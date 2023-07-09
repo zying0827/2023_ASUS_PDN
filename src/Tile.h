@@ -10,7 +10,7 @@ class Tile{
         Tile(unsigned int layId, unsigned int rowId, unsigned int colId): _layId(layId), _rowId(rowId), _colId(colId) {
             _netId = 0;
             _hasNet = false;
-            _obstacle = false;
+            _hasObstacle = false;
         }
         ~Tile() {}
 
@@ -28,12 +28,12 @@ class Tile{
         }
         unsigned int nodeId() const { return _nodeId; }
         bool hasNet() const { return _hasNet; }
-        bool obstacle() const { return _obstacle; }
+        bool hasObstacle() const { return _hasObstacle; }
 
         // set functions
-        void setObstacle() {_obstacle = true; }
+        void setObstacle() {_hasObstacle = true; }
         void setNet(unsigned int netId) {
-            if (_hasNet || _obstacle) {
+            if (_hasNet || _hasObstacle) {
                 cerr << "setNet fails! ERROR: Tile(" << _layId << "," << _rowId << "," << _colId << ") is full!" << endl;
             }
             _netId = netId; 
@@ -43,10 +43,12 @@ class Tile{
         unsigned int _layId;
         unsigned int _rowId;
         unsigned int _colId;
-        unsigned int _netId;
+        unsigned int _netId;    // the id of the net crossing the tile horizontally
         unsigned int _nodeId;
-        bool _hasNet;
-        bool _obstacle;
+        unsigned int _viaId;
+        bool _hasNet;   // true if has net crossing the tile horizontally
+        bool _hasObstacle;
+        bool _hasVia;
 };
 
 #endif
