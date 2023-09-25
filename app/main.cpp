@@ -8,5 +8,6 @@ int main() {
     cout << "Wei-Tseng" << endl;
     Printer printer;
     printer.print();
+    printer.print();
     cout << "leo304git" << endl;
 }
