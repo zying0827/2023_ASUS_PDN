@@ -2,6 +2,7 @@
 #define INCLUDE_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cassert>
 #include <cmath>
@@ -15,5 +16,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+#include <map>
 
 #endif

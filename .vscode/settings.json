@@ -1,5 +1,21 @@
 {
     "files.associations": {
-        "vector": "cpp"
+        "vector": "cpp",
+        "iostream": "cpp",
+        "string_view": "cpp"
+    },
+    "cmake.debugConfig": {
+        "args": [
+            "${workspaceFolder}/exp/output/RGraph_test.html"
+            // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
+            // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
+            // "--ntuplace3",
+            // "${workspaceFolder}/ntuplace3/ntuplace-r",
+            // "--params",
+            // "${workspaceFolder}/params/iccad2022-problem-b/case2.json",
+            // "--imgdir",
+            // "${workspaceFolder}/images"
+        ]
+        
     }
 }
