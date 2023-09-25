@@ -1,12 +1,12 @@
 [
 {
-  "directory": "/home/leotseng/test_github/build/app",
-  "command": "/usr/bin/c++  -I/home/leotseng/test_github -I/home/leotseng/test_github/src -g -std=gnu++11 -o CMakeFiles/testgit.dir/main.cpp.o -c /home/leotseng/test_github/app/main.cpp",
-  "file": "/home/leotseng/test_github/app/main.cpp"
+  "directory": "/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/app",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/c++  -I/Users/tsengweizhe/Desktop/Test_Github/Test_Github -I/Users/tsengweizhe/Desktop/Test_Github/Test_Github/src -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -std=gnu++11 -o CMakeFiles/testgit.dir/main.cpp.o -c /Users/tsengweizhe/Desktop/Test_Github/Test_Github/app/main.cpp",
+  "file": "/Users/tsengweizhe/Desktop/Test_Github/Test_Github/app/main.cpp"
 },
 {
-  "directory": "/home/leotseng/test_github/build/src",
-  "command": "/usr/bin/c++  -I/home/leotseng/test_github/src -g -std=gnu++11 -o CMakeFiles/source.dir/Printer.cpp.o -c /home/leotseng/test_github/src/Printer.cpp",
-  "file": "/home/leotseng/test_github/src/Printer.cpp"
+  "directory": "/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/c++  -I/Users/tsengweizhe/Desktop/Test_Github/Test_Github/src -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -std=gnu++11 -o CMakeFiles/source.dir/Printer.cpp.o -c /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp",
+  "file": "/Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp"
 }
 ]

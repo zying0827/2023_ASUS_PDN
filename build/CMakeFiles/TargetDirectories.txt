@@ -1,8 +1,8 @@
-/home/leotseng/test_github/build/CMakeFiles/edit_cache.dir
-/home/leotseng/test_github/build/CMakeFiles/rebuild_cache.dir
-/home/leotseng/test_github/build/app/CMakeFiles/testgit.dir
-/home/leotseng/test_github/build/app/CMakeFiles/edit_cache.dir
-/home/leotseng/test_github/build/app/CMakeFiles/rebuild_cache.dir
-/home/leotseng/test_github/build/src/CMakeFiles/source.dir
-/home/leotseng/test_github/build/src/CMakeFiles/edit_cache.dir
-/home/leotseng/test_github/build/src/CMakeFiles/rebuild_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles/edit_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles/rebuild_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/app/CMakeFiles/testgit.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/app/CMakeFiles/edit_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/app/CMakeFiles/rebuild_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src/CMakeFiles/source.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src/CMakeFiles/edit_cache.dir
+/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src/CMakeFiles/rebuild_cache.dir

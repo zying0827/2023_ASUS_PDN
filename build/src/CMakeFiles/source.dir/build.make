@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /home/leotseng/.local/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/Cellar/cmake/3.25.3/bin/cmake
 
 # The command to remove a file.
-RM = /home/leotseng/.local/bin/cmake -E rm -f
+RM = /opt/homebrew/Cellar/cmake/3.25.3/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/leotseng/test_github
+CMAKE_SOURCE_DIR = /Users/tsengweizhe/Desktop/Test_Github/Test_Github
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/leotseng/test_github/build
+CMAKE_BINARY_DIR = /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build
 
 # Include any dependencies generated for this target.
 include src/CMakeFiles/source.dir/depend.make
@@ -70,18 +70,18 @@ include src/CMakeFiles/source.dir/progress.make
 include src/CMakeFiles/source.dir/flags.make
 
 src/CMakeFiles/source.dir/Printer.cpp.o: src/CMakeFiles/source.dir/flags.make
-src/CMakeFiles/source.dir/Printer.cpp.o: /home/leotseng/test_github/src/Printer.cpp
+src/CMakeFiles/source.dir/Printer.cpp.o: /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp
 src/CMakeFiles/source.dir/Printer.cpp.o: src/CMakeFiles/source.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/leotseng/test_github/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/CMakeFiles/source.dir/Printer.cpp.o"
-	cd /home/leotseng/test_github/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/source.dir/Printer.cpp.o -MF CMakeFiles/source.dir/Printer.cpp.o.d -o CMakeFiles/source.dir/Printer.cpp.o -c /home/leotseng/test_github/src/Printer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/CMakeFiles/source.dir/Printer.cpp.o"
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && /Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/source.dir/Printer.cpp.o -MF CMakeFiles/source.dir/Printer.cpp.o.d -o CMakeFiles/source.dir/Printer.cpp.o -c /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp
 
 src/CMakeFiles/source.dir/Printer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/source.dir/Printer.cpp.i"
-	cd /home/leotseng/test_github/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/leotseng/test_github/src/Printer.cpp > CMakeFiles/source.dir/Printer.cpp.i
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && /Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp > CMakeFiles/source.dir/Printer.cpp.i
 
 src/CMakeFiles/source.dir/Printer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/source.dir/Printer.cpp.s"
-	cd /home/leotseng/test_github/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/leotseng/test_github/src/Printer.cpp -o CMakeFiles/source.dir/Printer.cpp.s
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && /Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src/Printer.cpp -o CMakeFiles/source.dir/Printer.cpp.s
 
 # Object files for target source
 source_OBJECTS = \
@@ -93,19 +93,19 @@ source_EXTERNAL_OBJECTS =
 src/libsource.a: src/CMakeFiles/source.dir/Printer.cpp.o
 src/libsource.a: src/CMakeFiles/source.dir/build.make
 src/libsource.a: src/CMakeFiles/source.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/leotseng/test_github/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libsource.a"
-	cd /home/leotseng/test_github/build/src && $(CMAKE_COMMAND) -P CMakeFiles/source.dir/cmake_clean_target.cmake
-	cd /home/leotseng/test_github/build/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/source.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libsource.a"
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && $(CMAKE_COMMAND) -P CMakeFiles/source.dir/cmake_clean_target.cmake
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/source.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/CMakeFiles/source.dir/build: src/libsource.a
 .PHONY : src/CMakeFiles/source.dir/build
 
 src/CMakeFiles/source.dir/clean:
-	cd /home/leotseng/test_github/build/src && $(CMAKE_COMMAND) -P CMakeFiles/source.dir/cmake_clean.cmake
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src && $(CMAKE_COMMAND) -P CMakeFiles/source.dir/cmake_clean.cmake
 .PHONY : src/CMakeFiles/source.dir/clean
 
 src/CMakeFiles/source.dir/depend:
-	cd /home/leotseng/test_github/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/leotseng/test_github /home/leotseng/test_github/src /home/leotseng/test_github/build /home/leotseng/test_github/build/src /home/leotseng/test_github/build/src/CMakeFiles/source.dir/DependInfo.cmake --color=$(COLOR)
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/tsengweizhe/Desktop/Test_Github/Test_Github /Users/tsengweizhe/Desktop/Test_Github/Test_Github/src /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/src/CMakeFiles/source.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/CMakeFiles/source.dir/depend
 

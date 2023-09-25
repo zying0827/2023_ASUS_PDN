@@ -1,2 +1,2 @@
-/usr/bin/ar qc libsource.a CMakeFiles/source.dir/Printer.cpp.o
-/usr/bin/ranlib libsource.a
+/Library/Developer/CommandLineTools/usr/bin/ar qc libsource.a CMakeFiles/source.dir/Printer.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libsource.a

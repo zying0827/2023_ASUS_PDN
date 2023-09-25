@@ -48,19 +48,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /home/leotseng/.local/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/Cellar/cmake/3.25.3/bin/cmake
 
 # The command to remove a file.
-RM = /home/leotseng/.local/bin/cmake -E rm -f
+RM = /opt/homebrew/Cellar/cmake/3.25.3/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/leotseng/test_github
+CMAKE_SOURCE_DIR = /Users/tsengweizhe/Desktop/Test_Github/Test_Github
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/leotseng/test_github/build
+CMAKE_BINARY_DIR = /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,7 +68,7 @@ CMAKE_BINARY_DIR = /home/leotseng/test_github/build
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/home/leotseng/.local/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/opt/homebrew/Cellar/cmake/3.25.3/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -78,7 +78,7 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/home/leotseng/.local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/opt/homebrew/Cellar/cmake/3.25.3/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/leotseng/test_github/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/leotseng/test_github/build/CMakeFiles /home/leotseng/test_github/build/app//CMakeFiles/progress.marks
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/leotseng/test_github/build/CMakeFiles 0
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(CMAKE_COMMAND) -E cmake_progress_start /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/app//CMakeFiles/progress.marks
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/clean
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,22 +103,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/preinstall
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/preinstall
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/leotseng/test_github/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 app/CMakeFiles/testgit.dir/rule:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/CMakeFiles/testgit.dir/rule
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app/CMakeFiles/testgit.dir/rule
 .PHONY : app/CMakeFiles/testgit.dir/rule
 
 # Convenience name for target.
@@ -127,7 +127,7 @@ testgit: app/CMakeFiles/testgit.dir/rule
 
 # fast build rule for target.
 testgit/fast:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/build
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/build
 .PHONY : testgit/fast
 
 main.o: main.cpp.o
@@ -135,7 +135,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.o
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -143,7 +143,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.i
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -151,7 +151,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	cd /home/leotseng/test_github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.s
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(MAKE) $(MAKESILENT) -f app/CMakeFiles/testgit.dir/build.make app/CMakeFiles/testgit.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 # Help Target
@@ -177,6 +177,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/leotseng/test_github/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /Users/tsengweizhe/Desktop/Test_Github/Test_Github/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
