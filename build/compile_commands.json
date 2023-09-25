@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/leotseng/test_github/build/app",
+  "command": "/usr/bin/c++  -I/home/leotseng/test_github -I/home/leotseng/test_github/src -g -std=gnu++11 -o CMakeFiles/testgit.dir/main.cpp.o -c /home/leotseng/test_github/app/main.cpp",
+  "file": "/home/leotseng/test_github/app/main.cpp"
+},
+{
+  "directory": "/home/leotseng/test_github/build/src",
+  "command": "/usr/bin/c++  -I/home/leotseng/test_github/src -g -std=gnu++11 -o CMakeFiles/source.dir/Printer.cpp.o -c /home/leotseng/test_github/src/Printer.cpp",
+  "file": "/home/leotseng/test_github/src/Printer.cpp"
+}
+]

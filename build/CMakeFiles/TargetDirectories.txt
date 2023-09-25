@@ -1,0 +1,8 @@
+/home/leotseng/test_github/build/CMakeFiles/edit_cache.dir
+/home/leotseng/test_github/build/CMakeFiles/rebuild_cache.dir
+/home/leotseng/test_github/build/app/CMakeFiles/testgit.dir
+/home/leotseng/test_github/build/app/CMakeFiles/edit_cache.dir
+/home/leotseng/test_github/build/app/CMakeFiles/rebuild_cache.dir
+/home/leotseng/test_github/build/src/CMakeFiles/source.dir
+/home/leotseng/test_github/build/src/CMakeFiles/edit_cache.dir
+/home/leotseng/test_github/build/src/CMakeFiles/rebuild_cache.dir
