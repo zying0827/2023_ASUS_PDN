@@ -1,5 +1,6 @@
 #include "GlobalMgr.h"
 #include "LayerILP.h"
+#include "FlowLP.h"
 
 // public functions
 
@@ -66,26 +67,30 @@ void GlobalMgr::buildTestOASG() {
 
     // layer2
     cerr << "layer2..." << endl;
-    OASGNode* lay2_obsNode1 = _rGraph.addOASGNode(80, 240, OASGNodeType::MIDDLE);
-    OASGNode* lay2_obsNode2 = _rGraph.addOASGNode(320, 240, OASGNodeType::MIDDLE);
-    OASGNode* lay2_obsNode3 = _rGraph.addOASGNode(320, 320, OASGNodeType::MIDDLE);
-    OASGNode* lay2_obsNode4 = _rGraph.addOASGNode(80, 320, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net0_obsNode1 = _rGraph.addOASGNode(80, 240, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net0_obsNode2 = _rGraph.addOASGNode(320, 240, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net0_obsNode3 = _rGraph.addOASGNode(320, 320, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net0_obsNode4 = _rGraph.addOASGNode(80, 320, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net1_obsNode1 = _rGraph.addOASGNode(80, 240, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net1_obsNode2 = _rGraph.addOASGNode(320, 240, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net1_obsNode3 = _rGraph.addOASGNode(320, 320, OASGNodeType::MIDDLE);
+    OASGNode* lay2_net1_obsNode4 = _rGraph.addOASGNode(80, 320, OASGNodeType::MIDDLE);
     OASGNode* lay2_detNode1 = _rGraph.addOASGNode(400, 400, OASGNodeType::MIDDLE);
     OASGNode* lay2_detNode2 = _rGraph.addOASGNode(400, 520, OASGNodeType::MIDDLE);
 
-    _rGraph.addOASGEdge(0, 2, _rGraph.sourceOASGNode(0,2), lay2_obsNode1, false);
-    _rGraph.addOASGEdge(0, 2, lay2_obsNode1, lay2_obsNode4, false);
-    _rGraph.addOASGEdge(0, 2, lay2_obsNode4, _rGraph.targetOASGNode(0,0,2), false);
-    _rGraph.addOASGEdge(0, 2, _rGraph.sourceOASGNode(0,2), lay2_obsNode2, false);
-    _rGraph.addOASGEdge(0, 2, lay2_obsNode2, lay2_obsNode3, false);
-    _rGraph.addOASGEdge(0, 2, lay2_obsNode3, _rGraph.targetOASGNode(0,0,2), false);
+    _rGraph.addOASGEdge(0, 2, _rGraph.sourceOASGNode(0,2), lay2_net0_obsNode1, false);
+    _rGraph.addOASGEdge(0, 2, lay2_net0_obsNode1, lay2_net0_obsNode4, false);
+    _rGraph.addOASGEdge(0, 2, lay2_net0_obsNode4, _rGraph.targetOASGNode(0,0,2), false);
+    _rGraph.addOASGEdge(0, 2, _rGraph.sourceOASGNode(0,2), lay2_net0_obsNode2, false);
+    _rGraph.addOASGEdge(0, 2, lay2_net0_obsNode2, lay2_net0_obsNode3, false);
+    _rGraph.addOASGEdge(0, 2, lay2_net0_obsNode3, _rGraph.targetOASGNode(0,0,2), false);
     
-    _rGraph.addOASGEdge(1, 2, _rGraph.sourceOASGNode(1,2), lay2_obsNode1, false);
-    _rGraph.addOASGEdge(1, 2, lay2_obsNode1, lay2_obsNode4, false);
-    _rGraph.addOASGEdge(1, 2, lay2_obsNode4, _rGraph.targetOASGNode(1,0,2), false);
-    _rGraph.addOASGEdge(1, 2, _rGraph.sourceOASGNode(1,2), lay2_obsNode2, false);
-    _rGraph.addOASGEdge(1, 2, lay2_obsNode2, lay2_obsNode3, false);
-    _rGraph.addOASGEdge(1, 2, lay2_obsNode3, _rGraph.targetOASGNode(1,0,2), false);
+    _rGraph.addOASGEdge(1, 2, _rGraph.sourceOASGNode(1,2), lay2_net1_obsNode1, false);
+    _rGraph.addOASGEdge(1, 2, lay2_net1_obsNode1, lay2_net1_obsNode4, false);
+    _rGraph.addOASGEdge(1, 2, lay2_net1_obsNode4, _rGraph.targetOASGNode(1,0,2), false);
+    _rGraph.addOASGEdge(1, 2, _rGraph.sourceOASGNode(1,2), lay2_net1_obsNode2, false);
+    _rGraph.addOASGEdge(1, 2, lay2_net1_obsNode2, lay2_net1_obsNode3, false);
+    _rGraph.addOASGEdge(1, 2, lay2_net1_obsNode3, _rGraph.targetOASGNode(1,0,2), false);
 
     _rGraph.addOASGEdge(1, 2, _rGraph.sourceOASGNode(1,2), _rGraph.targetOASGNode(1,1,2), false);
     _rGraph.addOASGEdge(1, 2, _rGraph.targetOASGNode(1,0,2), lay2_detNode1, false);
@@ -111,6 +116,11 @@ void GlobalMgr::buildTestOASG() {
     _rGraph.addOASGEdge(2, 3, _rGraph.sourceOASGNode(2,3), _rGraph.targetOASGNode(2,0,3), false);
     _rGraph.addOASGEdge(2, 3, _rGraph.sourceOASGNode(2,3), _rGraph.targetOASGNode(2,1,3), false);
     _rGraph.addOASGEdge(2, 3, _rGraph.targetOASGNode(2,0,3), _rGraph.targetOASGNode(2,1,3), false);
+}
+
+void GlobalMgr::buildOASG() {
+    // TODO for Luo:
+    // for each layer, for each net, use addOASGNode() and addOASGEdge() to construct a crossing OASG
 }
 
 void GlobalMgr::plotOASG() {
@@ -192,4 +202,21 @@ void GlobalMgr::plotRGraph() {
             }
         }
     }
+}
+
+void GlobalMgr::currentDistribution() {
+    FlowLP solver(_rGraph);
+    
+    // set objective
+
+    // set flow conservation constraints
+
+    // set capacity constraints
+    // TODO for Tsai and Huang:
+    // for each layer, for each neighboring OASGEdges,
+    // use solver.addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width)
+    // to add their capacity constraints
+
+    // solve the MCFP formulation and collect the result
+
 }

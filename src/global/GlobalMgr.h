@@ -16,9 +16,11 @@ class GlobalMgr {
 
         void plotDB();
         void buildTestOASG();
+        void buildOASG();
         void plotOASG();
         void plotRGraph();
         void layerDistribution();
+        void currentDistribution();
     private:
         // void constructRGraph();
         // void DFS(OASGNode* node, vector< vector<OASGEdge*> >& paths);

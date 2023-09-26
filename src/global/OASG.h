@@ -1,7 +1,7 @@
 #ifndef OASG_H
 #define OASG_H
 
-#include "../Include.h"
+#include "../base/Include.h"
 using namespace std;
 
 class OASGNode {

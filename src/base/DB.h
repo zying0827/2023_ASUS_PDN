@@ -56,6 +56,8 @@ class DB {
         size_t numObstacles(size_t layId) const { return _vMetalLayer[layId]->numObstacles(); }
         double boardWidth()               const { return _boardWidth; }
         double boardHeight()              const { return _boardHeight; }
+        double areaWeight()               const { return _areaWeight; }
+        double viaWeight()                const { return _viaWeight; }
 
         // size_t addVia(unsigned int rowId, unsigned int colId, unsigned int netId, ViaType type) {
         //     for (size_t layId = 0; layId < _numLayers; ++layId) {
@@ -140,6 +142,11 @@ class DB {
             addObstacle(layId, vShape);
         }
 
+        void setFlowWeight(double areaWeight, double viaWeight) {
+            _areaWeight = areaWeight;
+            _viaWeight = viaWeight;
+        }
+
         // void addObstacle(size_t layId, size_t rowId, size_t colId) {
         //     _vTile[layId][rowId][colId]->setObstacle();
         // }
@@ -194,7 +201,8 @@ class DB {
         double               _boardWidth;
         double               _boardHeight;
         SVGPlot&             _plot;
-
+        double _areaWeight;
+        double _viaWeight;
         // size_t _numRows;
         // size_t _numCols;
 };

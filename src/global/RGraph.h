@@ -61,6 +61,12 @@ class OASGEdge {
         size_t netId() const { return _netId; }
         size_t typeEdgeId() const { return _typeEdgeId; }
 
+        // double cost() {
+        //     if (_viaEdge) {
+
+        //     }
+        // }
+
         bool cross(OASGEdge* e) {
             // reference: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
             
