@@ -1,9 +1,9 @@
 #ifndef RGRAPH_H
 #define RGRAPH_H
 
-#include "../Include.h"
-#include "../DB.h"
-#include "../Net.h"
+#include "../base/Include.h"
+#include "../base/DB.h"
+#include "../base/Net.h"
 // #include "OASG.h"
 using namespace std;
 

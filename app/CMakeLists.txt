@@ -1,6 +1,6 @@
 add_executable(pd main.cpp)
 target_include_directories(pd PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(pd PRIVATE network global detailed)
+target_link_libraries(pd PRIVATE base global detailed)
 
 # Add Gurobi
 find_package(GUROBI REQUIRED)

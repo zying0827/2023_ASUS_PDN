@@ -1,9 +1,9 @@
 #ifndef GLOBAL_MGR
 #define GLOBAL_MGR
 
-#include "../Include.h"
-#include "../SVGPlot.h"
-#include "../DB.h"
+#include "../base/Include.h"
+#include "../base/SVGPlot.h"
+#include "../base/DB.h"
 #include "RGraph.h"
 
 class GlobalMgr {
@@ -14,6 +14,7 @@ class GlobalMgr {
         }
         ~GlobalMgr() {}
 
+        void plotDB();
         void buildTestOASG();
         void plotOASG();
         void plotRGraph();

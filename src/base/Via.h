@@ -42,10 +42,10 @@ class ViaCluster{
         ViaCluster() {}
         ~ViaCluster() {}
 
-        Via* vVia(int viaId) const { return _vVia[viaId]; }
-        size_t numVias() const { return _vVia.size(); }
-        unsigned int netId() const { return _vVia[0]->netId(); }
-        ViaType viaType() const { return _vVia[0]->viaType(); }
+        Via*    vVia(int viaId) const { return _vVia[viaId]; }
+        size_t  numVias()       const { return _vVia.size(); }
+        size_t  netId()         const { return _vVia[0]->netId(); }
+        ViaType viaType()       const { return _vVia[0]->viaType(); }
         // unsigned int nodeId() const { return _nodeId; }
         // double centerRowId() {
         //     double cRowId = 0;

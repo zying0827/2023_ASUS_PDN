@@ -46,4 +46,6 @@ add_subdirectory(extern/clipp)
 # Make sure you link your targets with this command. It can also link libraries and
 # even flags, so linking a target that does not exist will not give a configure-time error.
 add_subdirectory(app)
-add_subdirectory(src)
+add_subdirectory(src/base)
+add_subdirectory(src/global)
+add_subdirectory(src/detailed)

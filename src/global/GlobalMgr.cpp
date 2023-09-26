@@ -3,6 +3,23 @@
 
 // public functions
 
+void GlobalMgr::plotDB() {
+    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+        for (size_t viaId = 0; viaId < _db.numVias(); ++ viaId) {
+            Via* via = _db.vVia(viaId);
+            via->shape()->plot(via->netId(), layId);
+            // _plot.drawCircle(via->shape()->ctrX(), via->shape()->ctrY(), via->shape()->radius(), via->netId());
+        }
+        for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+            Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+            for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+                obs->vShape(shapeId)->plot(SVGPlotColor::gray, layId);
+            }
+        }
+    }
+    
+}
+
 void GlobalMgr::buildTestOASG() {
     cerr << "buildTestOASG..." << endl;
     // layer0
@@ -97,12 +114,12 @@ void GlobalMgr::buildTestOASG() {
 }
 
 void GlobalMgr::plotOASG() {
-    _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+    // _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                _plot.drawLine(e->sNode()->x() + _db.boardWidth()*layId, e->sNode()->y(), e->tNode()->x() + _db.boardWidth()*layId, e->tNode()->y(), netId);
+                _plot.drawLine(e->sNode()->x(), e->sNode()->y(), e->tNode()->x(), e->tNode()->y(), netId, layId);
             }
         }
     }
@@ -111,15 +128,15 @@ void GlobalMgr::plotOASG() {
 void GlobalMgr::layerDistribution() {
     // construct the routing graph
     _rGraph.constructRGraph();
-    cerr << "constructRGraph DONE" << endl;
-    for (size_t twoPinNetId = 0; twoPinNetId < _rGraph.num2PinNets(); ++ twoPinNetId) {
-        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
-            for (size_t RGEdgeId = 0; RGEdgeId < _rGraph.numRGEdges(twoPinNetId, layId); ++ RGEdgeId) {
-                cerr << "_vRGEdge[" << twoPinNetId << "][" << layId << "][" << RGEdgeId << "] = ";
-                _rGraph.vEdge(twoPinNetId,layId,RGEdgeId)->print();
-            }
-        }
-    }
+    // cerr << "constructRGraph DONE" << endl;
+    // for (size_t twoPinNetId = 0; twoPinNetId < _rGraph.num2PinNets(); ++ twoPinNetId) {
+    //     for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+    //         for (size_t RGEdgeId = 0; RGEdgeId < _rGraph.numRGEdges(twoPinNetId, layId); ++ RGEdgeId) {
+    //             cerr << "_vRGEdge[" << twoPinNetId << "][" << layId << "][" << RGEdgeId << "] = ";
+    //             _rGraph.vEdge(twoPinNetId,layId,RGEdgeId)->print();
+    //         }
+    //     }
+    // }
 
     
     // calculate normalized current demand
@@ -161,7 +178,7 @@ void GlobalMgr::layerDistribution() {
 }
 
 void GlobalMgr::plotRGraph() {
-    _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+    // _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
     for (size_t twoPinNetId = 0; twoPinNetId < _rGraph.num2PinNets(); ++ twoPinNetId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t RGEdgeId = 0; RGEdgeId < _rGraph.numRGEdges(twoPinNetId, layId); ++ RGEdgeId) {
@@ -169,49 +186,10 @@ void GlobalMgr::plotRGraph() {
                 if (rgEdge->selected()) {
                     for (size_t OASGEdgeId = 0; OASGEdgeId < rgEdge->numEdges(); ++ OASGEdgeId) {
                         OASGEdge* e = rgEdge->vEdge(OASGEdgeId);
-                        _plot.drawLine(e->sNode()->x() + _db.boardWidth()*layId, e->sNode()->y(), e->tNode()->x() + _db.boardWidth()*layId, e->tNode()->y(), e->netId());
+                        _plot.drawLine(e->sNode()->x(), e->sNode()->y(), e->tNode()->x(), e->tNode()->y(), e->netId(), layId);
                     }
                 }
             }
         }
     }
 }
-
-// private functions
-
-// void GlobalMgr::constructRGraph() {
-//     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-//         // for each layer, apply DFS
-//         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
-//             OASGNode* node = _rGraph.sourceOASGNode(netId, layId);
-//             vector< vector<OASGEdge*> > paths;
-//             paths = DFS(node);
-//             for (size_t pathId = 0; pathId < paths.size(); ++ pathId) {
-
-//             }
-//         }
-        
-        
-//     }
-// }
-
-// vector< vector<OASGEdge*> > GlobalMgr::DFS(OASGNode* node) {
-//     vector< vector<OASGEdge*> > paths;
-//     for (size_t edgeId = 0; edgeId < node->numOutEdges(); ++ edgeId) {
-//         OASGEdge* succEdge = _rGraph.vOASGEdge(node->outEdgeId(edgeId));
-//         if (succEdge->tNode()->nodeType() == OASGNodeType::TARGET) {
-//             vector<OASGEdge*> temp;
-//             temp.push_back(succEdge);
-//             paths.push_back(temp);
-//         }
-//         else {
-//             vector< vector<OASGEdge*> > tempPaths;
-//             tempPaths = DFS(succEdge->tNode());
-//             for (size_t tempPathId = 0; tempPathId < tempPaths.size(); ++ tempPathId) {
-//                 tempPaths[tempPathId].push_back(succEdge);
-//                 paths.push_back(tempPaths[tempPathId]);
-//             }
-//         }
-//     }
-//     return paths;
-// }

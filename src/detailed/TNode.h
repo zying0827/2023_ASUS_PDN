@@ -1,10 +1,10 @@
 #ifndef TNODE_H
 #define TNODE_H
 
-#include "../Include.h"
+#include "../base/Include.h"
 #include "TEdge.h"
-#include "../Tile.h"
-#include "../Via.h"
+#include "../base/Tile.h"
+#include "../base/Via.h"
 
 using namespace std;
 

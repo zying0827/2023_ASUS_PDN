@@ -1,8 +1,8 @@
-#include "Include.h"
-#include "DB.h"
-#include "Parser.h"
+#include "base/Include.h"
+#include "base/DB.h"
+#include "base/Parser.h"
 #include "global/GlobalMgr.h"
-#include "SVGPlot.h"
+#include "base/SVGPlot.h"
 
 using namespace std;
 
@@ -15,19 +15,30 @@ int main(int argc, char* argv[]){
         cerr << "Error opening output file" << endl;
     }
 
-    SVGPlot plot(fout);
-    // DB db(3, 4, 20, 16);
-    DB db;
+    double gridWidth = 40;
+    double boardWidth = 15*gridWidth;
+    double boardHeight = 19*gridWidth;
+    size_t numLayers = 4;
+
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers);
+    DB db(plot);
     Parser parser(db);
     // NetworkMgr mgr(db, plot);
-    // test initialize
-    parser.testInitialize();
+
+    // replace this line with a real parser function
+    parser.testInitialize(boardWidth, boardHeight, gridWidth);
+
     // db.print();
+    
     GlobalMgr globalMgr(db, plot);
+    
+
+    // replace this line with a real OASG building function
     globalMgr.buildTestOASG();
     // globalMgr.plotOASG();
     globalMgr.layerDistribution();
     globalMgr.plotRGraph();
+    globalMgr.plotDB();
 
     
 

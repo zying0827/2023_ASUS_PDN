@@ -1,7 +1,7 @@
 #ifndef TEDGE_H
 #define TEDGE_H
 
-#include "../Include.h"
+#include "../base/Include.h"
 
 using namespace std;
 

@@ -4,7 +4,7 @@ file(GLOB global_HEADER "*.h")
 
 add_library(global ${global_SRC} ${global_HEADER})
 target_include_directories(global PUBLIC ${PROJECT_SOURCE_DIR}/src/global)
-target_link_libraries(global PRIVATE network)
+target_link_libraries(global PRIVATE base)
 
 # Add Gurobi
 find_package(GUROBI REQUIRED)

@@ -1,11 +1,11 @@
 #ifndef NETWORKMGR_H
 #define NETWORKMGR_H
 
-#include "../Include.h"
-#include "../DB.h"
+#include "../base/Include.h"
+#include "../base/DB.h"
 #include "../detailed/RGraph.h"
 #include "NetworkILP.h"
-#include "../SVGPlot.h"
+#include "../base/SVGPlot.h"
 
 class NetworkMgr {
     // public:

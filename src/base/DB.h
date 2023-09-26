@@ -30,32 +30,32 @@ class DB {
         //     }
 
         // }
-        DB() {}
+        DB(SVGPlot& plot) : _plot(plot) {}
         ~DB() {}
 
         // void testInitialize();
 
-        Tile* vTile(int layId, int rowId, int colId) { return _vTile[layId][rowId][colId]; }
-        Via* vVia(int viaId) { return _vVia[viaId]; }
-        ViaCluster* vViaCluster(size_t viaCstrId) { return _vViaCluster[viaCstrId]; }
+        Tile*        vTile(int layId, int rowId, int colId)   { return _vTile[layId][rowId][colId]; }
+        Via*         vVia(int viaId)                          { return _vVia[viaId]; }
+        ViaCluster*  vViaCluster(size_t viaCstrId)            { return _vViaCluster[viaCstrId]; }
         // ViaCluster* vViaCluster(size_t netId, size_t netViaCstrId) { return _vNet[netId]->v; }
-        MediumLayer* vMediumLayer(size_t mediumLayId) { return _vMediumLayer[mediumLayId]; }
-        MetalLayer* vMetalLayer(size_t metalLayId) { return _vMetalLayer[metalLayId]; }
-        Net* vNet(size_t netId) { return _vNet[netId]; }
-        Obstacle* vObstacle(size_t obsId) { return _vObstacle[obsId]; }
-        Obstacle* vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
+        MediumLayer* vMediumLayer(size_t mediumLayId)         { return _vMediumLayer[mediumLayId]; }
+        MetalLayer*  vMetalLayer(size_t metalLayId)           { return _vMetalLayer[metalLayId]; }
+        Net*         vNet(size_t netId)                       { return _vNet[netId]; }
+        Obstacle*    vObstacle(size_t obsId)                  { return _vObstacle[obsId]; }
+        Obstacle*    vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
 
-        size_t numNets() const { return _vNet.size(); }
-        size_t numLayers() const { return _vMetalLayer.size(); }
+        size_t numNets()                  const { return _vNet.size(); }
+        size_t numLayers()                const { return _vMetalLayer.size(); }
         // size_t numRows() const { return _numRows; }
         // size_t numCols() const { return _numCols; }
-        size_t numVias() const { return _vVia.size(); }
-        size_t numViaClusters() const { return _vViaCluster.size(); }
+        size_t numVias()                  const { return _vVia.size(); }
+        size_t numViaClusters()           const { return _vViaCluster.size(); }
         // size_t numViaClusters(size_t netId) const { return _vViaCluster[netId].size(); }
-        size_t numObstacles() const { return _vObstacle.size(); }
+        size_t numObstacles()             const { return _vObstacle.size(); }
         size_t numObstacles(size_t layId) const { return _vMetalLayer[layId]->numObstacles(); }
-        double boardWidth() const { return _boardWidth; }
-        double boardHeight() const { return _boardHeight; }
+        double boardWidth()               const { return _boardWidth; }
+        double boardHeight()              const { return _boardHeight; }
 
         // size_t addVia(unsigned int rowId, unsigned int colId, unsigned int netId, ViaType type) {
         //     for (size_t layId = 0; layId < _numLayers; ++layId) {
@@ -91,7 +91,7 @@ class DB {
         }
 
         void addCircleVia(double x, double y, size_t netId, ViaType type) {
-            Shape* circle = new Circle(x, y, 16);
+            Shape* circle = new Circle(x, y, 16, _plot);
             Via* via = new Via(netId, type, circle);
             _vVia.push_back(via);
         }
@@ -134,7 +134,7 @@ class DB {
             vVtx.push_back(make_pair(xRight, yDown));
             vVtx.push_back(make_pair(xRight, yUp));
             vVtx.push_back(make_pair(xLeft, yUp));
-            Polygon* rect = new Polygon(vVtx);
+            Polygon* rect = new Polygon(vVtx, _plot);
             vector<Shape*> vShape;
             vShape.push_back(rect);
             addObstacle(layId, vShape);
@@ -143,6 +143,8 @@ class DB {
         // void addObstacle(size_t layId, size_t rowId, size_t colId) {
         //     _vTile[layId][rowId][colId]->setObstacle();
         // }
+
+        // void addSVGPlot(SVGPlot& plot) { _plot = SVGPlot&(plot); }
 
         void print() {
             cerr << "DB {boardWidth=" << _boardWidth << ", boardHeight=" << _boardHeight << endl;
@@ -179,20 +181,20 @@ class DB {
         }
         
     private:
-        vector<Net*> _vNet;
-        vector<Via*> _vVia;
-        vector<ViaCluster*> _vViaCluster;
+        vector<Net*>         _vNet;
+        vector<Via*>         _vVia;
+        vector<ViaCluster*>  _vViaCluster;
         // vector< vector<ViaCluster*> > _vViaCluster;  // index = [netId] [viaClusterId]
         vector<MediumLayer*> _vMediumLayer;
-        vector<MetalLayer*> _vMetalLayer;
-        vector<Obstacle*> _vObstacle;
+        vector<MetalLayer*>  _vMetalLayer;
+        vector<Obstacle*>    _vObstacle;
         // vector< vector<Obstacle*> > _vObstacle;     // index = [layId] [obsId]
-        vector<Port*> _vPort;
+        vector<Port*>        _vPort;
         vector< vector< vector< Tile* > > > _vTile;     // index = [layId][rowId][colId], layId of the bottom layer is 0
-        double _boardWidth;
-        double _boardHeight;
-        // size_t _numNets;
-        // size_t _numLayers;
+        double               _boardWidth;
+        double               _boardHeight;
+        SVGPlot&             _plot;
+
         // size_t _numRows;
         // size_t _numCols;
 };

@@ -9,6 +9,8 @@ class Obstacle {
     public:
         Obstacle(vector<Shape*> vShape) : _vShape(vShape) {}
         ~Obstacle() {}
+        size_t numShapes() const      { return _vShape.size(); }
+        Shape* vShape(size_t shapeId) { return _vShape[shapeId]; }
         void print() {
             cerr << "Obstacle {vShape=" << endl;
             for (size_t shapeId = 0; shapeId < _vShape.size(); ++ shapeId) {

@@ -44,16 +44,17 @@ class Net {
     public:
         Net() {}
         ~Net() {}
-        ViaCluster* sourceViaCstr() { return _sourcePort->viaCluster(); }
+        ViaCluster* sourceViaCstr()                   { return _sourcePort->viaCluster(); }
         ViaCluster* vTargetViaCstr(size_t netTPortId) { return _vTargetPort[netTPortId]->viaCluster(); }
         ViaCluster* vAddedViaCstr(size_t aViaCstrIdx) { return _vAddedViaCstr[aViaCstrIdx]; }
-        Port* sourcePort() { return _sourcePort; }
-        Port* targetPort(size_t netTPortId) { return _vTargetPort[netTPortId]; }
-        size_t numTPorts() const { return _vTargetPort.size(); }
+        Port*       sourcePort()                      { return _sourcePort; }
+        Port*       targetPort(size_t netTPortId)     { return _vTargetPort[netTPortId]; }
+        size_t      numTPorts() const                 { return _vTargetPort.size(); }
 
-        void addSPort(Port* port) { _sourcePort = port; }
-        void addTPort(Port* port) { _vTargetPort.push_back(port); }
+        void addSPort(Port* port)                 { _sourcePort = port; }
+        void addTPort(Port* port)                 { _vTargetPort.push_back(port); }
         void addAddedViaCstr(ViaCluster* viaCstr) { _vAddedViaCstr.push_back(viaCstr); }
+
         void print() {
             cerr << "Net {" << endl;
             cerr << "sourcePort=";
@@ -77,12 +78,13 @@ class Net {
             cerr << "}" << endl;
 
         }
+
     private:
-        Port* _sourcePort;
-        vector<Port*> _vTargetPort;
+        Port*                    _sourcePort;
+        vector<Port*>            _vTargetPort;
         // ViaCluster* _sourceViaCstr;
         // vector<ViaCluster*> _vTargetViaCstr;
-        vector<ViaCluster*> _vAddedViaCstr;
+        vector<ViaCluster*>      _vAddedViaCstr;
         vector< vector<Shape*> > _vShape;   // index = [layId] [shapeId]
 };
 

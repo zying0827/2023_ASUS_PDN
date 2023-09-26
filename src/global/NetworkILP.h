@@ -2,7 +2,7 @@
 #define NETWORKILP_H
 
 #include <gurobi_c++.h>
-#include "../Include.h"
+#include "../base/Include.h"
 // #include "OASG.h"
 using namespace std;
 

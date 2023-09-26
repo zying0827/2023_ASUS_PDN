@@ -9,7 +9,7 @@ class Parser {
         Parser(DB& db) : _db(db) {}
         ~Parser() {}
 
-        void testInitialize();
+        void testInitialize(double boardWidth, double boardHeight, double gridWidth);
     private:
         DB& _db;
 

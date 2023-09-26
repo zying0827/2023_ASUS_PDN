@@ -1,9 +1,10 @@
 #include "Parser.h"
 using namespace std;
 
-void Parser::testInitialize() {
-    double gridWidth = 40.0;
-    _db.setBoundary(15*gridWidth, 19*gridWidth);
+void Parser::testInitialize(double boardWidth, double boardHeight, double gridWidth) {
+    // double gridWidth = 40.0;
+    // _db.setBoundary(15*gridWidth, 19*gridWidth);
+    _db.setBoundary(boardWidth, boardHeight);
 
     _db.addMediumLayer("medium64", 1.524000e-02, 4.500000e+00, 3.500000e-02);
     _db.addMetalLayer("BOTTOM", 3.556000e-02, 5.959000e+07, 4.500000e+00);
