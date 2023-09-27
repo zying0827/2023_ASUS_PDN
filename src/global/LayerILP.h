@@ -20,6 +20,7 @@ class LayerILP {
         void clear();
         void setObjective();
         void setConflictConstraints();
+        void addConflictConstraint(size_t netId, size_t twoPinNetId);
         
         RGraph& _rGraph;
         GRBEnv _env;

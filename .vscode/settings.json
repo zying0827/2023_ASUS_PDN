@@ -6,7 +6,7 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "${workspaceFolder}/exp/output/oasg_test_black_1.html"
+            "${workspaceFolder}/exp/output/RGraph_test_new.html"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
             // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
             // "--ntuplace3",

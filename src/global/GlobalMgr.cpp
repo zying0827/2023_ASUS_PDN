@@ -121,6 +121,8 @@ void GlobalMgr::buildTestOASG() {
 void GlobalMgr::buildOASG() {
     // TODO for Luo:
     // for each layer, for each net, use addOASGNode() and addOASGEdge() to construct a crossing OASG
+    // in the later stage, all possible paths from the source to target ports and from target ports to lower-voltage target ports will be searched by DFS
+    // so the OASGEdges should point from the source to the target ports or from higher-voltage to lower-voltage target ports all along
 }
 
 void GlobalMgr::plotOASG() {
