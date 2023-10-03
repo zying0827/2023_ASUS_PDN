@@ -316,25 +316,25 @@ void GlobalMgr::voltageAssignment() {
                 double resistance;
                 double l;
                 if (outEdge->viaEdge()) {
-                    cerr << "viaEdge "; 
+                    // cerr << "viaEdge "; 
                     l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
                         + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
-                    cerr << "l=" << l << " ";
+                    // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
                     resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
                 } else {
-                    cerr << "planeEdge ";
+                    // cerr << "planeEdge ";
                     l = outEdge->length();
                     resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
                 }
-                cerr << "resistance = " << resistance << endl;
+                // cerr << "resistance = " << resistance << endl;
 
                 if (outNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
                 } else {
                     solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), resistance);
-                    cerr << "voltage = " << outNode->port()->voltage() << endl;
+                    // cerr << "voltage = " << outNode->port()->voltage() << endl;
                 }
             }
 
@@ -345,96 +345,108 @@ void GlobalMgr::voltageAssignment() {
                 double resistance;
                 double l;
                 if (inEdge->viaEdge()) {
-                    cerr << "viaEdge ";
+                    // cerr << "viaEdge ";
                     l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
                     resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
                 } else {
-                    cerr << "planeEdge ";
+                    // cerr << "planeEdge ";
                     l = inEdge->length();
                     resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
                 }
-                cerr << "resistance = " << resistance << endl;
+                // cerr << "resistance = " << resistance << endl;
 
                 if (inNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), resistance);
                 } else {
                     solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), resistance);
-                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                    // cerr << "voltage = " << inNode->port()->voltage() << endl;
                 }
             }
         }
-        cerr << "G = " << endl;
-        for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
-            for (size_t colId = 0; colId < solver.numNodes(); ++ colId) {
-                cerr << setprecision(15) << solver.G(rowId, colId);
-                if (colId < solver.numNodes()-1) {
-                    cerr << ", ";
-                }
-            }
-            if (rowId < solver.numNodes()-1) {
-                cerr << ";" << endl;
-            }
-        }
-        cerr << endl;
-        cerr << "I = " << endl;
-        for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
-            cerr << setprecision(15) << solver.I(rowId);
-            if (rowId < solver.numNodes()-1) {
-                cerr << ";" << endl;
-            }
-        }
-        cerr << endl;
-    }
+        // cerr << "G = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     for (size_t colId = 0; colId < solver.numNodes(); ++ colId) {
+        //         cerr << setprecision(15) << solver.G(rowId, colId);
+        //         if (colId < solver.numNodes()-1) {
+        //             cerr << ", ";
+        //         }
+        //     }
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+        // cerr << "I = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     cerr << setprecision(15) << solver.I(rowId);
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
 
-    for (size_t nodeId = 0; nodeId < _rGraph.numOASGNodes(); ++ nodeId) {
-        _rGraph.vOASGNode(nodeId) -> print();
-    }
-    vector<double> netVoltage;
-    vector< vector<double> > vVoltage(3, netVoltage);
-    vVoltage[0] = { 4.99999975251689,
-                    4.99999948245706,
-                    4.99999939003966,
-                    4.50000024748309,
-                    4.50000051754296,
-                    4.50000060996036,
-                    4.78574240598038,
-                    4.86315393669003 };
-    vVoltage[1] = { 4.99999967817019,
-                    4.99999932627796,
-                    4.99999920660867,
-                    4.50000028543947,
-                    4.50000063733168,
-                    4.50000075700098,
-                    4.40000003639034,
-                    4.40000003639039,
-                    4.40000003639039,
-                    4.70485438179277,
-                    4.80649030108812,
-                    4.45000000000000,
-                    4.44999999999998,
-                    4.45000016091490 };
-    vVoltage[2] = { 4.99999948018458,
-                    4.99999882037443,
-                    4.99999859900624,
-                    4.50000026702640,
-                    4.50000052112573,
-                    4.50000060637678,
-                    4.40000025278904,
-                    4.40000065849982,
-                    4.40000079461696 };
+        // cerr << "V = ";
+        solver.solve();
+        // cerr << endl;
 
-    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
-            _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(vVoltage[netId][nPortNodeId]);
+            _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(solver.V(nPortNodeId));
         }
         _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
         for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
             _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
         }
     }
+
+    // for (size_t nodeId = 0; nodeId < _rGraph.numOASGNodes(); ++ nodeId) {
+    //     _rGraph.vOASGNode(nodeId) -> print();
+    // }
+    // vector<double> netVoltage;
+    // vector< vector<double> > vVoltage(3, netVoltage);
+    // vVoltage[0] = { 4.99999975251689,
+    //                 4.99999948245706,
+    //                 4.99999939003966,
+    //                 4.50000024748309,
+    //                 4.50000051754296,
+    //                 4.50000060996036,
+    //                 4.78574240598038,
+    //                 4.86315393669003 };
+    // vVoltage[1] = { 4.99999967817019,
+    //                 4.99999932627796,
+    //                 4.99999920660867,
+    //                 4.50000028543947,
+    //                 4.50000063733168,
+    //                 4.50000075700098,
+    //                 4.40000003639034,
+    //                 4.40000003639039,
+    //                 4.40000003639039,
+    //                 4.70485438179277,
+    //                 4.80649030108812,
+    //                 4.45000000000000,
+    //                 4.44999999999998,
+    //                 4.45000016091490 };
+    // vVoltage[2] = { 4.99999948018458,
+    //                 4.99999882037443,
+    //                 4.99999859900624,
+    //                 4.50000026702640,
+    //                 4.50000052112573,
+    //                 4.50000060637678,
+    //                 4.40000025278904,
+    //                 4.40000065849982,
+    //                 4.40000079461696 };
+
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+    //         _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(vVoltage[netId][nPortNodeId]);
+    //     }
+    //     _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
+    //     for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+    //         _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
+    //     }
+    // }
     // OASGNode* t1 = _rGraph.vNPortOASGNode(1, 7);
     // cerr << "t1(" << t1->x() << "," << t1->y() << ")" << endl;
     // OASGNode* t2 = _rGraph.vNPortOASGNode(1, 8);
@@ -486,11 +498,11 @@ void GlobalMgr::currentDistribution() {
     FlowLP solver(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
     
     // set objective
-    cerr << "setObjective..." << endl;
+    // cerr << "setObjective..." << endl;
     solver.setObjective(_db.areaWeight(), _db.viaWeight());
 
     // set flow conservation constraints
-    cerr << "setConserveConstraints..." << endl;
+    // cerr << "setConserveConstraints..." << endl;
     solver.setConserveConstraints();
     // set capacity constraints
     // TODO for Tsai and Huang:

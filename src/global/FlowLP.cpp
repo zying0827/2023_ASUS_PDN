@@ -35,36 +35,36 @@ FlowLP::FlowLP(RGraph& rGraph, vector<double> vMediumLayerThickness, vector<doub
                                                         "Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId));
         }
     }
-    _model.update();
-    _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    // _model.update();
+    // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::setObjective(double areaWeight, double viaWeight){
     GRBLinExpr obj;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // add cost for horizontal flows
-        cerr << "add cost for horizontal flows" << endl;
+        // cerr << "add cost for horizontal flows" << endl;
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
                 double cost = (areaWeight * pow(1E-3 * e->length(), 2)) / (abs(e->sNode()->voltage()-e->tNode()->voltage()) * _vMetalLayerThickness[layId] * 1E-3);
-                cerr << "cost = " << cost << endl;
+                // cerr << "cost = " << cost << endl;
                 obj += cost * (_vPlaneLeftFlow[netId][layId][pEdgeId] + _vPlaneRightFlow[netId][layId][pEdgeId]);
             }
         }
         // add cost for vertical flows
-        cerr << "add cost for vertical flows" << endl;
+        // cerr << "add cost for vertical flows" << endl;
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
                 if (!e->redundant()) {
                     double costNum = 1E-3 * (0.5*_vMetalLayerThickness[layPairId]+_vMediumLayerThickness[layPairId+1]+0.5*_vMetalLayerThickness[layPairId+1]);
                     double costDen = abs(e->sNode()->voltage() - e->tNode()->voltage()); // has not * via cross-sectional area
-                    cerr << "costDen=" << setprecision(15) << costDen << ", ";
-                    cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
-                    cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
+                    // cerr << "costDen=" << setprecision(15) << costDen << ", ";
+                    // cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
+                    // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
                     double cost = costNum / costDen;
-                    cerr << "cost = " << cost << endl;
+                    // cerr << "cost = " << cost << endl;
                     _model.addConstr(viaWeight * cost * _vViaFlow[netId][layPairId][vEdgeId] <= _vMaxViaCost[netId][vEdgeId], 
                                     "max_via_cost_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId));
                 }
@@ -72,10 +72,10 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
             obj += _vMaxViaCost[netId][vEdgeId];
         }
     }
-    cerr << "_model.setObjective(obj, GRB_MINIMIZE)" << endl;
+    // cerr << "_model.setObjective(obj, GRB_MINIMIZE)" << endl;
     _model.setObjective(obj, GRB_MINIMIZE);
-    _model.update();
-    _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    // _model.update();
+    // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::setConserveConstraints(){
@@ -96,7 +96,7 @@ void FlowLP::setConserveConstraints(){
         GRBLinExpr outFlow;
         OASGNode* node = _rGraph.vOASGNode(nodeId);
         if (!node->redundant()) {
-            node->print();
+            // node->print();
             for (size_t outEdgeId = 0; outEdgeId < node->numOutEdges(); ++ outEdgeId) {
                 OASGEdge* edge = _rGraph.vOASGEdge(node->outEdgeId(outEdgeId)); 
                 if (!edge->redundant()) {
@@ -122,8 +122,8 @@ void FlowLP::setConserveConstraints(){
             _model.addConstr(outFlow == vInputFlow[nodeId], "flow_conserve_n" + to_string(nodeId));
         }
     }
-    _model.update();
-    _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    // _model.update();
+    // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width){
@@ -142,8 +142,8 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OA
         totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
     }
     _model.addConstr(totalWidth * 1E3 <= width, "capacity");
-    _model.update();
-    _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    // _model.update();
+    // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width) {
@@ -156,8 +156,8 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, do
         e1Width += _vPlaneLeftFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
     }
     _model.addConstr(e1Width * 1E3 <= width, "capacity");
-    _model.update();
-    _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    // _model.update();
+    // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width){}
