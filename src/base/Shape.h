@@ -15,6 +15,12 @@ class Shape {
         virtual double ctrY() { double ctrY; return ctrY; }
         virtual void print() {}
         virtual void plot(size_t colorId, size_t layId) {}
+        virtual double maxX() { double maxX; return maxX; }
+        virtual double minX() { double minX; return minX; }
+        virtual double maxY() { double maxY; return maxY; }
+        virtual double minY() { double minY; return minY; }
+        virtual double boxH() { return maxX() - minX(); }
+        virtual double boxW() { return maxY() - minY(); }
     protected:
         SVGPlot& _plot;
         // pair<double, double> _center;
@@ -51,7 +57,42 @@ class Polygon : public Shape {
         void plot(size_t colorId, size_t layId) {
             _plot.drawPolygon(_vVtx, colorId, layId);
         }
-
+        double maxX() {
+            double maxX = _vVtx[0].first;
+            for (size_t vtxId = 1; vtxId < _vVtx.size(); ++ vtxId) {
+                if (_vVtx[vtxId].first > maxX) {
+                    maxX = _vVtx[vtxId].first;
+                }
+            }
+            return maxX;
+        }
+        double minX() {
+            double minX = _vVtx[0].first;
+            for (size_t vtxId = 1; vtxId < _vVtx.size(); ++ vtxId) {
+                if (_vVtx[vtxId].first < minX) {
+                    minX = _vVtx[vtxId].first;
+                }
+            }
+            return minX;
+        }
+        double maxY() {
+            double maxY = _vVtx[0].second;
+            for (size_t vtxId = 1; vtxId < _vVtx.size(); ++ vtxId) {
+                if (_vVtx[vtxId].second > maxY) {
+                    maxY = _vVtx[vtxId].second;
+                }
+            }
+            return maxY;
+        }
+        double minY() {
+            double minY = _vVtx[0].second;
+            for (size_t vtxId = 1; vtxId < _vVtx.size(); ++ vtxId) {
+                if (_vVtx[vtxId].second < minY) {
+                    minY = _vVtx[vtxId].second;
+                }
+            }
+            return minY;
+        }
     private:
         vector< pair<double, double> > _vVtx;
 };
@@ -71,7 +112,10 @@ class Circle : public Shape {
         void plot(size_t colorId, size_t layId) {
             _plot.drawCircle(_ctr.first, _ctr.second, _radius, colorId, layId);
         }
-
+        double maxX() { return _ctr.first + _radius; }
+        double minX() { return _ctr.first - _radius; }
+        double maxY() { return _ctr.second + _radius; }
+        double minY() { return _ctr.second - _radius; }
     private:
         pair<double, double> _ctr;
         double _radius;
@@ -91,6 +135,10 @@ class Node : public Shape {
         void plot(size_t colorId, size_t layId) {
             _plot.drawCircle(_ctr.first, _ctr.second, 2, colorId, layId);
         } 
+        double maxX() { return _ctr.first; }
+        double minX() { return _ctr.first; }
+        double maxY() { return _ctr.second; }
+        double minY() { return _ctr.second; }
     private:
         pair<double, double> _ctr;
 };
@@ -113,9 +161,13 @@ class Trace : public Shape {
         }
 
         void plot(size_t colorId, size_t layId) {
-            _plot.drawLine(_sNode->ctrX(), _sNode->ctrY(), _tNode->ctrX(), _tNode->ctrY(), colorId, layId);
+            _plot.drawLine(_sNode->ctrX(), _sNode->ctrY(), _tNode->ctrX(), _tNode->ctrY(), colorId, layId, _width);
         }
 
+        double maxX() { return (_sNode->ctrX() > _tNode->ctrX()) ? _sNode->ctrX() : _tNode->ctrX(); }
+        double minX() { return (_sNode->ctrX() < _tNode->ctrX()) ? _sNode->ctrX() : _tNode->ctrX(); }
+        double maxY() { return (_sNode->ctrY() > _tNode->ctrY()) ? _sNode->ctrY() : _tNode->ctrY(); }
+        double minY() { return (_sNode->ctrY() < _tNode->ctrY()) ? _sNode->ctrY() : _tNode->ctrY(); }
     private:
         Node* _sNode;
         Node* _tNode;

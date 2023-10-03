@@ -1,3 +1,4 @@
 build/
 exp/
+.vscode/
 .python-version

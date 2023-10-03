@@ -46,7 +46,8 @@ class DB {
         Obstacle*    vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
 
         size_t numNets()                  const { return _vNet.size(); }
-        size_t numLayers()                const { return _vMetalLayer.size(); }
+        size_t numLayers()                const { return _vMetalLayer.size(); } // number of metal layers
+        size_t numMediumLayers()          const { return _vMediumLayer.size(); }
         // size_t numRows() const { return _numRows; }
         // size_t numCols() const { return _numCols; }
         size_t numVias()                  const { return _vVia.size(); }

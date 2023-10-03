@@ -1,3 +1,4 @@
+#include <gurobi_c++.h>
 #include "base/Include.h"
 #include "base/DB.h"
 #include "base/Parser.h"
@@ -14,6 +15,13 @@ int main(int argc, char* argv[]){
     } else {
         cerr << "Error opening output file" << endl;
     }
+    // ofstream fout1;
+    // fout1.open(argv[2], ofstream::out);
+    // if (fout1.is_open()) {
+    //     cout << "output file is opened successfully" << endl;
+    // } else {
+    //     cerr << "Error opening output file" << endl;
+    // }
 
     double gridWidth = 40;
     double boardWidth = 15*gridWidth;
@@ -37,9 +45,18 @@ int main(int argc, char* argv[]){
     globalMgr.buildTestOASG();
     // globalMgr.plotOASG();
     globalMgr.layerDistribution();
-    globalMgr.plotRGraph();
+    // globalMgr.plotRGraph();
+    globalMgr.buildTestNCOASG();
+    // globalMgr.plotNCOASG();
+    globalMgr.voltageAssignment();
+    try {
+        globalMgr.currentDistribution();
+    } catch (GRBException e) {
+        cerr << "Error = " << e.getErrorCode() << endl;
+        cerr << e.getMessage() << endl;
+    }
+    globalMgr.plotCurrentPaths();
     globalMgr.plotDB();
-
     
 
 

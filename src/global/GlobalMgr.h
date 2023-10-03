@@ -20,8 +20,13 @@ class GlobalMgr {
         void plotOASG();
         void plotRGraph();
         void layerDistribution();
+        void buildTestNCOASG();
+        void plotNCOASG();
+        void voltageAssignment();
         void currentDistribution();
+        void plotCurrentPaths();
     private:
+        Trace* edge2Trace(OASGEdge* edge);
         // void constructRGraph();
         // void DFS(OASGNode* node, vector< vector<OASGEdge*> >& paths);
         // vector< vector<OASGEdge*> > DFS(OASGNode* node);
