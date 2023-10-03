@@ -22,7 +22,7 @@ class SVGPlot {
         void drawSquare(double leftX, double topY, double width, size_t colorId, size_t layId);
         void drawRect(double leftX, double bottY, double width, double height, size_t colorId, size_t layId);
         void drawCircle(double centerX, double centerY, double r, size_t colorId, size_t layId);
-        void drawLine(double x1, double y1, double x2, double y2, size_t colorId, size_t layId);
+        void drawLine(double x1, double y1, double x2, double y2, size_t colorId, size_t layId, double width = 5);
         void drawPolygon(vector< pair<double, double> > vVtx, size_t colorId, size_t layId);
 
         double gridWidth() const { return _gridWidth; }

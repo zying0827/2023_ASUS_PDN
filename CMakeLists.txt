@@ -2,7 +2,7 @@
 # You should always specify a range with the newest
 # and oldest tested versions of CMake. This will ensure
 # you pick up the best policies.
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.20)
 
 # This is your project statement. You should always list languages;
 # Listing the version is nice here since it sets lots of useful variables
@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 11)
 
 # # Find packages go here.
-# set(GUROBI_DIR "/work/gurobi1001/linux64")
+ set(GUROBI_DIR "/work/gurobi1001/linux64")
 
 # # Add submodules
 # find_package(Git QUIET)

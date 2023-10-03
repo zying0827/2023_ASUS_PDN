@@ -9,14 +9,24 @@ void RGraph::initRGraph(DB db) {
     // OASG info (ports and nodes)
     for (size_t netId = 0; netId < db.numNets(); ++ netId) {
         Net* net = db.vNet(netId);
+        //construct non port nodes
+        vector<OASGNode*> vNetNPortNode;
+        _vNPortOASGNode.push_back(vNetNPortNode);
         // construct source ports
         _vSPort.push_back(net->sourcePort());
         // construct source nodes
         vector<OASGNode*> layerSNode;
         for (size_t layId = 0; layId < db.numLayers(); ++ layId) {
-            OASGNode* node = new OASGNode(net->sourceViaCstr()->centerX(), net->sourceViaCstr()->centerY(), OASGNodeType::SOURCE, net->sourcePort());
+            OASGNode* node;
+            if (layId == 0) {
+                node = addOASGNode(netId, net->sourceViaCstr()->centerX(), net->sourceViaCstr()->centerY(), OASGNodeType::SOURCE, net->sourcePort(), false);
+            } else {
+                node = addOASGNode(netId, net->sourceViaCstr()->centerX(), net->sourceViaCstr()->centerY(), OASGNodeType::SOURCE, net->sourcePort(), true);
+            }
+            
+            // OASGNode* node = new OASGNode(net->sourceViaCstr()->centerX(), net->sourceViaCstr()->centerY(), OASGNodeType::SOURCE, net->sourcePort());
             layerSNode.push_back(node);
-            _vOASGNode.push_back(node);
+            // _vOASGNode.push_back(node);
         }
         _vSourceOASGNode.push_back(layerSNode);
 
@@ -27,9 +37,16 @@ void RGraph::initRGraph(DB db) {
             netPort.push_back(net->targetPort(netTPortId));
             vector<OASGNode*> layerTNode;
             for (size_t layId = 0; layId < db.numLayers(); ++ layId) {
-                OASGNode* node = new OASGNode(net->vTargetViaCstr(netTPortId)->centerX(), net->vTargetViaCstr(netTPortId)->centerY(), OASGNodeType::TARGET, net->targetPort(netTPortId));
+                OASGNode* node;
+                if (layId == 0) {
+                    node = addOASGNode(netId, net->vTargetViaCstr(netTPortId)->centerX(), net->vTargetViaCstr(netTPortId)->centerY(), OASGNodeType::TARGET, net->targetPort(netTPortId), false);
+                } else {
+                    node = addOASGNode(netId, net->vTargetViaCstr(netTPortId)->centerX(), net->vTargetViaCstr(netTPortId)->centerY(), OASGNodeType::TARGET, net->targetPort(netTPortId), true);
+                }
+                
+                // OASGNode* node = new OASGNode(net->vTargetViaCstr(netTPortId)->centerX(), net->vTargetViaCstr(netTPortId)->centerY(), OASGNodeType::TARGET, net->targetPort(netTPortId));
                 layerTNode.push_back(node);
-                _vOASGNode.push_back(node);
+                // _vOASGNode.push_back(node);
             }
             netLayerTNode.push_back(layerTNode);
         }
@@ -71,15 +88,19 @@ void RGraph::initRGraph(DB db) {
     }
 }
 
-OASGNode* RGraph::addOASGNode(double x, double y, OASGNodeType type, Port* port){
+OASGNode* RGraph::addOASGNode(size_t netId, double x, double y, OASGNodeType type, Port* port, bool nPort){
     // _vOutEdgeId and _vInEdgeId will be set later through addOASGEdge()
     // _voltage will be set in the preporcessing of currentDistribution()
-    OASGNode* node = new OASGNode(x, y, type, port);
+    OASGNode* node = new OASGNode(_vOASGNode.size(), _vNPortOASGNode[netId].size(), netId, x, y, type, port, nPort);
     _vOASGNode.push_back(node);
+    if (nPort) {
+        _vNPortOASGNode[netId].push_back(node);
+    }
     return node;
 }
 
-void RGraph::addOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, bool viaEdge){
+size_t RGraph::addOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, bool viaEdge){
+    // if viaEdge, layId is layPairId
     size_t OASGEdgeId = _vOASGEdge.size();
     size_t typeEdgeId = viaEdge ? _vViaOASGEdge[netId][layId].size() : _vPlaneOASGEdge[netId][layId].size();
     OASGEdge* edge = new OASGEdge(OASGEdgeId, netId, layId, typeEdgeId, sNode, tNode, viaEdge);
@@ -91,6 +112,7 @@ void RGraph::addOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* 
     } else {
         _vPlaneOASGEdge[netId][layId].push_back(edge);
     }
+    return OASGEdgeId;
 }
 
 void RGraph::constructRGraph() {
