@@ -67,5 +67,6 @@
             // "${workspaceFolder}/images"
         ]
         
-    }
+    },
+    "cmake.configureOnOpen": true
 }

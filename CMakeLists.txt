@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 11)
 
 # # Find packages go here.
- set(GUROBI_DIR "/work/gurobi1001/linux64")
+set(GUROBI_DIR "/work/gurobi1001/linux64")
 
 # # Add submodules
 # find_package(Git QUIET)
