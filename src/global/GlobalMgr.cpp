@@ -128,7 +128,7 @@ void GlobalMgr::buildOASG() {
 }
 
 void GlobalMgr::plotOASG() {
-    // _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+    //_plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
@@ -509,15 +509,17 @@ void GlobalMgr::currentDistribution() {
     // TODO for Tsai and Huang:
     // for each layer, for each neighboring OASGEdges,
     
+    
     //search each layer                                                                           
     for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+        cout << "LAYER :" << layId << endl << endl;
         //search each net
         for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
             //search each edge
             for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
                 //compare other net edge
                 for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId){
-                    OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
                     //make sure to compare different net
                     if(S_netId != T_netId){
                         for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
@@ -528,15 +530,32 @@ void GlobalMgr::currentDistribution() {
                         }   
                     }
                 } 
+
+                cout << "starting add obstacle constraint" << endl;
+                //compare with obstacle
+                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+                   
+                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+                    AddObstacleConstraint(e1,obs,solver);
+                }
+
+                cout << "ending add obstacle constraint" << endl;
+                //board boundary
+                cout << "starting add board constraint" << endl;
+                AddRectangularBoardConstraint(e1, _db.boardWidth(), _db.boardHeight(), solver);
+                cout << "ending add board constraint" << endl;
+                //cout << " board width: " << _db.boardWidth() << " board height :" << _db.boardHeight() << endl;
             }
         }  
     }
+    
     
     // use solver.addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width)
     // to add their capacity constraints
     
     
     // layer0
+    /*
     solver.addCapacityConstraints(_rGraph.vOASGEdge(24), false, 1, 100);
     //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
     //solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);
@@ -565,7 +584,7 @@ void GlobalMgr::currentDistribution() {
     solver.addCapacityConstraints(_rGraph.vOASGEdge(49), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), false, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), true, 1, 80);
-    
+    */
     // solve the MCFP formulation and collect the result
     solver.solve();
     solver.collectResult();
