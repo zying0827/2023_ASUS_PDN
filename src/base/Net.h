@@ -42,18 +42,28 @@ class Port {
 
 class Net {
     public:
-        Net() {}
+        Net(size_t numLayers) {
+            vector<Trace*> tempTrace;
+            vector<Shape*> tempShape;
+            for (size_t layId = 0; layId < numLayers; ++ layId) {
+                _vTrace.push_back(tempTrace);
+                _vShape.push_back(tempShape);
+            }
+        }
         ~Net() {}
         ViaCluster* sourceViaCstr()                   { return _sourcePort->viaCluster(); }
         ViaCluster* vTargetViaCstr(size_t netTPortId) { return _vTargetPort[netTPortId]->viaCluster(); }
         ViaCluster* vAddedViaCstr(size_t aViaCstrIdx) { return _vAddedViaCstr[aViaCstrIdx]; }
         Port*       sourcePort()                      { return _sourcePort; }
         Port*       targetPort(size_t netTPortId)     { return _vTargetPort[netTPortId]; }
+        Trace*      vTrace(size_t layId, size_t traceId) { return _vTrace[layId][traceId]; }
         size_t      numTPorts() const                 { return _vTargetPort.size(); }
+        size_t      numTraces(size_t layId) const     { return _vTrace[layId].size(); }
 
         void addSPort(Port* port)                 { _sourcePort = port; }
         void addTPort(Port* port)                 { _vTargetPort.push_back(port); }
         void addAddedViaCstr(ViaCluster* viaCstr) { _vAddedViaCstr.push_back(viaCstr); }
+        void addTrace(Trace* trace, size_t layId) { _vTrace[layId].push_back(trace); }
 
         void print() {
             cerr << "Net {" << endl;
@@ -86,6 +96,7 @@ class Net {
         // vector<ViaCluster*> _vTargetViaCstr;
         vector<ViaCluster*>      _vAddedViaCstr;
         vector< vector<Shape*> > _vShape;   // index = [layId] [shapeId]
+        vector< vector<Trace*> > _vTrace;   // index = [layId] [traceId], assigned in current distribution
 };
 
 

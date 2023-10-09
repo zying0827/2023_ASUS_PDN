@@ -56,7 +56,7 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "${workspaceFolder}/exp/output/voltage_test1003.html"
+            "${workspaceFolder}/exp/output/grid_map_100902.html"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
             // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
             // "--ntuplace3",

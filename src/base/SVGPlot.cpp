@@ -4,7 +4,7 @@ void SVGPlot::startPlot(double canvasW, double canvasH) {
     _fout << "<html>" << endl;
     _fout << "<body>" << endl;
     _fout << "<svg width=\"" << canvasW <<"\" height=\"" << canvasH << "\">" << endl;
-    drawRect(0, 0, canvasW, canvasH, SVGPlotColor::black, 0);
+    // drawRect(0, 0, canvasW, canvasH, SVGPlotColor::black, 0);
 }
 
 void SVGPlot::endPlot() {
@@ -39,5 +39,5 @@ void SVGPlot::drawPolygon(vector< pair<double, double> > vVtx, size_t colorId, s
         _fout << vVtx[vtxId].first + _boardWidth*layId << "," << _boardHeight - vVtx[vtxId].second;
         if (vtxId < vVtx.size()-1) _fout << " ";
     }
-    _fout << "\" style=\"fill:" << _vColor[colorId] << ";stroke:gray;stroke-width:1\" />" << endl;
+    _fout << "\" style=\"fill:" << _vColor[colorId] << ";stroke:gray;stroke-width:1;fill-opacity:0.7\" />" << endl;
 }

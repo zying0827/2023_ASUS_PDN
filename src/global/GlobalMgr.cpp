@@ -545,6 +545,18 @@ void GlobalMgr::currentDistribution() {
     solver.collectResult();
     solver.printResult();
 
+    // add traces to each net
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                if (e->current() > 0) {
+                    Trace* trace = edge2Trace(e);
+                    _db.vNet(netId)->addTrace(trace, layId);
+                }
+            }
+        }
+    }
 }
 
 void GlobalMgr::plotCurrentPaths() {

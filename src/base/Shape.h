@@ -21,6 +21,10 @@ class Shape {
         virtual double minY() { double minY; return minY; }
         virtual double boxH() { return maxX() - minX(); }
         virtual double boxW() { return maxY() - minY(); }
+        virtual double bPolygonX(size_t vtxId) { double bPolygonX; return bPolygonX;}
+        virtual double bPolygonY(size_t vtxId) { double bPolygonY; return bPolygonY;}
+        virtual size_t numBPolyVtcs() { size_t numBPolyVtcs; return numBPolyVtcs;}
+        bool enclose(double x, double y);
     protected:
         SVGPlot& _plot;
         // pair<double, double> _center;
@@ -93,6 +97,9 @@ class Polygon : public Shape {
             }
             return minY;
         }
+        double bPolygonX(size_t vtxId) { return _vVtx[vtxId].first; }
+        double bPolygonY(size_t vtxId) { return _vVtx[vtxId].second; }
+        size_t numBPolyVtcs() { return _vVtx.size(); }
     private:
         vector< pair<double, double> > _vVtx;
 };
@@ -116,6 +123,15 @@ class Circle : public Shape {
         double minX() { return _ctr.first - _radius; }
         double maxY() { return _ctr.second + _radius; }
         double minY() { return _ctr.second - _radius; }
+        double bPolygonX(size_t vtxId) {
+            if (vtxId == 0 || vtxId == 3) return minX();
+            else return maxX();
+        }
+        double bPolygonY(size_t vtxId) {
+            if (vtxId == 0 || vtxId == 1) return minY();
+            else return maxY();
+        }
+        size_t numBPolyVtcs() { return 4; }
     private:
         pair<double, double> _ctr;
         double _radius;
@@ -139,6 +155,9 @@ class Node : public Shape {
         double minX() { return _ctr.first; }
         double maxY() { return _ctr.second; }
         double minY() { return _ctr.second; }
+        double bPolygonX(size_t vtxId) { return _ctr.first; }
+        double bPolygonY(size_t vtxId) { return _ctr.second; }
+        size_t numBPolyVtcs() { return 1; }
     private:
         pair<double, double> _ctr;
 };
@@ -168,6 +187,27 @@ class Trace : public Shape {
         double minX() { return (_sNode->ctrX() < _tNode->ctrX()) ? _sNode->ctrX() : _tNode->ctrX(); }
         double maxY() { return (_sNode->ctrY() > _tNode->ctrY()) ? _sNode->ctrY() : _tNode->ctrY(); }
         double minY() { return (_sNode->ctrY() < _tNode->ctrY()) ? _sNode->ctrY() : _tNode->ctrY(); }
+        double bPolygonX(size_t vtxId) {
+            double orgX;
+            if (vtxId == 0 || vtxId == 1) orgX = _sNode->ctrX();
+            else orgX = _tNode->ctrX();
+            double offset;
+            if (vtxId == 0 || vtxId == 3) offset = -0.5 * _width;
+            else offset = 0.5 *_width;
+            return orgX + offset * (_tNode->ctrY() - _sNode->ctrY()) / 
+                                    sqrt(pow(_tNode->ctrX() - _sNode->ctrX(), 2) + pow(_tNode->ctrY() - _sNode->ctrY(), 2));
+        }
+        double bPolygonY(size_t vtxId) {
+            double orgY;
+            if (vtxId == 0 || vtxId == 1) orgY = _sNode->ctrY();
+            else orgY = _tNode->ctrY();
+            double offset;
+            if (vtxId == 0 || vtxId == 3) offset = -0.5 * _width;
+            else offset = 0.5 *_width;
+            return orgY + offset * -(_tNode->ctrX() - _sNode->ctrX()) / 
+                                    sqrt(pow(_tNode->ctrX() - _sNode->ctrX(), 2) + pow(_tNode->ctrY() - _sNode->ctrY(), 2));
+        }
+        size_t numBPolyVtcs() { return 4; }
     private:
         Node* _sNode;
         Node* _tNode;
