@@ -2,6 +2,10 @@
 #include "LayerILP.h"
 #include "VoltEigen.h"
 #include "FlowLP.h"
+#include "AddCapacity.h"
+#include <cmath>
+#include <cstdio>
+#include <math.h>
 
 // public functions
 
@@ -127,7 +131,15 @@ void GlobalMgr::buildOASG() {
 }
 
 void GlobalMgr::plotOASG() {
-    // _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+    //_plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+/*
+    printf("========plot OASG=========\n\n");
+    printf("numNets: %d\n", _rGraph.numNets());
+    printf("numLayers: %d\n\n", _rGraph.numLayers());
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId)
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId)
+            printf("vPlaneOASGEdge(net: %d, lay: %d): %d\n", netId, layId, _rGraph.numPlaneOASGEdges(netId, layId));
+*/
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
@@ -471,8 +483,146 @@ void GlobalMgr::voltageAssignment() {
     // }
     
 }
+void printVia(FILE *fp) {
+    fprintf(fp, "<html>\n");
+    fprintf(fp, "<body>\n");
+    fprintf(fp, "<svg width=\"2400\" height=\"760\">\n");
+    fprintf(fp, "  <rect x=\"0\" y=\"0\" width=\"2400\" height=\"760\" style=\"fill:black;stroke:gray;stroke-width:1\" />\n");
+    fprintf(fp, "  <circle cx=\"80\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"120\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"80\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"120\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"200\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"240\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"200\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"240\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"240\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"280\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"240\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"280\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"280\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"320\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"480\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"520\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"400\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"440\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"400\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"440\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"400\" cy=\"320\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"400\" cy=\"280\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"360\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"400\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"440\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"680\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"720\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"680\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"720\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"800\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"840\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"800\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"840\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"840\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"880\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"840\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"880\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"880\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"920\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1080\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1120\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1000\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1040\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1000\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1040\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1000\" cy=\"320\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1000\" cy=\"280\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"960\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1000\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1040\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <polygon points=\"920,200 1080,200 1080,160 920,160\" style=\"fill:gray;stroke:gray;stroke-width:1\" />\n");
+    fprintf(fp, "  <circle cx=\"1280\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1320\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1280\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1320\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1400\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1440\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1400\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1440\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1440\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1480\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1440\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1480\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1480\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1520\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1680\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1720\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1600\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1640\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1600\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1640\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1600\" cy=\"320\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1600\" cy=\"280\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1560\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1600\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1640\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <polygon points=\"1280,520 1520,520 1520,440 1280,440\" style=\"fill:gray;stroke:gray;stroke-width:1\" />\n");
+    fprintf(fp, "  <circle cx=\"1880\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1920\" cy=\"680\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1880\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"1920\" cy=\"640\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2000\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2040\" cy=\"200\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2000\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2040\" cy=\"160\" r=\"16\" fill=\"lightsalmon\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2040\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2080\" cy=\"680\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2040\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2080\" cy=\"640\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2080\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2120\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2280\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2320\" cy=\"280\" r=\"16\" fill=\"gold\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2200\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2240\" cy=\"680\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2200\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2240\" cy=\"640\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2200\" cy=\"320\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2200\" cy=\"280\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2160\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2200\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <circle cx=\"2240\" cy=\"80\" r=\"16\" fill=\"greenyellow\" stroke=\"gray\" stroke-width=\"1\" />\n");
+    fprintf(fp, "  <line x1=\"100\" y1=\"660\" x2=\"220\" y2=\"180\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"700\" y1=\"660\" x2=\"820\" y2=\"180\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1280\" y1=\"440\" x2=\"1420\" y2=\"180\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1280\" y1=\"520\" x2=\"1280\" y2=\"440\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1300\" y1=\"660\" x2=\"1280\" y2=\"520\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1900\" y1=\"660\" x2=\"2020\" y2=\"180\" style=\"stroke:lightsalmon;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"260\" y1=\"660\" x2=\"300\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"260\" y1=\"660\" x2=\"500\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"400\" y1=\"360\" x2=\"500\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"300\" y1=\"280\" x2=\"400\" y2=\"360\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"400\" y1=\"240\" x2=\"500\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"300\" y1=\"280\" x2=\"400\" y2=\"240\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"860\" y1=\"660\" x2=\"900\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1000\" y1=\"240\" x2=\"1100\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"900\" y1=\"280\" x2=\"1000\" y2=\"240\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1520\" y1=\"440\" x2=\"1500\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1520\" y1=\"520\" x2=\"1520\" y2=\"440\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1460\" y1=\"660\" x2=\"1520\" y2=\"520\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"2060\" y1=\"660\" x2=\"2100\" y2=\"280\" style=\"stroke:gold;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1020\" y1=\"660\" x2=\"1000\" y2=\"300\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1620\" y1=\"660\" x2=\"1600\" y2=\"300\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1620\" y1=\"660\" x2=\"1600\" y2=\"80\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"1600\" y1=\"300\" x2=\"1600\" y2=\"80\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"2220\" y1=\"660\" x2=\"2200\" y2=\"300\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"2220\" y1=\"660\" x2=\"2200\" y2=\"80\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"2200\" y1=\"300\" x2=\"2200\" y2=\"80\" style=\"stroke:greenyellow;stroke-width:5\" />\n");
+    fprintf(fp, "  <line x1=\"100\" y1=\"100\" x2=\"210\" y2=\"100\" style=\"stroke:white;stroke-width:5\" />\n");
+    fprintf(fp, "<text x=\"155\" y=\"80\" font-size=\"40\" text-anchor=\"middle\" fill=\"white\">100</text>\n");
+}
 
 void GlobalMgr::currentDistribution() {
+    printf("\n\n\n\n\n====================currentDistrubution===================\n\n");
+
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
     vector<double> vConductivity;
@@ -504,27 +654,268 @@ void GlobalMgr::currentDistribution() {
     // set flow conservation constraints
     // cerr << "setConserveConstraints..." << endl;
     solver.setConserveConstraints();
+
+    printf("\n\n\n------------set capacity constraint------------\n\n");
     // set capacity constraints
     // TODO for Tsai and Huang:
     // for each layer, for each neighboring OASGEdges,
+    
+    // test shortest dist
+    /*
+    for(int i=0; i<10; i++)
+    {
+        double x1, y1, x2, y2, px, py;
+        printf("input x1, y1: ");
+        cin>> x1>> y1;
+        printf("input x2, y2: ");
+        cin>> x2>> y2;
+        printf("input px, py: ");
+        cin>> px>> py;
+        double l = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+        printf("length: %.3f\n", l);
+        printf("shortest dist: %.3f\n", shortest_distance(x1, y1, x2, y2, px, py, l));
+    }
+    */
+    //search each layer                                                                           
+    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+        cout << "LAYER :" << layId << endl << endl;
+        //search each net
+        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
+            //search each edge
+            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+                //compare other net edge
+                for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId){
+                    //make sure to compare different net
+                    if(S_netId != T_netId){
+                        for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+                            OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+        
+                            
+                        //    printf("S_netId: %d, S_EdgeId: %d, T_netId: %d, T_EdgeId: %d\n", S_netId, S_EdgeId, T_netId, T_EdgeId);
+                            printf("--------------------------\n");
+                            FILE *fp = fopen("capacity.html", "w");
+                            printVia(fp);
+
+                            double gridWidth = 40;
+                            double boardWidth = 15*gridWidth;
+                            double boardHeight = 19*gridWidth;
+                        //    printf("S: (%.0f, %.0f)->(%.0f, %.0f), T: (%.0f, %.0f)->(%.0f, %.0f)\n", e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y());
+                            fprintf(fp, "  <text x=\"%.0f\" y=\"%.0f\" font-size=\"60\" text-anchor=\"middle\" fill=\"white\">S</text>\n", ((e1->sNode()->x()+boardWidth*layId) + (e1->tNode()->x()+boardWidth*layId))/2.0, ((boardHeight-e1->sNode()->y()) + (boardHeight-e1->tNode()->y()))/2.0);
+                            fprintf(fp, "  <text x=\"%.0f\" y=\"%.0f\" font-size=\"60\" text-anchor=\"middle\" fill=\"white\">T</text>\n", ((e2->sNode()->x()+boardWidth*layId) + (e2->tNode()->x()+boardWidth*layId))/2.0, ((boardHeight-e2->sNode()->y()) + (boardHeight-e2->tNode()->y()))/2.0);
+                            fclose(fp);
+
+                            printf("d(S1, T): %.2f\n", shortest_distance(e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y(), e1->sNode()->x(), e1->sNode()->y(), sqrt((e2->sNode()->x()-e2->tNode()->x())*(e2->sNode()->x()-e2->tNode()->x()) + (e2->sNode()->y()-e2->tNode()->y())*(e2->sNode()->y()-e2->tNode()->y()))));
+                            printf("d(S2, T): %.2f\n", shortest_distance(e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y(), e1->tNode()->x(), e1->tNode()->y(), sqrt((e2->sNode()->x()-e2->tNode()->x())*(e2->sNode()->x()-e2->tNode()->x()) + (e2->sNode()->y()-e2->tNode()->y())*(e2->sNode()->y()-e2->tNode()->y()))));
+                            printf("d(S, T1): %.2f\n", shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->sNode()->x(), e2->sNode()->y(), sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y()))));
+                            printf("d(S, T2): %.2f\n", shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->tNode()->x(), e2->tNode()->y(), sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y()))));
+                            printf("\n\n");
+                        /*    
+                            printf("slope_S: %.2f, th1: %.2f\n", (e1->sNode()->y()-e1->tNode()->y())/(e1->sNode()->x()-e1->tNode()->x()), atan((e1->sNode()->y()-e1->tNode()->y())/(e1->sNode()->x()-e1->tNode()->x())));
+                            printf("slope_T: %.2f, th2: %.2f\n", (e2->sNode()->y()-e2->tNode()->y())/(e2->sNode()->x()-e2->tNode()->x()), atan((e2->sNode()->y()-e2->tNode()->y())/(e2->sNode()->x()-e2->tNode()->x())));
+                            printf("th1-th2: %.2f, cos: %.2f\n", atan((e1->sNode()->y()-e1->tNode()->y())/(e1->sNode()->x()-e1->tNode()->x()))-atan((e2->sNode()->y()-e2->tNode()->y())/(e2->sNode()->x()-e2->tNode()->x())), cos(atan((e1->sNode()->y()-e1->tNode()->y())/(e1->sNode()->x()-e1->tNode()->x()))-atan((e2->sNode()->y()-e2->tNode()->y())/(e2->sNode()->x()-e2->tNode()->x()))));
+                        */
+                            
+                            double v1x = e1->tNode()->x()-e1->sNode()->x();
+                            double v1y = e1->tNode()->y()-e1->sNode()->y();
+                            double v2x = e2->tNode()->x()-e2->sNode()->x();
+                            double v2y = e2->tNode()->y()-e2->sNode()->y();
+                            printf("v1=(%.2f, %.2f), v2=(%.2f, %.2f)\n", v1x, v1y, v2x, v2y);
+                            printf("cos: %.2f\n", fabs((v1x*v2x + v1y*v2y)/(sqrt(v1x*v1x+v1y*v1y)*sqrt(v2x*v2x+v2y*v2y))));
+                            printf("\n\n");
+                            
+                            
+                            BuildCapicityConstraint(e1,e2,solver);
+
+
+                            double fx = -1, fy = -1; // foot
+                            double min_dist = 999999;
+                            double dist;
+                            double cos = fabs((v1x*v2x + v1y*v2y)/(sqrt(v1x*v1x+v1y*v1y)*sqrt(v2x*v2x+v2y*v2y)));
+                            double ratio1 = -1, ratio2 = -1;
+                            bool right1 = 0, right2 = 0;
+                            
+                            // d(S1, T)
+                            dist = shortest_distance(e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y(), e1->sNode()->x(), e1->sNode()->y(), sqrt((e2->sNode()->x()-e2->tNode()->x())*(e2->sNode()->x()-e2->tNode()->x()) + (e2->sNode()->y()-e2->tNode()->y())*(e2->sNode()->y()-e2->tNode()->y())), fx, fy);
+                            if(fx != -1) {
+                                min_dist = dist;
+
+                                ratio1 = cos, ratio2 = 1;
+                                if(e1->sNode()->x() == fx) {
+                                    // T is horizontal
+                                    if(e1->sNode()->y() < fy) {
+                                        right2 = 1;
+                                        if(v1x*v1y > 0) // S slope > 0
+                                            right1 = 0;
+                                        else
+                                            right1 = 1;
+                                    }
+                                    else {
+                                        right2 = 0;
+                                        if(v1x*v1y > 0) // S slope > 0
+                                            right1 = 1;
+                                        else
+                                            right1 = 0;
+                                    }
+                                }
+                                // S1 is left to foot (edge T)
+                                else if(e1->sNode()->x() < fx) {
+                                    right1 = 1, right2 = 0;
+                                }
+                                else {
+                                    right1 = 0, right2 = 1;
+                                }
+                            }
+                            // d(S2, T)
+                            dist = shortest_distance(e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y(), e1->tNode()->x(), e1->tNode()->y(), sqrt((e2->sNode()->x()-e2->tNode()->x())*(e2->sNode()->x()-e2->tNode()->x()) + (e2->sNode()->y()-e2->tNode()->y())*(e2->sNode()->y()-e2->tNode()->y())), fx, fy);
+                            if(fx != -1 && dist < min_dist) {
+                                min_dist = dist;
+                                
+                                ratio1 = cos, ratio2 = 1;
+                                if(e1->tNode()->x() == fx) {
+                                    // T is horizontal
+                                    if(e1->tNode()->y() < fy) {
+                                        right2 = 1;
+                                        if(v1x*v1y > 0) // S slope > 0
+                                            right1 = 0;
+                                        else
+                                            right1 = 1;
+                                    }
+                                    else {
+                                        right2 = 0;
+                                        if(v1x*v1y > 0) // S slope > 0
+                                            right1 = 1;
+                                        else
+                                            right1 = 0;
+                                    }
+                                }
+                                // S1 is left to foot (edge T)
+                                else if(e1->tNode()->x() < fx) {
+                                    right1 = 1, right2 = 0;
+                                }
+                                else {
+                                    right1 = 0, right2 = 1;
+                                }
+                            }
+                            // d(S, T1)
+                            dist = shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->sNode()->x(), e2->sNode()->y(), sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y())), fx, fy);
+                            if(fx != -1 && dist < min_dist) {
+                                min_dist = dist;
+                                
+                                ratio1 = 1, ratio2 = cos;
+                                if(e2->sNode()->x() == fx) {
+                                    // S is horizontal
+                                    if(e2->sNode()->y() < fy) {
+                                        right1 = 1;
+                                        if(v2x*v2y > 0) // T slope > 0
+                                            right2 = 0;
+                                        else
+                                            right2 = 1;
+                                    }
+                                    else {
+                                        right1 = 0;
+                                        if(v2x*v2y > 0) // T slope > 0
+                                            right2 = 1;
+                                        else
+                                            right2 = 0;
+                                    }
+                                }
+                                // T2 is left to foot (edge S)
+                                else if(e2->sNode()->x() < fx) {
+                                    right1 = 0, right2 = 1;
+                                }
+                                else {
+                                    right1 = 1, right2 = 0;
+                                }
+                            }
+                            // d(S, T2)
+                            dist = shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->tNode()->x(), e2->tNode()->y(), sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y())), fx, fy);
+                            if(fx != -1 && dist < min_dist) {
+                                min_dist = dist;
+                                
+                                ratio1 = 1, ratio2 = cos;
+                                if(e2->tNode()->x() == fx) {
+                                    // S is horizontal
+                                    if(e2->tNode()->y() < fy) {
+                                        right1 = 1;
+                                        if(v2x*v2y > 0) // T slope > 0
+                                            right2 = 0;
+                                        else
+                                            right2 = 1;
+                                    }
+                                    else {
+                                        right1 = 0;
+                                        if(v2x*v2y > 0) // T slope > 0
+                                            right2 = 1;
+                                        else
+                                            right2 = 0;
+                                    }
+                                }
+                                // T2 is left to foot (edge S)
+                                else if(e2->tNode()->x() < fx) {
+                                    right1 = 0, right2 = 1;
+                                }
+                                else {
+                                    right1 = 1, right2 = 0;
+                                }
+                            }
+                            printf("\n");
+                            printf("min_dist: %.2f\n", min_dist);
+                            if(min_dist == 999999)
+                                printf("NO CONSTRAINT\n");
+                            else {
+                        //    printf("p: (%.2f, %.2f), l: (%.2f, %.2f)\n", px, py, lx, ly);
+                                printf("ratio1: %.2f, ratio2: %.2f, right1: %c, right2: %c\n", ratio1, ratio2, right1? 'r':'l', right2? 'r': 'l');
+                                printf("ADD CONSTRAINT: S_%c * %.2f + T_%c * %.2f <= %.2f\n", right1? 'r': 'l', ratio1, right2? 'r': 'l', ratio2, min_dist);
+                            }
+                            getchar();
+                            
+                            printf("\n\n\n");
+                            
+                        }   
+                    }
+                } 
+            /*
+                cout << "starting add obstacle constraint" << endl;
+                //compare with obstacle
+                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+                   
+                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+                    AddObstacleConstraint(e1,obs,solver);
+                }
+
+                cout << "ending add obstacle constraint" << endl;
+                //board boundary
+                cout << "starting add board constraint" << endl;
+                AddRectangularBoardConstraint(e1, _db.boardWidth(), _db.boardHeight(), solver);
+                cout << "ending add board constraint" << endl;
+                //cout << " board width: " << _db.boardWidth() << " board height :" << _db.boardHeight() << endl;
+            */
+            }
+        }  
+    }
+   
+    
     // use solver.addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width)
     // to add their capacity constraints
-
+    
+    
     // layer0
+    /*
     solver.addCapacityConstraints(_rGraph.vOASGEdge(24), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(36), true, 1, 80);
     // layer1
     solver.addCapacityConstraints(_rGraph.vOASGEdge(25), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(31), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(31), true, 1, _rGraph.vOASGEdge(43), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(31), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(31), true, 1, _rGraph.vOASGEdge(43), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(43), true, 1, 80);
     //layer2
     solver.addCapacityConstraints(_rGraph.vOASGEdge(27), false, 1, 80);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(27), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(33), false, 1, 0);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(33), true, 1, _rGraph.vOASGEdge(44), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(33), true, 1, _rGraph.vOASGEdge(44), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(44), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(48), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(48), true, 1, 0);
@@ -532,14 +923,14 @@ void GlobalMgr::currentDistribution() {
     solver.addCapacityConstraints(_rGraph.vOASGEdge(46), true, 1, 80);
     // layer3
     solver.addCapacityConstraints(_rGraph.vOASGEdge(29), false, 1, 80);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(29), true, 1, _rGraph.vOASGEdge(35), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(35), true, 1, _rGraph.vOASGEdge(45), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(29), true, 1, _rGraph.vOASGEdge(35), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(35), true, 1, _rGraph.vOASGEdge(45), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(45), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(49), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(49), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), false, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), true, 1, 80);
-
+    */
     // solve the MCFP formulation and collect the result
     solver.solve();
     solver.collectResult();
@@ -570,3 +961,5 @@ Trace* GlobalMgr::edge2Trace(OASGEdge* edge) {
     Trace* trace = new Trace(sNode, tNode, edge->widthRight() + edge->widthLeft(), _plot);
     return trace;
 }
+
+

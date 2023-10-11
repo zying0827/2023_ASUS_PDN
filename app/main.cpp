@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     DB db(plot);
     Parser parser(db);
     // NetworkMgr mgr(db, plot);
-
+    
     // replace this line with a real parser function
     parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
@@ -56,8 +56,8 @@ int main(int argc, char* argv[]){
         cerr << e.getMessage() << endl;
     }
     globalMgr.plotCurrentPaths();
-    globalMgr.plotDB();
-    
+      globalMgr.plotDB();
+      globalMgr.plotOASG();    
 
 
     // mgr.genRGraph();
