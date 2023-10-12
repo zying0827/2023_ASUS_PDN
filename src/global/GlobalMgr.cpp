@@ -519,7 +519,7 @@ void GlobalMgr::currentDistribution() {
             for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
                 OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
                 //compare other net edge
-                for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId){
+                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
                     //make sure to compare different net
                     if(S_netId != T_netId){
                         for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
@@ -531,7 +531,6 @@ void GlobalMgr::currentDistribution() {
                     }
                 } 
 
-                
                 cout << "starting add obstacle constraint" << endl;
                 //compare with obstacle
                 for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
