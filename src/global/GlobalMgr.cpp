@@ -525,12 +525,13 @@ void GlobalMgr::currentDistribution() {
                         for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
                             OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
         
-                            BuildCapicityConstraint(e1,e2,solver);
+                            BuildCapacityConstraint(e1,e2,solver);
                             
                         }   
                     }
                 } 
 
+                
                 cout << "starting add obstacle constraint" << endl;
                 //compare with obstacle
                 for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
@@ -544,6 +545,7 @@ void GlobalMgr::currentDistribution() {
                 cout << "starting add board constraint" << endl;
                 AddRectangularBoardConstraint(e1, _db.boardWidth(), _db.boardHeight(), solver);
                 cout << "ending add board constraint" << endl;
+                
                 //cout << " board width: " << _db.boardWidth() << " board height :" << _db.boardHeight() << endl;
             }
         }  
@@ -553,9 +555,9 @@ void GlobalMgr::currentDistribution() {
     // use solver.addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width)
     // to add their capacity constraints
     
-    
-    // layer0
     /*
+    // layer0
+    
     solver.addCapacityConstraints(_rGraph.vOASGEdge(24), false, 1, 100);
     //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
     //solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);

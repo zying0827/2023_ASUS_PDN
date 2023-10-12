@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
 
     // replace this line with a real OASG building function
     globalMgr.buildTestOASG();
-    globalMgr.plotOASG();
+    //globalMgr.plotOASG();
     globalMgr.layerDistribution();
     // globalMgr.plotRGraph();
     globalMgr.buildTestNCOASG();
