@@ -24,7 +24,7 @@ class Shape {
         virtual double bPolygonX(size_t vtxId) { double bPolygonX; return bPolygonX;}
         virtual double bPolygonY(size_t vtxId) { double bPolygonY; return bPolygonY;}
         virtual size_t numBPolyVtcs() { size_t numBPolyVtcs; return numBPolyVtcs;}
-        bool enclose(double x, double y);
+        virtual bool enclose(double x, double y);
     protected:
         SVGPlot& _plot;
         // pair<double, double> _center;
@@ -132,6 +132,10 @@ class Circle : public Shape {
             else return maxY();
         }
         size_t numBPolyVtcs() { return 4; }
+        bool enclose(double x, double y) {
+            double dist = sqrt(pow(x-_ctr.first,2) + pow(y-_ctr.second,2));
+            return (dist < _radius);
+        }
     private:
         pair<double, double> _ctr;
         double _radius;

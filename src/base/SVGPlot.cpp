@@ -5,6 +5,9 @@ void SVGPlot::startPlot(double canvasW, double canvasH) {
     _fout << "<body>" << endl;
     _fout << "<svg width=\"" << canvasW <<"\" height=\"" << canvasH << "\">" << endl;
     // drawRect(0, 0, canvasW, canvasH, SVGPlotColor::black, 0);
+    for (size_t layId = 0; layId < 4; ++ layId) {
+        drawRect(0, 0, _boardWidth, _boardHeight, SVGPlotColor::white, layId);
+    }
 }
 
 void SVGPlot::endPlot() {
@@ -20,7 +23,7 @@ void SVGPlot::drawSquare(double leftX, double bottY, double width, size_t colorI
 
 void SVGPlot::drawRect(double leftX, double bottY, double width, double height, size_t colorId, size_t layId) {
     _fout << "  <rect x=\"" << leftX + _boardWidth*layId << "\" y=\"" << bottY << "\" width=\"" << width << "\" height=\"" << height;
-    _fout << "\" style=\"fill:" << _vColor[colorId] << ";stroke:gray;stroke-width:1\" />\n";
+    _fout << "\" style=\"fill:" << _vColor[colorId] << ";stroke:black;stroke-width:3\" />\n";
 }
 
 void SVGPlot::drawCircle(double centerX, double centerY, double r, size_t colorId, size_t layId) {

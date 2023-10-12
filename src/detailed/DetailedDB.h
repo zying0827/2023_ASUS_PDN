@@ -1,5 +1,5 @@
 #ifndef DETAILED_DB_H
-#define dETAILED_DB_H
+#define DETAILED_DB_H
 
 #include "../base/Include.h"
 using namespace std;
@@ -20,6 +20,20 @@ class Grid {
         void incCongestCur() { _congestCur ++; _congestion ++; }
         void decCongestCur() { _congestCur --; _congestion --; }
         void addNet(size_t netId) { _vNetId.push_back(netId); }
+        void removeNet(size_t netId) {
+            for (vector<size_t>::iterator i = _vNetId.begin(); i != _vNetId.end(); ++ i) {
+                if (*i == netId) {
+                    _vNetId.erase(i);
+                    return;
+                }
+            }
+        }
+        bool hasNet(size_t netId) {
+            for (size_t i = 0; i<_vNetId.size(); ++ i) {
+                if (_vNetId[i] == netId) return true;
+            }
+            return false;
+        }
     private:
         int _congestion;    // _congestHis + _congestCur
         int _congestCur;    // current congestion cost
@@ -38,10 +52,10 @@ class GNode {
         GNode(int xId, int yId) : _xId(xId), _yId(yId) {
             _status = GNodeStatus::Init;
             _parent = NULL;
-            _cost = numeric_limits<double>::max();
-            _curDist = numeric_limits<double>::max();
-            _estDist = numeric_limits<double>::max();
-            _congest = numeric_limits<double>::max();
+            _cost = numeric_limits<double>::infinity();
+            _curDist = numeric_limits<double>::infinity();
+            _estDist = numeric_limits<double>::infinity();
+            _congest = numeric_limits<double>::infinity();
         }
         ~GNode() {}
 
