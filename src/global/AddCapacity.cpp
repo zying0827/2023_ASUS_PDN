@@ -32,9 +32,6 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
     double v1y = e1->tNode()->y()-e1->sNode()->y();
     double v2x = e2->tNode()->x()-e2->sNode()->x();
     double v2y = e2->tNode()->y()-e2->sNode()->y();
-
-    double e1_slope = (v1y)/(v1x);//S
-    double e2_slope = (v2y)/(v2x);//T
     
     double fx = -1, fy = -1; // foot
     double min_dist = 999999;
@@ -56,14 +53,14 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         if(e1->sNode()->x() == fx) {
             if(e1->sNode()->y() < fy) {
                 right2 = 1;
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 0;
                 else
                     right1 = 1;
             }
             else {
                 right2 = 0;
-                if(e1_slope >= 0) // S slope > 0
+                if(v1x*v1y >= 0) // S slope > 0
                     right1 = 1;
                 else
                     right1 = 0;
@@ -72,23 +69,37 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         // S1 is left to foot (edge T)
         else if(e1->sNode()->x() < fx) {
             right2 = 0;
-            // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 0;
-            // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 0;
+
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+
+                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 0;
+                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 0;
+                else
+                    right1 = 1;
+            }
             else
                 right1 = 1;
         }
         else {
             right2 = 1;
-            //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 1;
-            //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 1;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 1;
+                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 1;
+                else
+                    right1 = 0;
+            }
             else
                 right1 = 0;
         }
@@ -104,14 +115,14 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         if(e1->tNode()->x() == fx) {
             if(e1->tNode()->y() < fy) {
                 right2 = 1;
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 0;
                 else
                     right1 = 1;
             }
             else {
                 right2 = 0;
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 1;
                 else
                     right1 = 0;
@@ -120,23 +131,35 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         // S2 is left to foot (edge T)
         else if(e1->tNode()->x() < fx) {
             right2 = 0;
-            // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 0;
-            // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 0;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 0;
+                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 0;
+                else
+                    right1 = 1;
+            }
             else
                 right1 = 1;
         }
         else {
             right2 = 1;
-            //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 1;
-            //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 1;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 1;
+                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 1;
+                else
+                    right1 = 0;
+            }
             else
                 right1 = 0;
         }
@@ -152,14 +175,14 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         if(e2->sNode()->x() == fx) {
             if(e2->sNode()->y() < fy) {
                 right1 = 1;
-                if(e2_slope >= 0) // T slope >= 0
+                if(v2x*v2y >= 0) // T slope >= 0
                     right2 = 0;
                 else
                     right2 = 1;
             }
             else {
                 right1 = 0;
-                if(e2_slope >= 0) // T slope >= 0
+                if(v2x*v2y >= 0) // T slope >= 0
                     right2 = 1;
                 else
                     right2 = 0;
@@ -168,23 +191,35 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         // T2 is left to foot (edge S)
         else if(e2->sNode()->x() < fx) {
             right1 = 0;
-            // special case : S_slope > 0 and 0 > T_slope > -1/S_slope 
-            if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
-                right2 = 0;
-            // special case : S_slope < 0 and -1/S_slope > T_slope >= 0
-            else if (e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
-                right2 = 0;
+            if(v2x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                // special case : S_slope > 0 and 0 > T_slope > -1/S_slope 
+                if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
+                    right2 = 0;
+                // special case : S_slope < 0 and -1/S_slope > T_slope >= 0
+                else if (e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
+                    right2 = 0;
+                else
+                    right2 = 1;
+            }
             else
                 right2 = 1;
         }
         else {
             right1 = 1;
-            //special case : S_slope > 0 and 0 > T_slope > -1/S_slope
-            if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
-                right2 = 1;
-            //special case : S_slope < 0 and -1/S_slope > T_slope >= 0
-            else if(e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
-                right2 = 1;
+            if(v2x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : S_slope > 0 and 0 > T_slope > -1/S_slope
+                if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
+                    right2 = 1;
+                //special case : S_slope < 0 and -1/S_slope > T_slope >= 0
+                else if(e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
+                    right2 = 1;
+                else
+                    right2 = 0;
+            }
             else
                 right2 = 0;
         }
@@ -200,14 +235,14 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         if(e2->tNode()->x() == fx) {
             if(e2->tNode()->y() < fy) {
                 right1 = 1;
-                if(e2_slope >= 0) // T slope > 0
+                if(v2x*v2y >= 0) // T slope > 0
                     right2 = 0;
                 else
                     right2 = 1;
             }
             else {
                 right1 = 0;
-                if(e2_slope >= 0) // T slope > 0
+                if(v2x*v2y >= 0) // T slope > 0
                     right2 = 1;
                 else
                     right2 = 0;
@@ -216,23 +251,35 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         // T2 is left to foot (edge S)
         else if(e2->tNode()->x() < fx) {
             right1 = 0;
-            // special case : S_slope > 0 and 0 > T_slope > -1/S_slope 
-            if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
-                right2 = 0;
-            // special case : S_slope < 0 and -1/S_slope > T_slope >= 0
-            else if (e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
-                right2 = 0;
-            else
+            if(v2x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                // special case : S_slope > 0 and 0 > T_slope > -1/S_slope 
+                if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
+                    right2 = 0;
+                // special case : S_slope < 0 and -1/S_slope > T_slope >= 0
+                else if (e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
+                    right2 = 0;
+                else
+                    right2 = 1;
+            }
+            else 
                 right2 = 1;
         }
         else {
             right1 = 1;
-            //special case : S_slope > 0 and 0 > T_slope > -1/S_slope
-            if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
-                right2 = 1;
-            //special case : S_slope < 0 and -1/S_slope > T_slope >= 0
-            else if(e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
-                right2 = 1;
+            if(v2x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : S_slope > 0 and 0 > T_slope > -1/S_slope
+                if(e1_slope > 0 && (0 > e2_slope && e2_slope > -1/e1_slope))
+                    right2 = 1;
+                //special case : S_slope < 0 and -1/S_slope > T_slope >= 0
+                else if(e1_slope < 0 && (-1/e1_slope > e2_slope && e2_slope >= 0))
+                    right2 = 1;
+                else
+                    right2 = 0;
+            }
             else
                 right2 = 0;
         }
@@ -241,7 +288,6 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
     if(detected == 1){
         double width = min_dist;
         cout << "add constraint => " << "width :" << width << " | ratio1 : " << ratio1 << " | ratio2 : "<< ratio2 << endl;
-        cout << "S_slope is " << e1_slope << " T_slope is " << e2_slope << endl;
         cout << "right1 : " << right1 << " right2 : " << right2 << endl;
         solver.addCapacityConstraints(e1,right1,ratio1,e2,right2,ratio2,width);
     }
@@ -252,9 +298,6 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
     double v1y = e1->tNode()->y()-e1->sNode()->y();
     double v2x = x2 - x1;
     double v2y = y2 - y1;
-
-    double e1_slope = (v1y/v1x);//S
-    double e2_slope = (v2y/v2x);//T
     
     double fx = -1, fy = -1; // foot
     double min_dist = 999999;
@@ -275,13 +318,13 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         // T is horizontal
         if(e1->sNode()->x() == fx) {
             if(e1->sNode()->y() < fy) {
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 0;
                 else
                     right1 = 1;
             }
             else {
-                if(e1_slope >= 0) // S slope > 0
+                if(v1x*v1y >= 0) // S slope > 0
                     right1 = 1;
                 else
                     right1 = 0;
@@ -289,22 +332,34 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         }
         // S1 is left to foot (edge T)
         else if(e1->sNode()->x() < fx) {
-            // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 0;
-            // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 0;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 0;
+                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 0;
+                else
+                    right1 = 1;
+            }
             else
                 right1 = 1;
         }
         else {
-            //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 1;
-            //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 1;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 1;
+                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 1;
+                else
+                    right1 = 0;
+            }
             else
                 right1 = 0;
         }
@@ -319,13 +374,13 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         // T is horizontal
         if(e1->tNode()->x() == fx) {
             if(e1->tNode()->y() < fy) {
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 0;
                 else
                     right1 = 1;
             }
             else {
-                if(e1_slope >= 0) // S slope >= 0
+                if(v1x*v1y >= 0) // S slope >= 0
                     right1 = 1;
                 else
                     right1 = 0;
@@ -333,22 +388,34 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         }
         // S2 is left to foot (edge T)
         else if(e1->tNode()->x() < fx) {
-            // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 0;
-            // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 0;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 0;
+                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 0;
+                else
+                    right1 = 1;
+            }
             else
                 right1 = 1;
         }
         else {
-            //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-            if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                right1 = 1;
-            //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-            else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                right1 = 1;
+            if(v1x != 0){
+                double e1_slope = (v1y)/(v1x);//S
+                double e2_slope = (v2y)/(v2x);//T
+                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
+                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
+                    right1 = 1;
+                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
+                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
+                    right1 = 1;
+                else
+                    right1 = 0;
+            }
             else
                 right1 = 0;
         }
@@ -396,7 +463,6 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
     if(detected == 1){
         double width = min_dist;
         cout << "add obstacle constraint => " << "width :" << width << " | ratio1 : " << ratio1 << endl;
-        cout << "S_slope is " << e1_slope << " T_slope is " << e2_slope << endl;
         cout << "right1 : " << right1 << endl;
         solver.addCapacityConstraints(e1,right1,ratio1,width);
     }
@@ -416,9 +482,9 @@ void AddObstacleConstraint(OASGEdge* e1, Obstacle* obs, FlowLP &solver){
         y1 = obs->vShape(shapeId)-> minY();
         x2 = obs->vShape(shapeId)-> maxX();
         y2 = obs->vShape(shapeId)-> minY();
-        cout << "bottom edge" << endl;
-        cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
-        cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
+        //cout << "bottom edge" << endl;
+        //cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
+        //cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
         BuildObstacleCapacityConstraint(e1,x1,y1,x2,y2,solver);
         
 
@@ -427,9 +493,9 @@ void AddObstacleConstraint(OASGEdge* e1, Obstacle* obs, FlowLP &solver){
         y1 = obs->vShape(shapeId)-> minY();
         x2 = obs->vShape(shapeId)-> minX();
         y2 = obs->vShape(shapeId)-> maxY();
-        cout << "left edge" << endl;
-        cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
-        cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
+        //cout << "left edge" << endl;
+        //cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
+        //cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
         BuildObstacleCapacityConstraint(e1,x1,y1,x2,y2,solver);
 
         //top edge
@@ -437,9 +503,9 @@ void AddObstacleConstraint(OASGEdge* e1, Obstacle* obs, FlowLP &solver){
         y1 = obs->vShape(shapeId)-> maxY();
         x2 = obs->vShape(shapeId)-> maxX();
         y2 = obs->vShape(shapeId)-> maxY();
-        cout << "top edge" << endl;
-        cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
-        cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
+        //cout << "top edge" << endl;
+        //cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
+        //cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
         BuildObstacleCapacityConstraint(e1,x1,y1,x2,y2,solver);
     
         //right edge
@@ -447,9 +513,9 @@ void AddObstacleConstraint(OASGEdge* e1, Obstacle* obs, FlowLP &solver){
         y1 = obs->vShape(shapeId)-> minY();
         x2 = obs->vShape(shapeId)-> maxX();
         y2 = obs->vShape(shapeId)-> maxY();
-        cout << "right edge" << endl;
-        cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
-        cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
+        //cout << "right edge" << endl;
+        //cout << "(x1 , y1) = " << "(" << x1 << " , " << y1 << ")" << endl;
+        //cout << "(x2 , y2) = " << "(" << x2 << " , " << y2 << ")" << endl;
         BuildObstacleCapacityConstraint(e1,x1,y1,x2,y2,solver);
     }
 }

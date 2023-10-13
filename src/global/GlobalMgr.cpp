@@ -521,14 +521,12 @@ void GlobalMgr::currentDistribution() {
                 //compare other net edge
                 for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
                     //make sure to compare different net
-                    if(S_netId != T_netId){
-                        for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
-                            OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
-        
-                            BuildCapacityConstraint(e1,e2,solver);
-                            
-                        }   
-                    }
+                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+    
+                        BuildCapacityConstraint(e1,e2,solver);
+                        
+                    }   
                 } 
 
                 cout << "starting add obstacle constraint" << endl;
