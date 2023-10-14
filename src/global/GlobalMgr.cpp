@@ -589,16 +589,36 @@ void GlobalMgr::currentDistribution() {
     solver.collectResult();
     solver.printResult();
 
-}
-
-void GlobalMgr::plotCurrentPaths() {
+    // add traces to each net
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                Trace* trace = edge2Trace(e);
-                trace->plot(netId, layId);
-                // _plot.drawLine(e->sNode()->x(), e->sNode()->y(), e->tNode()->x(), e->tNode()->y(), netId, layId);
+                if (e->current() > 0) {
+                    Segment* segment = edge2Segment(e);
+                    _db.vNet(netId)->addSegment(segment, layId);
+                }
+            }
+        }
+    }
+}
+
+void GlobalMgr::plotCurrentPaths() {
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+    //         for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+    //             OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+    //             Trace* trace = edge2Trace(e);
+    //             trace->plot(netId, layId);
+    //             // _plot.drawLine(e->sNode()->x(), e->sNode()->y(), e->tNode()->x(), e->tNode()->y(), netId, layId);
+    //         }
+    //     }
+    // }
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        Net* net = _db.vNet(netId);
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
+                net->vSegment(layId, segId)->plot(netId, layId);
             }
         }
     }
@@ -615,4 +635,14 @@ Trace* GlobalMgr::edge2Trace(OASGEdge* edge) {
     return trace;
 }
 
-
+Segment* GlobalMgr::edge2Segment(OASGEdge* edge) {
+    assert (!edge->viaEdge());
+    double offset = 0.5 * ( edge->widthRight() - edge->widthLeft() );
+    double xOffset = offset * (edge->tNode()->y() - edge->sNode()->y()) / edge->length(); // offset * sin(theta)
+    double yOffset = offset * (edge->sNode()->x() - edge->tNode()->x()) / edge->length(); // offset * -cos(theta)
+    Node* sNode = new Node(edge->sNode()->x()+xOffset, edge->sNode()->y()+yOffset, _plot);
+    Node* tNode = new Node(edge->tNode()->x()+xOffset, edge->tNode()->y()+yOffset, _plot);
+    Trace* trace = new Trace(sNode, tNode, edge->widthRight() + edge->widthLeft(), _plot);
+    Segment* segment = new Segment(trace, edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
+    return segment;
+}

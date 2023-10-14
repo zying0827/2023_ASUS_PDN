@@ -4,6 +4,7 @@
 #include "base/Parser.h"
 #include "global/GlobalMgr.h"
 #include "base/SVGPlot.h"
+#include "detailed/DetailedMgr.h"
 
 using namespace std;
 
@@ -55,9 +56,15 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    globalMgr.plotCurrentPaths();
+    // globalMgr.plotCurrentPaths();
+
+    DetailedMgr detailedMgr(db, plot, 10);
+    detailedMgr.initGridMap();
+    // detailedMgr.plotGridMap();
+    detailedMgr.naiveAStar();
+    detailedMgr.plotGridMap();
+
     globalMgr.plotDB();
-    
 
 
     // mgr.genRGraph();
