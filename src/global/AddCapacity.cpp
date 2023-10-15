@@ -26,6 +26,20 @@ double shortest_distance(double segment_x1, double segment_y1, double segment_x2
     } 
 }
 
+bool CrossProduct(double x1, double y1, double x2, double y2, double x3, double y3){
+    double v1x = (x2 - x1);
+    double v1y = (y2 - y1);
+    double v2x = (x3 - x1);
+    double v2y = (y3 - y1);
+
+    double crossproduct = v1x*v2y - v1y*v2x;
+
+    if(crossproduct >= 0)
+        return true;
+    else
+        return false;
+}
+
 void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
 
     double v1x = e1->tNode()->x()-e1->sNode()->x();
@@ -49,106 +63,17 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         min_dist = dist;
         ratio1 = cos, ratio2 = 1;
 
-        // T is horizontal
-        if(e1->sNode()->x() == fx) {
-            //Tedge is on top of the point
-            if(e1->sNode()->y() < fy) {
-                //determine the flow direction of e2
-                if(e2->sNode()->x() < e2->tNode()->x())
-                    right2 = 1;
-                else
-                    right2 = 0;
-
-                //determine flow direction of e1
-                if(e1->sNode()->x() <= e1->tNode()->x())
-                    right1 = 0;
-                else
-                    right1 = 1;
-            }
-            else {
-                //determine the flow direction of e2
-                if(e2->sNode()->x() < e2->tNode()->x())
-                    right2 = 0;
-                else
-                    right2 = 1;
-
-                //determine flow direction of e1
-                if(e1->sNode()->x() <= e1->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-        }
-        // S1 is left to foot (edge T)
-        else if(e1->sNode()->x() < fx) {
-            //determine the flow direction of e2
-            if(e2->sNode()->y() < e2->tNode()->y())
-                right2 = 0;
-            else    
-                right2 = 1;
-
-            //determine the flow direction of e1
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-
-                //case1 : e1_slope >= -1/e2_slope
-                if(e1_slope >= -1/e2_slope){
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 1;
-                    else    
-                        right1 = 0;
-                }
-                //case2 : e1_slope < -1/e2_slope
-                else{
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 0;
-                    else    
-                        right1 = 1;
-                }
-            }
-            //e1 is vertical
-            else{
-                if(e1->sNode()->y() < e1->tNode()->y())
-                    right1 = 1;
-                else    
-                    right1 = 0;
-            }
-        }
-        else {
-            //determine the flow direction of e2
-            if(e2->sNode()->y() < e2->tNode()->y())
-                right2 = 1;
-            else    
-                right2 = 0;
-
-            //determine the flow direction of e1
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e1_slope >= -1/e2_slope
-                if(e1_slope >= -1/e2_slope){
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 0;
-                    else    
-                        right1 = 1;
-                }
-                //case2 : e1_slope < -1/e2_slope
-                else{
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 1;
-                    else    
-                        right1 = 0;
-                }
-            }
-            //e1 is vertical
-            else{
-                if(e1->sNode()->y() < e1->tNode()->y())
-                    right1 = 0;
-                else    
-                    right1 = 1;
-            }
-        }
+        //side of source point
+        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),fx,fy))
+            right1 = 0;
+        else   
+            right1 = 1;
+        //side of target edge
+        if(CrossProduct(e2->sNode()->x(),e2->sNode()->y(),e2->tNode()->x(),e2->tNode()->y(),e1->sNode()->x(),e1->sNode()->y()))
+            right2 = 0;
+        else   
+            right2 = 1;
+        
     }
     // d(S2, T)
     dist = shortest_distance(e2->sNode()->x(), e2->sNode()->y(), e2->tNode()->x(), e2->tNode()->y(), e1->tNode()->x(), e1->tNode()->y(), sqrt((e2->sNode()->x()-e2->tNode()->x())*(e2->sNode()->x()-e2->tNode()->x()) + (e2->sNode()->y()-e2->tNode()->y())*(e2->sNode()->y()-e2->tNode()->y())), fx, fy);
@@ -157,105 +82,17 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         min_dist = dist;
         ratio1 = cos, ratio2 = 1;
 
-        // T is horizontal
-        if(e1->tNode()->x() == fx) {
-            if(e1->tNode()->y() < fy) {
-                //determine the flow direction of e2
-                if(e2->sNode()->x() < e2->tNode()->x())
-                    right2 = 1;
-                else
-                    right2 = 0;
-
-                //determine flow direction of e1
-                if(e1->sNode()->x() <= e1->tNode()->x()) 
-                    right1 = 0;
-                else
-                    right1 = 1;
-            }
-            else {
-                //determine the flow direction of e2
-                if(e2->sNode()->x() < e2->tNode()->x())
-                    right2 = 0;
-                else
-                    right2 = 1;
-
-                //determine flow direction of e1
-                if(e1->sNode()->x() <= e1->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-        }
-        // S2 is left to foot (edge T)
-        else if(e1->tNode()->x() < fx) {
-            //determine the flow direction of e2
-            if(e2->sNode()->y() < e2->tNode()->y())
-                right2 = 0;
-            else    
-                right2 = 1;
-
-            //determine the flow direction of e1
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-
-                //case1 : e1_slope >= -1/e2_slope
-                if(e1_slope >= -1/e2_slope){
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 1;
-                    else    
-                        right1 = 0;
-                }
-                //case2 : e1_slope < -1/e2_slope
-                else{
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 0;
-                    else    
-                        right1 = 1;
-                }
-            }
-            //e1 is vertical
-            else{
-                if(e1->sNode()->y() < e1->tNode()->y())
-                    right1 = 1;
-                else    
-                    right1 = 0;
-            }
-        }
-        else {
-            //determine the flow direction of e2
-            if(e2->sNode()->y() < e2->tNode()->y())
-                right2 = 1;
-            else    
-                right2 = 0;
-
-            //determine the flow direction of e1
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e1_slope >= -1/e2_slope
-                if(e1_slope >= -1/e2_slope){
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 0;
-                    else    
-                        right1 = 1;
-                }
-                //case2 : e1_slope < -1/e2_slope
-                else{
-                    if(e1->sNode()->x() < e1->tNode()->x())
-                        right1 = 1;
-                    else    
-                        right1 = 0;
-                }
-            }
-            //e1 is vertical
-            else{
-                if(e1->sNode()->y() < e1->tNode()->y())
-                    right1 = 0;
-                else    
-                    right1 = 1;
-            }
-        }
+        //side of source point
+        if(CrossProduct(e1->tNode()->x(),e1->tNode()->y(),e1->sNode()->x(),e1->sNode()->y(),fx,fy))
+            right1 = 1;
+        else   
+            right1 = 0;
+        //side of target edge
+        if(CrossProduct(e2->sNode()->x(),e2->sNode()->y(),e2->tNode()->x(),e2->tNode()->y(),e1->tNode()->x(),e1->tNode()->y()))
+            right2 = 0;
+        else   
+            right2 = 1;
+        
     }
 
     // d(S, T1)
@@ -265,104 +102,17 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         min_dist = dist; 
         ratio1 = 1, ratio2 = cos;
 
-        // S is horizontal
-        if(e2->sNode()->x() == fx) {
-            if(e2->sNode()->y() < fy) {
-                //determine the flow direction of e1
-                if(e1->sNode()->x() < e1->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-
-                //determine flow direction of e2
-                if(e2->sNode()->x() <= e2->tNode()->x()) 
-                    right2 = 0;
-                else
-                    right2 = 1;
-            }
-            else {
-                //determine the flow direction of e1
-                if(e1->sNode()->x() < e1->tNode()->x())
-                    right1 = 0;
-                else
-                    right1 = 1;
-
-                //determine flow direction of e2
-                if(e2->sNode()->x() <= e2->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-        }
-        // T1 is left to foot (edge S)
-        else if(e2->sNode()->x() < fx) {
-            //determine the flow direction of e1
-            if(e1->sNode()->y() < e1->tNode()->y())
-                right1 = 0;
-            else    
-                right1 = 1;
-
-            //determine the flow direction of e2
-            if(v2x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e2_slope >= -1/e1_slope
-                if(e2_slope >= -1/e1_slope){
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 1;
-                    else    
-                        right2 = 0;
-                }
-                //case2 : e2_slope < -1/e1_slope
-                else{
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 0;
-                    else    
-                        right2 = 1;
-                }
-            }
-            //e2 is vertical
-            else{
-                if(e2->sNode()->y() < e2->tNode()->y())
-                    right2 = 1;
-                else    
-                    right2 = 0;
-            }
-        }
-        else {
-            //determine the flow direction of e1
-            if(e1->sNode()->y() < e1->tNode()->y())
-                right1 = 1;
-            else    
-                right1 = 0;
-
-            //determine the flow direction of e2
-            if(v2x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e2_slope >= -1/e1_slope
-                if(e2_slope >= -1/e1_slope){
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 0;
-                    else    
-                        right2 = 1;
-                }
-                //case2 : e2_slope < -1/e1_slope
-                else{
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 1;
-                    else    
-                        right2 = 0;
-                }
-            }
-            //e2 is vertical
-            else{
-                if(e2->sNode()->y() < e2->tNode()->y())
-                    right2 = 0;
-                else    
-                    right2 = 1;
-            }
-        }
+        //side of source point
+        if(CrossProduct(e2->sNode()->x(),e2->sNode()->y(),e2->tNode()->x(),e2->tNode()->y(),fx,fy))
+            right2 = 0;
+        else   
+            right2 = 1;
+        //side of target edge
+        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),e2->sNode()->x(),e2->sNode()->y()))
+            right1 = 0;
+        else   
+            right1 = 1;
+       
     }
     // d(S, T2)
     dist = shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), e2->tNode()->x(), e2->tNode()->y(), sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y())), fx, fy);
@@ -371,104 +121,17 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
         min_dist = dist;
         ratio1 = 1, ratio2 = cos;
         
-        // S is horizontal
-        if(e2->tNode()->x() == fx) {
-            if(e2->tNode()->y() < fy) {
-                //determine the flow direction of e1
-                if(e1->sNode()->x() < e1->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-
-                //determine flow direction of e2
-                if(e2->sNode()->x() <= e2->tNode()->x()) 
-                    right2 = 0;
-                else
-                    right2 = 1;
-            }
-            else {
-                //determine the flow direction of e1
-                if(e1->sNode()->x() < e1->tNode()->x())
-                    right1 = 0;
-                else
-                    right1 = 1;
-
-                //determine flow direction of e2
-                if(e2->sNode()->x() <= e2->tNode()->x())
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-        }
-        // T2 is left to foot (edge S)
-        else if(e2->tNode()->x() < fx) {
-            //determine the flow direction of e1
-            if(e1->sNode()->y() < e1->tNode()->y())
-                right1 = 0;
-            else    
-                right1 = 1;
-
-            //determine the flow direction of e2
-            if(v2x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e2_slope >= -1/e1_slope
-                if(e2_slope >= -1/e1_slope){
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 1;
-                    else    
-                        right2 = 0;
-                }
-                //case2 : e2_slope < -1/e1_slope
-                else{
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 0;
-                    else    
-                        right2 = 1;
-                }
-            }
-            //e2 is vertical
-            else{
-                if(e2->sNode()->y() < e2->tNode()->y())
-                    right2 = 1;
-                else    
-                    right2 = 0;
-            }
-        }
-        else {
-            //determine the flow direction of e1
-            if(e1->sNode()->y() < e1->tNode()->y())
-                right1 = 1;
-            else    
-                right1 = 0;
-
-            //determine the flow direction of e2
-            if(v2x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //case1 : e2_slope >= -1/e1_slope
-                if(e2_slope >= -1/e1_slope){
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 0;
-                    else    
-                        right2 = 1;
-                }
-                //case2 : e2_slope < -1/e1_slope
-                else{
-                    if(e2->sNode()->x() < e2->tNode()->x())
-                        right2 = 1;
-                    else    
-                        right2 = 0;
-                }
-            }
-            //e2 is vertical
-            else{
-                if(e2->sNode()->y() < e2->tNode()->y())
-                    right2 = 0;
-                else    
-                    right2 = 1;
-            }
-        }
+        //side of source point
+        if(CrossProduct(e2->tNode()->x(),e2->tNode()->y(),e2->sNode()->x(),e2->sNode()->y(),fx,fy))
+            right2 = 1;
+        else   
+            right2 = 0;
+        //side of target edge
+        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),e2->tNode()->x(),e2->tNode()->y()))
+            right1 = 0;
+        else   
+            right1 = 1;
+        
     }
     //add constraint
     if(detected == 1){
@@ -480,6 +143,7 @@ void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver){
 }
 
 void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double x2, double y2, FlowLP &solver){
+
     double v1x = e1->tNode()->x()-e1->sNode()->x();
     double v1y = e1->tNode()->y()-e1->sNode()->y();
     double v2x = x2 - x1;
@@ -491,7 +155,7 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
     double cos = fabs((v1x*v2x + v1y*v2y)/(sqrt(v1x*v1x+v1y*v1y)*sqrt(v2x*v2x+v2y*v2y)));
     double ratio1 = -1;
     bool right1 = 0;
-
+    
     bool detected = 0;
     
     // d(S1, T)
@@ -501,55 +165,142 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         min_dist = dist;
         ratio1 = cos;
 
-        // T is horizontal
-        if(e1->sNode()->x() == fx) {
-            if(e1->sNode()->y() < fy) {
-                if(v1x*v1y >= 0) 
-                    right1 = 0;
-                else
-                    right1 = 1;
+        //point is on the segment
+        if(dist == 0){  
+            //obstacle slope == 0 (horizontal edge)
+            if(v2y == 0){
+                //if coincide
+                if(v1y == 0){
+                    //bottom edge
+                    if(v2x > 0){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //top edge
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(v1x*v1y >= 0)
+                        right1 = 1;
+                    else
+                        right1 = 0;
+                }
             }
-            else {
-                if(v1x*v1y >= 0)
-                    right1 = 1;
-                else
-                    right1 = 0;
+            //obstcale slope == inf (vertical edge)
+            else if(v2x == 0){
+                //if coincide
+                if(v1x == 0){
+                    //right edge
+                    if(v2y > 0){
+                        if(v1y > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //left edge
+                    else{
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(v1x*v1y > 0)
+                        right1 = 0;
+                    else
+                        right1 = 1;
+                }
+            }
+            //slope > 0
+            else if(v2x*v2y > 0){
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x > 0){
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                    }
+                    else{
+                        if(e2_slope > e1_slope > -1/e2_slope)
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    right1 = 1; 
+                }
+            }
+            //slope < 0
+            else{
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x < 0){
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                    }
+                    else{
+                        if(-1/e2_slope > e1_slope > e2_slope)
+                            right1 = 1;
+                        else
+                            right1 = 0;
+                    }
+                }
+                else{
+                    right1 = 0; 
+                }
             }
         }
-        // S1 is left to foot (edge T)
-        else if(e1->sNode()->x() < fx) {
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                    right1 = 0;
-                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                    right1 = 0;
-                else
-                    right1 = 1;
-            }
-            else
+
+        //if not, the situation is as same as e1 vs e2
+        else{
+            //side of source point
+            if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),fx,fy))
+                right1 = 0;
+            else   
                 right1 = 1;
         }
-        else {
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                    right1 = 1;
-                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-            else
-                right1 = 0;
-        }
     }
+
+
+
     // d(S2, T)
     dist = shortest_distance(x1, y1, x2, y2, e1->tNode()->x(), e1->tNode()->y(), sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)), fx, fy);
     if(fx != -1 && dist < min_dist) {
@@ -557,73 +308,295 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         min_dist = dist;
         ratio1 = cos;
 
-        // T is horizontal
-        if(e1->tNode()->x() == fx) {
-            if(e1->tNode()->y() < fy) {
-                if(v1x*v1y >= 0) 
-                    right1 = 0;
-                else
-                    right1 = 1;
+        if(dist == 0){
+            //obstacle slope == 0 (horizontal edge)
+            if(v2y == 0){
+                //if coincide
+                if(v1y == 0){
+                    //bottom edge
+                    if(v2x > 0){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //top edge
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(v1x*v1y >= 0)
+                        right1 = 0;
+                    else
+                        right1 = 1;
+                }
             }
-            else {
-                if(v1x*v1y >= 0) 
-                    right1 = 1;
-                else
-                    right1 = 0;
+            //obstcale slope == inf (vertical edge)
+            else if(v2x == 0){
+                //if coincide
+                if(v1x == 0){
+                    //right edge
+                    if(v2y > 0){
+                        if(v1y > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //left edge
+                    else{
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(v1x*v1y > 0)
+                        right1 = 1;
+                    else
+                        right1 = 0;
+                }
+            }
+            //slope > 0
+            else if(v2x*v2y > 0){
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x > 0){
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                    }
+                    else{
+                        if(e2_slope > e1_slope > -1/e2_slope)
+                            right1 = 1;
+                        else
+                            right1 = 0;
+                    }
+                }
+                else{
+                    right1 = 0; 
+                }
+            }
+            //slope < 0
+            else{
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x < 0){
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                    }
+                    else{
+                        if(-1/e2_slope > e1_slope > e2_slope)
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    right1 = 1; 
+                }
             }
         }
-        // S2 is left to foot (edge T)
-        else if(e1->tNode()->x() < fx) {
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                // special case : T_slope > 0 and 0 > S_slope > -1/T_slope 
-                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                    right1 = 0;
-                // special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-                else if (e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                    right1 = 0;
-                else
-                    right1 = 1;
-            }
-            else
+        else{
+            //side of source point
+            if(CrossProduct(e1->tNode()->x(),e1->tNode()->y(),e1->sNode()->x(),e1->sNode()->y(),fx,fy))
                 right1 = 1;
-        }
-        else {
-            if(v1x != 0){
-                double e1_slope = (v1y)/(v1x);//S
-                double e2_slope = (v2y)/(v2x);//T
-                //special case : T_slope > 0 and 0 > S_slope > -1/T_slope
-                if(e2_slope > 0 && (0 > e1_slope && e1_slope > -1/e2_slope))
-                    right1 = 1;
-                //special case : T_slope < 0 and -1/T_slope > S_slope >= 0
-                else if(e2_slope < 0 && (-1/e2_slope > e1_slope && e1_slope >= 0))
-                    right1 = 1;
-                else
-                    right1 = 0;
-            }
-            else
+            else   
                 right1 = 0;
         }
     }
+
     // d(S, T1)
     dist = shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), x1, y1, sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y())), fx, fy);
     if(fx != -1 && dist < min_dist) {
         detected = 1;
         min_dist = dist; 
         ratio1 = 1;
-        // S is horizontal
-        if(x1 == fx) {
-            if(y1 < fy) 
-                right1 = 1;
-            else 
-                right1 = 0;
+
+        if(dist == 0){
+            //e1 slope == 0 (horizontal edge)
+            if(v1y == 0){
+                //if coincide
+                if(v2y == 0){
+                    //bottom edge
+                    if(v2x > 0){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //top edge
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(y2 > y1){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else    
+                            right1 = 1;
+                    }
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+            }
+            //e1 slope == inf (vertical edge)
+            else if(v1x == 0){
+                //if coincide
+                if(v2x == 0){
+                    //right edge
+                    if(v2y > 0){
+                        if(v1y > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //left edge
+                    else{
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(x2 > x1){
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                    else{
+                        if(v1y > 0)
+                            right1 = 0;
+                        else    
+                            right1 = 1;
+                    }
+                }
+            }
+            //slope > 0
+            else if(v1x*v1y > 0){
+                double e1_slope = (v1y)/(v1x);//T 
+                //obstacle edge is not vertical
+                if(v2x != 0){
+                    double e2_slope = (v2y)/(v2x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x > 0){
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                    }
+                    else{
+                        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x2,y2))
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    if(y2 > y1)
+                        right1 = 0;
+                    else 
+                        right1 = 1;
+                }
+            }
+            //slope < 0
+            else{
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x < 0){
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                    }
+                    else{
+                        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x2,y2))
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    if(y2 > y1)
+                        right1 = 1;
+                    else 
+                        right1 = 0;
+                }
+            }
         }
-        // T2 is left to foot (edge S)
-        else if(x1 < fx) 
-            right1 = 0;
-        else 
-            right1 = 1;
+        else{
+            //side of target edge
+            if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x1,y1))
+                right1 = 0;
+            else   
+                right1 = 1;
+        }
     }
     // d(S, T2)
     dist = shortest_distance(e1->sNode()->x(), e1->sNode()->y(), e1->tNode()->x(), e1->tNode()->y(), x2, y2, sqrt((e1->sNode()->x()-e1->tNode()->x())*(e1->sNode()->x()-e1->tNode()->x()) + (e1->sNode()->y()-e1->tNode()->y())*(e1->sNode()->y()-e1->tNode()->y())), fx, fy);
@@ -631,24 +604,163 @@ void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double 
         detected = 1;
         min_dist = dist;
         ratio1 = 1;
-        
-        // S is horizontal
-        if(x2 == fx) {
-            if(y2 < fy) 
-                right1 = 1;
-            else 
-                right1 = 0;
+
+        if(dist == 0){
+            //e1 slope == 0 (horizontal edge)
+            if(v1y == 0){
+                //if coincide
+                if(v2y == 0){
+                    //bottom edge
+                    if(v2x > 0){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //top edge
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(y1 > y2){
+                        if(v1x > 0)
+                            right1 = 0;
+                        else    
+                            right1 = 1;
+                    }
+                    else{
+                        if(v1x > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+            }
+            //e1 slope == inf (vertical edge)
+            else if(v1x == 0){
+                //if coincide
+                if(v2x == 0){
+                    //right edge
+                    if(v2y > 0){
+                        if(v1y > 0)
+                            right1 = 0;
+                        else 
+                            right1 = 1;
+                    }
+                    //left edge
+                    else{
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                }
+                else{
+                    if(x1 > x2){
+                        if(v1y > 0)
+                            right1 = 1;
+                        else    
+                            right1 = 0;
+                    }
+                    else{
+                        if(v1y > 0)
+                            right1 = 0;
+                        else    
+                            right1 = 1;
+                    }
+                }
+            }
+            //slope > 0
+            else if(v1x*v1y > 0){
+                double e1_slope = (v1y)/(v1x);//T 
+                //obstacle edge is not vertical
+                if(v2x != 0){
+                    double e2_slope = (v2y)/(v2x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x > 0){
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                    }
+                    else{
+                        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x1,y1))
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    if(y2 > y1)
+                        right1 = 0;
+                    else 
+                        right1 = 1;
+                }
+            }
+            //slope < 0
+            else{
+                double e2_slope = (v2y)/(v2x);//T 
+                //e1 is not vertical
+                if(v1x != 0){
+                    double e1_slope = (v1y)/(v1x);
+                    //coincide
+                    if(e1_slope == e2_slope){
+                        //right edge
+                        if(v2x < 0){
+                            if(v1x > 0)
+                                right1 = 1;
+                            else
+                                right1 = 0;
+                        }
+                        //left edge
+                        else{
+                            if(v1x > 0)
+                                right1 = 0;
+                            else
+                                right1 = 1;
+                        }
+                    }
+                    else{
+                        if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x1,y1))
+                            right1 = 0;
+                        else
+                            right1 = 1;
+                    }
+                }
+                else{
+                    if(y2 > y1)
+                        right1 = 1;
+                    else 
+                        right1 = 0;
+                }
+            }
         }
-        // T2 is left to foot (edge S)
-        else if(x2 < fx) 
-            right1 = 0;
-        else
-            right1 = 1;
+        else{
+            //side of target edge
+            if(CrossProduct(e1->sNode()->x(),e1->sNode()->y(),e1->tNode()->x(),e1->tNode()->y(),x2,y2))
+                right1 = 0;
+            else   
+                right1 = 1;
+        }
     }
     //add constraint
     if(detected == 1){
         double width = min_dist;
-        cout << "add obstacle constraint => " << "width :" << width << " | ratio1 : " << ratio1 << endl;
+        cout << "add constraint => " << "width :" << width << " | ratio1 : " << ratio1 << endl;
         cout << "right1 : " << right1 << endl;
         solver.addCapacityConstraints(e1,right1,ratio1,width);
     }
