@@ -3,6 +3,7 @@
 #include "VoltEigen.h"
 #include "FlowLP.h"
 #include "AddCapacity.h"
+#include <utility>
 
 // public functions
 
@@ -518,32 +519,76 @@ void GlobalMgr::currentDistribution() {
             //search each edge
             for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
                 OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+                
+                pair<double, double> ratio;
+                pair<bool, bool> right;
+                double width;
+                
                 //compare other net edge
                 for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
                     //make sure to compare different net
                     for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
                         OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
     
-                        BuildCapacityConstraint(e1,e2,solver);
+                    //    BuildCapacityConstraint(e1,e2,solver);
+                        if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
+                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
+                                         ratio, right, width))
+                            solver.addCapacityConstraints(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                         
                     }   
                 } 
 
-                cout << "starting add obstacle constraint" << endl;
-                //compare with obstacle
+                // obstacle constraint
                 for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
                    
                     Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
-                    AddObstacleConstraint(e1,obs,solver);
+                    pair<double, double> S2, T2;
+                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
+                            // get the edge coordinates
+                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
+                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                        
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                        }
+                    }
                 }
 
-                cout << "ending add obstacle constraint" << endl;
-                //board boundary
-                cout << "starting add board constraint" << endl;
-                AddRectangularBoardConstraint(e1, _db.boardWidth(), _db.boardHeight(), solver);
-                cout << "ending add board constraint" << endl;
-                
-                //cout << " board width: " << _db.boardWidth() << " board height :" << _db.boardHeight() << endl;
+                // board cnstraint
+                // bottom
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(_db.boardWidth(), 0),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // left
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(0, _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // top
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, _db.boardHeight()),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // right
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(_db.boardWidth(), 0),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
             }
         }  
     }

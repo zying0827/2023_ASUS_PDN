@@ -127,6 +127,7 @@ void FlowLP::setConserveConstraints(){
 }
 
 void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width){
+    printf("E%-2d_%c * %.2f + E%-2d_%c * %.2f <= %.3f\n", e1->edgeId(), right1? 'r': 'l', ratio1, e2->edgeId(), right2? 'r': 'l', ratio2, width);
     // width unit = millimeter
     GRBLinExpr totalWidth;
     double widthWeight1 = (e1->length()) / (_vConductivity[e1->layId()] * abs(e1->sNode()->voltage()-e1->tNode()->voltage()) * _vMetalLayerThickness[e1->layId()]);
@@ -147,6 +148,7 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OA
 }
 
 void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width) {
+    printf("E%-2d_%c * %.2f <= %.3f\n", e1->edgeId(), right1? 'r': 'l', ratio1, width);
     // width unit = millimeter
     GRBLinExpr e1Width;
     double widthWeight1 = (e1->length()) / (_vConductivity[e1->layId()] * abs(e1->sNode()->voltage()-e1->tNode()->voltage()) * _vMetalLayerThickness[e1->layId()]);
