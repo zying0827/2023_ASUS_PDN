@@ -171,13 +171,13 @@ void FlowLP::collectResult(){
         // collect results for horizontal flows
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
-                cerr << "vPEdge[" << netId << "][" << layId << "][" << pEdgeId << "]: ";
+                // cerr << "vPEdge[" << netId << "][" << layId << "][" << pEdgeId << "]: ";
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
                 double widthWeight = (e->length()) / (_vConductivity[e->layId()] * abs(e->sNode()->voltage()-e->tNode()->voltage()) * _vMetalLayerThickness[e->layId()]);
                 double leftFlow = _vPlaneLeftFlow[netId][layId][pEdgeId].get(GRB_DoubleAttr_X) * _currentNorm;
-                cerr << "leftFlow = " << leftFlow;
+                // cerr << "leftFlow = " << leftFlow;
                 double rightFlow = _vPlaneRightFlow[netId][layId][pEdgeId].get(GRB_DoubleAttr_X) * _currentNorm;
-                cerr << " rightFlow = " << rightFlow << endl;
+                // cerr << " rightFlow = " << rightFlow << endl;
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrent(leftFlow + rightFlow);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(leftFlow * widthWeight * 1E3);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(rightFlow * widthWeight * 1E3);
@@ -187,10 +187,10 @@ void FlowLP::collectResult(){
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
             double viaArea = _vMaxViaCost[netId][vEdgeId].get(GRB_DoubleAttr_X) * _currentNorm / _vConductivity[0];
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
-                cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
+                // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
                     double flow = _vViaFlow[netId][layPairId][vEdgeId].get(GRB_DoubleAttr_X) * _currentNorm;
-                    cerr << "flow = " << flow << endl;
+                    // cerr << "flow = " << flow << endl;
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrent(flow);
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
                 }

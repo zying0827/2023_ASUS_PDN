@@ -73,7 +73,7 @@ class DB {
 
         void initNet(size_t numNets) {
             for (size_t netId = 0; netId < numNets; ++ netId) {
-                Net* net = new Net;
+                Net* net = new Net(numLayers());
                 _vNet.push_back(net);
             }
         }

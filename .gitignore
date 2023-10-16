@@ -2,3 +2,4 @@ build/
 exp/
 .vscode/
 .python-version
+gurobi.lic

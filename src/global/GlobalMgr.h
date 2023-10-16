@@ -27,6 +27,7 @@ class GlobalMgr {
         void plotCurrentPaths();
     private:
         Trace* edge2Trace(OASGEdge* edge);
+        Segment* edge2Segment(OASGEdge* edge);
         // void constructRGraph();
         // void DFS(OASGNode* node, vector< vector<OASGEdge*> >& paths);
         // vector< vector<OASGEdge*> > DFS(OASGNode* node);

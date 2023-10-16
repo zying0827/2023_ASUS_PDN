@@ -4,6 +4,7 @@
 #include "base/Parser.h"
 #include "global/GlobalMgr.h"
 #include "base/SVGPlot.h"
+#include "detailed/DetailedMgr.h"
 
 using namespace std;
 
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]){
 
     // replace this line with a real OASG building function
     globalMgr.buildTestOASG();
-    // globalMgr.plotOASG();
+    //globalMgr.plotOASG();
     globalMgr.layerDistribution();
     // globalMgr.plotRGraph();
     globalMgr.buildTestNCOASG();
@@ -56,8 +57,14 @@ int main(int argc, char* argv[]){
         cerr << e.getMessage() << endl;
     }
     globalMgr.plotCurrentPaths();
-      globalMgr.plotDB();
-      globalMgr.plotOASG();    
+
+    //DetailedMgr detailedMgr(db, plot, 10);
+    //detailedMgr.initGridMap();
+    //detailedMgr.plotGridMap();
+    //detailedMgr.naiveAStar();
+    //detailedMgr.plotGridMap();
+
+    globalMgr.plotDB();
 
 
     // mgr.genRGraph();

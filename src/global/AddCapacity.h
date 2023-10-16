@@ -8,13 +8,14 @@
 
 #define PI 3.1415926
 
-double shortest_distance(double segment_x1, double segment_y1, double segment_x2, double segment_y2, double point_x, double point_y, double length_of_segment);
-double shortest_distance(double segment_x1, double segment_y1, double segment_x2, double segment_y2, double point_x, double point_y, double length_of_segment, double&, double&);
+double shortest_distance(double segment_x1, double segment_y1, double segment_x2, double segment_y2, double point_x, double point_y, double length_of_segment, double& footx, double& footy);
 
-void BuildCapicityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver);
+//return the positvie or negative crossproduct value
+bool CrossProduct(double x1, double y1, double x2, double y2, double x3, double y3);
 
-void AsSourceCapacityConstraint(OASGEdge* e1, double x1, double y1, double x2, double y2, FlowLP &solver);
-bool AsTargetCapacityConstraint(OASGEdge* e1, double x1, double y1, double x2, double y2, FlowLP &solver);
+void BuildCapacityConstraint(OASGEdge* e1, OASGEdge* e2, FlowLP &solver);
+
+void BuildObstacleCapacityConstraint(OASGEdge* e1, double x1, double y1, double x2, double y2, FlowLP &solver);
 
 void AddObstacleConstraint(OASGEdge* e1, Obstacle* obs, FlowLP &solver);
 
