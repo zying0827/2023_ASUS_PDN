@@ -49,6 +49,14 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
+    /*    
+        // handle the case if shortest dist = 0
+        // https://i.imgur.com/Z6qzYwS.png
+        if(P == F) {
+            pair<double, double> n; // normal to out
+            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
+        }
+    */
     }
     // project T1 to e2
     P = T1;
