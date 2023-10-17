@@ -556,6 +556,7 @@ void GlobalMgr::currentDistribution() {
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
                                              S2, T2, ratio, right, width))
                                 solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+
                         }
                     }
                 }

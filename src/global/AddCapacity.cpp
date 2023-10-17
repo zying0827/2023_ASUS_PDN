@@ -24,11 +24,13 @@ double shortest_distance(pair<double, double> A, pair<double, double> B, pair<do
 bool isRight(pair<double, double> S, pair<double, double> T, pair<double, double> P) {
     // return (P is on the right of segment ST)? 1: 0
     // https://i.imgur.com/g3XAnZo.jpg
-    double v1x = P.first-S.first, v1y = P.second-S.second; // v1 = SP vector
-    double v2x = T.first-S.first, v2y = T.second-S.second; // v2 = ST vector
+
+
+    double v1x = T.first-S.first, v1y = T.second-S.second; // v1 = ST vector
+    double v2x = P.first-S.first, v2y = P.second-S.second; // v2 = SP vector
 
     // z-coordinate of v1 x v2 = v1xv2y - v1yv2x, return true if z>=0
-    return (v1x*v2y - v1y*v2x) >= 0;
+    return (v1x*v2y - v1y*v2x) <= 0;
 }
 
 bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double, double> S2, pair<double, double> T2, pair<double, double> &ratio, pair<bool, bool> &right, double &width) {
@@ -49,14 +51,13 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
-    /*    
+        
         // handle the case if shortest dist = 0
         // https://i.imgur.com/Z6qzYwS.png
-        if(P == F) {
-            pair<double, double> n; // normal to out
+        if(dist == 0) {
+            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
             right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
         }
-    */
     }
     // project T1 to e2
     P = T1;
@@ -65,6 +66,11 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
+        
+        if(dist == 0) {
+            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
+            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
+        }
     }
     // project S2 to e1
     P = S2;
@@ -73,6 +79,12 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
+
+        
+        if(dist == 0) {
+            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
+            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
+        }
     }
     // project T2 to e1
     P = T2;
@@ -81,6 +93,11 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
+        
+        if(dist == 0) {
+            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
+            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
+        }
     }
     width = min_dist;
     return ratio.first >= 0;
