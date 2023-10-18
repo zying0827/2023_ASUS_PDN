@@ -73,3 +73,439 @@ void Parser::testInitialize(double boardWidth, double boardHeight, double gridWi
     // area & via weight
     _db.setFlowWeight(0.5, 0.5);
 }
+
+void Parser::parse() {
+    string data;
+    stringstream ss;
+    string word;
+
+    // parse layers
+    // data = toLineBegin("Medium");
+    // ss.str(data);
+    // ss.ignore(numeric_limits<streamsize>::max(), '$');
+    // string name, sThickness;
+    // double thickness, permittivity, lossTangent;
+    // ss >> name;
+    // // cerr << "name = " << name << endl;
+    // ss.ignore(numeric_limits<streamsize>::max(), '=');
+    // ss >> sThickness;
+    // // cerr << "thickness = " << sThickness << endl;
+    // sThickness.pop_back();
+    // sThickness.pop_back();
+    // thickness = stod(sThickness);
+    // // cerr << "thickness = " << thickness << endl;
+    // ss.ignore(numeric_limits<streamsize>::max(), '=');
+    // ss >> permittivity;
+    // // cerr << "permittivity = " << permittivity << endl;
+    // ss.ignore(numeric_limits<streamsize>::max(), '=');
+    // ss >> lossTangent;
+    // // cerr << "lossTangent = " << lossTangent << endl;
+    // _db.addMediumLayer(name, thickness, permittivity, lossTangent);
+    // getline(_fin, data);
+    // ss.str(data);
+    // ss >> word;
+    // stringstream sWord(word);
+    // getline(sWord, word, '$');
+    // // word = sWord.str();
+    // // cerr << "word = " << word << endl;
+    // while(word == "Medium" || word == "Signal" || word == "Plane") {
+    //     // ss.ignore(numeric_limits<streamsize>::max(), '$');
+    //     string name, sThickness;
+    //     double thickness;
+    //     // ss >> name;
+    //     getline(sWord, name);
+    //     // cerr << "name = " << name << endl;
+    //     ss.ignore(numeric_limits<streamsize>::max(), '=');
+    //     ss >> sThickness;
+    //     // cerr << "thickness = " << sThickness << endl;
+    //     sThickness.pop_back();
+    //     sThickness.pop_back();
+    //     thickness = stod(sThickness);
+    //     // cerr << "thickness = " << thickness << endl;
+    //     if (word == "Medium") {
+    //         double permittivity, lossTangent;
+    //         ss.ignore(numeric_limits<streamsize>::max(), '=');
+    //         ss >> permittivity;
+    //         // cerr << "permittivity = " << permittivity << endl;
+    //         ss.ignore(numeric_limits<streamsize>::max(), '=');
+    //         ss >> lossTangent;
+    //         // cerr << "lossTangent = " << lossTangent << endl;
+    //         _db.addMediumLayer(name, thickness, permittivity, lossTangent);
+    //     } else if (word == "Signal" || word == "Plane") {
+    //         double conductivity, permittivity;
+    //         ss.ignore(numeric_limits<streamsize>::max(), '=');
+    //         ss >> conductivity;
+    //         // cerr << "conductivity = " << conductivity << endl;
+    //         ss.ignore(numeric_limits<streamsize>::max(), '=');
+    //         ss >> permittivity;
+    //         // cerr << "permittivity = " << permittivity << endl;
+    //         _db.addMetalLayer(name, thickness, conductivity, permittivity);
+    //     }
+    //     getline(_fin, data);
+    //     ss.str(data);
+    //     ss >> word;
+    //     sWord.clear();
+    //     sWord.str(word);
+    //     // cerr << "sWord = " << sWord.str() << endl;
+    //     getline(sWord, word, '$');
+    //     // cerr << "word = " << word << endl;
+    // }
+
+    // _db.reverseMediumLayers();
+    // _db.reverseMetalLayers();
+    // for (int layId = 0; layId < _db.numLayers(); ++ layId) {
+    //     _layName2Id[_db.vMetalLayer(layId)->layName()] = layId;
+    //     // cerr << "layer[" << layId << "] = " << _db.vMetalLayer(layId)->layName() << endl;
+    //     // _db.vMetalLayer(layId)->print();
+    // }
+    parseLayer();
+
+
+    // parse shape
+    _fin.seekg(_fin.beg);
+    parseShape();
+    parseNodeTrace();
+    
+    
+
+}
+
+void Parser::parseLayer() {
+    string data;
+    stringstream ss;
+    string word;
+
+    data = toLineBegin("Medium");
+    ss.str(data);
+    ss.ignore(numeric_limits<streamsize>::max(), '$');
+    string name, sThickness;
+    double thickness, permittivity, lossTangent;
+    ss >> name;
+    // cerr << "name = " << name << endl;
+    ss.ignore(numeric_limits<streamsize>::max(), '=');
+    ss >> sThickness;
+    // cerr << "thickness = " << sThickness << endl;
+    sThickness.pop_back();
+    sThickness.pop_back();
+    thickness = stod(sThickness);
+    // cerr << "thickness = " << thickness << endl;
+    ss.ignore(numeric_limits<streamsize>::max(), '=');
+    ss >> permittivity;
+    // cerr << "permittivity = " << permittivity << endl;
+    ss.ignore(numeric_limits<streamsize>::max(), '=');
+    ss >> lossTangent;
+    // cerr << "lossTangent = " << lossTangent << endl;
+    _db.addMediumLayer(name, thickness, permittivity, lossTangent);
+    getline(_fin, data);
+    ss.str(data);
+    ss >> word;
+    stringstream sWord(word);
+    getline(sWord, word, '$');
+    // word = sWord.str();
+    // cerr << "word = " << word << endl;
+    while(word == "Medium" || word == "Signal" || word == "Plane") {
+        // ss.ignore(numeric_limits<streamsize>::max(), '$');
+        string name, sThickness;
+        double thickness;
+        // ss >> name;
+        getline(sWord, name);
+        // cerr << "name = " << name << endl;
+        ss.ignore(numeric_limits<streamsize>::max(), '=');
+        ss >> sThickness;
+        // cerr << "thickness = " << sThickness << endl;
+        sThickness.pop_back();
+        sThickness.pop_back();
+        thickness = stod(sThickness);
+        // thickness = extractDouble(ss, 2);
+        // cerr << "thickness = " << thickness << endl;
+        if (word == "Medium") {
+            double permittivity, lossTangent;
+            ss.ignore(numeric_limits<streamsize>::max(), '=');
+            ss >> permittivity;
+            // cerr << "permittivity = " << permittivity << endl;
+            ss.ignore(numeric_limits<streamsize>::max(), '=');
+            ss >> lossTangent;
+            // cerr << "lossTangent = " << lossTangent << endl;
+            _db.addMediumLayer(name, thickness, permittivity, lossTangent);
+        } else if (word == "Signal" || word == "Plane") {
+            double conductivity, permittivity;
+            ss.ignore(numeric_limits<streamsize>::max(), '=');
+            ss >> conductivity;
+            // cerr << "conductivity = " << conductivity << endl;
+            ss.ignore(numeric_limits<streamsize>::max(), '=');
+            ss >> permittivity;
+            // cerr << "permittivity = " << permittivity << endl;
+            _db.addMetalLayer(name, thickness, conductivity, permittivity);
+        }
+        getline(_fin, data);
+        ss.str(data);
+        ss >> word;
+        sWord.clear();
+        sWord.str(word);
+        // cerr << "sWord = " << sWord.str() << endl;
+        getline(sWord, word, '$');
+        // cerr << "word = " << word << endl;
+    }
+
+    _db.reverseMediumLayers();
+    _db.reverseMetalLayers();
+    for (int layId = 0; layId < _db.numLayers(); ++ layId) {
+        _layName2Id[_db.vMetalLayer(layId)->layName()] = layId;
+        // cerr << "layer[" << layId << "] = " << _db.vMetalLayer(layId)->layName() << endl;
+        // _db.vMetalLayer(layId)->print();
+    }
+}
+
+void Parser::parseShape() {
+    string data;
+    stringstream ss;
+    string garbage;
+
+    for (size_t layId = 0; layId < _db.numLayers(); ++layId) {
+        data = toLineBegin(".Shape");
+        ss.str(data);
+        ss.ignore(numeric_limits<streamsize>::max(), '$');
+        string layName;
+        ss >> layName;
+
+        getline(_fin, data);
+        ss.str(data);
+        bool isShape = false;
+        if(data.substr(0,7) == "Polygon" || data.substr(0,6) == "Circle") {
+            isShape = true;
+        } else {
+            isShape = false;
+            cerr << "ERROR! Undefined Shape" << endl;
+        }
+        while(isShape) {
+            Shape* shape;
+            if(data.substr(0,7) == "Polygon") {
+                string netName;
+                stringstream sNetName;
+                ss.ignore(numeric_limits<streamsize>::max(), ':');
+                ss.ignore(numeric_limits<streamsize>::max(), ':');
+                ss >> netName;
+                // Color = darkgreen
+                ss >> garbage;
+                ss >> garbage;
+                ss >> garbage;
+                // vertices positions
+                vector< pair<double, double> > vVtx;
+                double x, y;
+                while (ss.peek() >= ' ') {
+                    // cerr << ss.peek() << endl;
+                    x = extractDouble(ss, 2);
+                    y = extractDouble(ss, 2);
+                    // cerr << "vtx = (" << x << ", " << y << ") " << endl;
+                    vVtx.push_back(make_pair(x,y));
+                }
+                // cerr << endl;
+                getline(_fin, data);
+                ss.str(data);
+                while (data[0] == '+') {
+                    // cerr << "+ " << ends;
+                    ss >> garbage;
+                    while (ss.peek() >= ' ') {
+                        x = extractDouble(ss, 2);
+                        y = extractDouble(ss, 2);
+                        // cerr << "vtx = (" << x << ", " << y << ") " << ends;
+                        vVtx.push_back(make_pair(x,y));
+                    }
+                    // cerr << endl;
+                    getline(_fin, data);
+                    ss.str(data);
+                }
+                shape = new Polygon(vVtx, _plot);
+                if (netName == "+VCCCORE+") {
+                    shape->plot(SVGPlotColor::green, _layName2Id[layName]);
+                } else if (netName == "+VCCGT+") {
+                    shape->plot(SVGPlotColor::lightsalmon, _layName2Id[layName]);
+                } else if (netName == "+VCCSA+") {
+                    shape->plot(SVGPlotColor::purple, _layName2Id[layName]);
+                } else {
+                    shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
+                } 
+            } else if (data.substr(0,6) == "Circle") {
+                string netName;
+                stringstream sNetName;
+                if (ss.str().find("::") != string::npos) {
+                ss.ignore(numeric_limits<streamsize>::max(), ':');
+                ss.ignore(numeric_limits<streamsize>::max(), ':');
+                ss >> netName;
+                // Color = darkgreen
+                ss >> garbage;
+                ss >> garbage;
+                ss >> garbage;
+                } else {
+                    // circle with no net name
+                    ss >> garbage;
+                }
+                // center position and radius
+                double ctrX, ctrY, radius;
+                // cerr << ss.str() << endl;
+                ctrX = extractDouble(ss, 2);
+                ctrY = extractDouble(ss, 2);
+                radius = extractDouble(ss, 2);
+                // construct circle
+                shape = new Circle(ctrX, ctrY, radius, _plot);
+                if (netName == "+VCCCORE+") {
+                    shape->plot(SVGPlotColor::green, _layName2Id[layName]);
+                } else if (netName == "+VCCGT+") {
+                    shape->plot(SVGPlotColor::lightsalmon, _layName2Id[layName]);
+                } else if (netName == "+VCCSA+") {
+                    shape->plot(SVGPlotColor::purple, _layName2Id[layName]);
+                } else {
+                    shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
+                }
+                // new line
+                getline(_fin, data);
+                ss.str(data);
+            }
+            
+            if(data.substr(0,7) == "Polygon" || data.substr(0,6) == "Circle") {
+                isShape = true;
+            } else {
+                isShape = false;
+                break;
+            }
+        }
+    }
+}
+
+void Parser::parseNodeTrace() {
+    string data;
+    stringstream ss;
+    string garbage;
+    data = toLineBegin("Node");
+    ss.str(data);
+    // cerr << data << endl;
+    while(data.substr(0,4) == "Node") {
+        string nodeName;
+        stringstream sNodeName;
+        ss >> nodeName;
+        sNodeName.clear();
+        sNodeName.str(nodeName);
+        getline(sNodeName, nodeName, ':');
+        nodeName.erase(0,4);
+        // cerr << "nodeName = " << nodeName << endl;
+ 
+        double x, y;
+        ss >> garbage;
+        assert(garbage == "X");
+        ss >> garbage;
+        assert(garbage == "=");
+        x = extractDouble(ss, 2);
+        // cerr << " x = " << x << endl;
+        ss >> garbage;
+        assert(garbage == "Y");
+        ss >> garbage;
+        assert(garbage == "=");
+        y = extractDouble(ss, 2);
+        // cerr << " y = " << y << endl;
+
+        string layName;
+        ss >> garbage;
+        assert(garbage == "Layer");
+        ss >> garbage;
+        assert(garbage == "=");
+        ss.ignore(numeric_limits<streamsize>::max(), '$');
+        ss >> layName;
+        // cerr << " layName = " << layName << endl;
+
+        _db.addNode(nodeName, x, y, _layName2Id[layName]);
+
+        getline(_fin, data);
+        ss.str(data);
+    }
+    assert(data.substr(0,5) == "Trace");
+    while (data.substr(0,5) == "Trace") {
+        string netName;
+        if (ss.str().find("::") != string::npos) {
+            ss.ignore(numeric_limits<streamsize>::max(), ':');
+            ss.ignore(numeric_limits<streamsize>::max(), ':');
+            ss >> netName;
+            // cerr << "netName = " << netName << endl;
+        } else {
+            // circle with no net name
+            ss >> garbage;
+        }
+        
+        string nodeSName, nodeTName;
+        stringstream sNodeName;
+        // starting node
+        ss >> garbage;
+        assert (garbage == "StartingNode");
+        ss >> garbage;
+        assert (garbage == "=");
+        ss >> nodeSName;
+        sNodeName.clear();
+        sNodeName.str(nodeSName);
+        getline(sNodeName, nodeSName, ':');
+        nodeSName.erase(0,4);
+        // cerr << "nodeSName = " << nodeSName << endl;
+        // ending node
+        ss >> garbage;
+        assert (garbage == "EndingNode");
+        ss >> garbage;
+        assert (garbage == "=");
+        ss >> nodeTName;
+        sNodeName.clear();
+        sNodeName.str(nodeTName);
+        getline(sNodeName, nodeTName, ':');
+        nodeTName.erase(0,4);
+        // cerr << "nodeTName = " << nodeTName << endl;
+        // width
+        double width;
+        ss >> garbage;
+        assert (garbage == "Width");
+        ss >> garbage;
+        assert (garbage == "=");
+        width = extractDouble(ss, 2);
+        // cerr << "width = " << width << endl;
+        Shape* shape = new Trace(_db.vNode(nodeSName), _db.vNode(nodeTName), width, _plot);
+        if (netName == "+VCCCORE+") {
+            shape->plot(SVGPlotColor::green, _db.vNode(nodeSName)->layId());
+        } else if (netName == "+VCCGT+") {
+            shape->plot(SVGPlotColor::lightsalmon, _db.vNode(nodeSName)->layId());
+        } else if (netName == "+VCCSA+") {
+            shape->plot(SVGPlotColor::purple, _db.vNode(nodeSName)->layId());
+        } else {
+            shape->plot(SVGPlotColor::black, _db.vNode(nodeSName)->layId());
+        }
+
+        getline(_fin, data);
+        ss.str(data);
+
+    }
+}
+
+string Parser::toLineBegin(string word) {
+    string data;
+    getline(_fin, data);
+    // stringstream ss;
+    // ss.str(data);
+    string word1;
+    word1.assign(data, 0, word.size());
+    while (word1 != word) {
+        _fin.ignore(numeric_limits<streamsize>::max(), '\n');
+        getline(_fin, data);
+        // cerr << "data = " << data << endl;
+        // ss.str("");
+        // ss.str(data);
+        // cerr << "ss = " << ss.str() << endl;
+        word1.clear();
+        word1.assign(data, 0, word.size());
+        // ss >> word;
+        // cerr << "word = " << word << endl;
+    }
+    return data;
+}
+
+double Parser::extractDouble(stringstream& ss, int eraseLength) {
+    string word;
+    ss >> word;
+    for (int i = 0; i < eraseLength; ++ i) {
+        word.pop_back();
+    }
+    return stod(word);
+}

@@ -16,7 +16,8 @@ class FlowLP {
         // width unit = meter
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width);
-        void relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
+        // void relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
+        void relaxCapacityConstraints(vector<double> vLambda);
         void solve();
         void collectResult();
         void printResult();
@@ -30,6 +31,7 @@ class FlowLP {
         GRBVar*** _vPlaneRightFlow;  // flows on the right of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
         GRBVar*** _vViaFlow;         // flows on vertical OASGEdges, index = [netId] [layPairId] [vEdgeId]
         GRBVar**  _vMaxViaCost;      // the maximum flow on an OASGEdge, index = [netId] [vEdgeId]
+        int _numCapConstrs;          // number of capacity constraints
 
         // input constants
         vector<double> _vMediumLayerThickness;

@@ -162,8 +162,11 @@ class Node : public Shape {
         double bPolygonX(size_t vtxId) { return _ctr.first; }
         double bPolygonY(size_t vtxId) { return _ctr.second; }
         size_t numBPolyVtcs() { return 1; }
+        size_t layId() { return _layId; }
+        void setLayId(size_t layId) { _layId = layId; }
     private:
         pair<double, double> _ctr;
+        size_t _layId;
 };
 
 class Trace : public Shape {

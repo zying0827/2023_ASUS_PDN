@@ -44,6 +44,7 @@ class DB {
         Net*         vNet(size_t netId)                       { return _vNet[netId]; }
         Obstacle*    vObstacle(size_t obsId)                  { return _vObstacle[obsId]; }
         Obstacle*    vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
+        Node*        vNode(string nodeName)                   { return _vNode[_nodeName2Id[nodeName]]; }
 
         size_t numNets()                  const { return _vNet.size(); }
         size_t numLayers()                const { return _vMetalLayer.size(); } // number of metal layers
@@ -88,9 +89,27 @@ class DB {
             _vMediumLayer.push_back(layer);
         }
 
+        void reverseMediumLayers() {
+            vector<MediumLayer*> reverse;
+            for (int mediumLayId = numMediumLayers()-1; mediumLayId >= 0; -- mediumLayId) {
+                _vMediumLayer[mediumLayId]->setLayId(reverse.size());
+                reverse.push_back(_vMediumLayer[mediumLayId]);
+            }
+            _vMediumLayer = reverse;
+        }
+
         void addMetalLayer(string name, double thickness, double conductivity, double permittivity) {
             MetalLayer* layer = new MetalLayer(name, _vMetalLayer.size(), thickness, conductivity, permittivity);
             _vMetalLayer.push_back(layer);
+        }
+
+        void reverseMetalLayers() {
+            vector<MetalLayer*> reverse;
+            for (int metalLayId = numLayers()-1; metalLayId >= 0; -- metalLayId) {
+                _vMetalLayer[metalLayId]->setLayId(reverse.size());
+                reverse.push_back(_vMetalLayer[metalLayId]);
+            }
+            _vMetalLayer = reverse;
         }
 
         void addCircleVia(double x, double y, size_t netId, ViaType type) {
@@ -122,6 +141,13 @@ class DB {
             } else {
                 cerr << "ERROR: addPort FAILs! Wrong viaType!" << endl;
             }
+        }
+
+        void addNode(string nodeName, double x, double y, size_t layId) {
+            Node* node = new Node(x, y, _plot);
+            node->setLayId(layId);
+            _nodeName2Id[nodeName] = _vNode.size();
+            _vNode.push_back(node);
         }
 
         void addObstacle (size_t layId, vector<Shape*> vShape) {
@@ -198,6 +224,7 @@ class DB {
         vector<Obstacle*>    _vObstacle;
         // vector< vector<Obstacle*> > _vObstacle;     // index = [layId] [obsId]
         vector<Port*>        _vPort;
+        vector<Node*>        _vNode;
         vector< vector< vector< Tile* > > > _vTile;     // index = [layId][rowId][colId], layId of the bottom layer is 0
         double               _boardWidth;
         double               _boardHeight;
@@ -206,6 +233,8 @@ class DB {
         double _viaWeight;
         // size_t _numRows;
         // size_t _numCols;
+        map<string, int>    _nodeName2Id;
+        // map<string, int>    _layName2Id;
 };
 
 #endif

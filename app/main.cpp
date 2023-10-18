@@ -9,8 +9,15 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
+    ifstream fin;
     ofstream fout;
-    fout.open(argv[1], ofstream::out);
+    fin.open(argv[1], ifstream::in);
+    if (fin.is_open()) {
+        cout << "input file is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file" << endl;
+    }
+    fout.open(argv[2], ofstream::out);
     if (fout.is_open()) {
         cout << "output file is opened successfully" << endl;
     } else {
@@ -28,10 +35,16 @@ int main(int argc, char* argv[]){
     double boardWidth = 15*gridWidth;
     double boardHeight = 19*gridWidth;
     size_t numLayers = 4;
+    // double gridWidth = 8;
+    // double boardWidth = 50*gridWidth;
+    // double boardHeight = 15*gridWidth;
+    // size_t numLayers = 12;
 
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers);
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 3.0);
+    // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 5.0);
     DB db(plot);
-    Parser parser(db);
+    Parser parser(fin, db, plot);
+    // parser.parse();
     // NetworkMgr mgr(db, plot);
 
     // replace this line with a real parser function
@@ -44,7 +57,7 @@ int main(int argc, char* argv[]){
 
     // replace this line with a real OASG building function
     globalMgr.buildTestOASG();
-    globalMgr.plotOASG();
+    // globalMgr.plotOASG();
     globalMgr.layerDistribution();
     // globalMgr.plotRGraph();
     globalMgr.buildTestNCOASG();

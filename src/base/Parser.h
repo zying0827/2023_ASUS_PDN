@@ -3,15 +3,25 @@
 
 #include "Include.h"
 #include "DB.h"
+#include "SVGPlot.h"
 
 class Parser {
     public:
-        Parser(DB& db) : _db(db) {}
+        Parser(ifstream& fin, DB& db, SVGPlot& plot) : _fin(fin), _db(db), _plot(plot) {}
         ~Parser() {}
 
         void testInitialize(double boardWidth, double boardHeight, double gridWidth);
+        void parse();
     private:
+        void parseLayer();
+        void parseShape();
+        void parseNodeTrace();
+        string toLineBegin(string word);
+        double extractDouble(stringstream& ss, int eraseLength);
+        ifstream& _fin;
         DB& _db;
+        SVGPlot& _plot;
+        map<string, int> _layName2Id;
 
 };
 

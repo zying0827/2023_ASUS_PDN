@@ -2,6 +2,7 @@
 
 FlowLP::FlowLP(RGraph& rGraph, vector<double> vMediumLayerThickness, vector<double> vMetalLayerThickness, vector<double> vConductivity, double currentNorm)
     : _model(_env), _rGraph(rGraph), _vMediumLayerThickness(vMediumLayerThickness), _vMetalLayerThickness(vMetalLayerThickness), _vConductivity(vConductivity), _currentNorm(currentNorm) {
+    _numCapConstrs = 0;
     _vPlaneLeftFlow = new GRBVar** [_rGraph.numNets()];
     _vPlaneRightFlow = new GRBVar** [_rGraph.numNets()];
     _vViaFlow = new GRBVar** [_rGraph.numNets()];
@@ -141,9 +142,10 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OA
     } else {
         totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
     }
-    _model.addConstr(totalWidth * 1E3 <= width, "capacity");
+    _model.addConstr(totalWidth * 1E3 <= width, "capacity_" + to_string(_numCapConstrs));
     // _model.update();
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    _numCapConstrs ++;
 }
 
 void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width) {
@@ -155,12 +157,29 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, do
     } else {
         e1Width += _vPlaneLeftFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
     }
-    _model.addConstr(e1Width * 1E3 <= width, "capacity");
+    _model.addConstr(e1Width * 1E3 <= width, "capacity_" + to_string(_numCapConstrs));
     // _model.update();
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
+    _numCapConstrs ++;
 }
 
-void FlowLP::relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width){}
+void FlowLP::relaxCapacityConstraints(vector<double> vLambda) {
+    assert(vLambda.size() == _numCapConstrs);
+    for (size_t capId = 0; capId < _numCapConstrs; ++ capId) {
+        const GRBConstr& c = _model.getConstrByName("capacity_" + to_string(capId));
+        // char sense = c->get ( GRB_CharAttr_Sense );
+        // if ( sense != '>') {
+        //     double coef = -1.0;
+        //     _model.addVar (0.0 , GRB_INFINITY , 1.0 , GRB_CONTINUOUS , 1 , & c, & coef , " ArtN_ " + c-> get ( GRB_StringAttr_ConstrName ));
+        // }
+        // if ( sense != '<') {
+        //     double coef = 1.0;
+        //     _model.addVar (0.0 , GRB_INFINITY , 1.0 , GRB_CONTINUOUS , 1 ,& c , & coef , " ArtP_ " + c-> get ( GRB_StringAttr_ConstrName ));
+        // }
+        double coef = -1.0;
+        _model.addVar(0.0 , GRB_INFINITY , vLambda[capId] , GRB_CONTINUOUS, 1, &c, &coef , " lambda_ " + c.get ( GRB_StringAttr_ConstrName ));
+    }
+}
 
 void FlowLP::solve() {
     _model.optimize();
@@ -178,7 +197,8 @@ void FlowLP::collectResult(){
                 // cerr << "leftFlow = " << leftFlow;
                 double rightFlow = _vPlaneRightFlow[netId][layId][pEdgeId].get(GRB_DoubleAttr_X) * _currentNorm;
                 // cerr << " rightFlow = " << rightFlow << endl;
-                _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrent(leftFlow + rightFlow);
+                _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrentRight(rightFlow);
+                _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrentLeft(leftFlow);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(leftFlow * widthWeight * 1E3);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(rightFlow * widthWeight * 1E3);
             }
@@ -191,7 +211,8 @@ void FlowLP::collectResult(){
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
                     double flow = _vViaFlow[netId][layPairId][vEdgeId].get(GRB_DoubleAttr_X) * _currentNorm;
                     // cerr << "flow = " << flow << endl;
-                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrent(flow);
+                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrentRight(flow);
+                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrentLeft(0.0);
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
                 }
             }

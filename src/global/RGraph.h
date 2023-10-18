@@ -97,7 +97,9 @@ class OASGEdge {
         size_t netId() const { return _netId; }
         size_t typeEdgeId() const { return _typeEdgeId; }
         size_t edgeId() const { return _OASGEdgeId; }
-        double current() const { return _current; }
+        double current() { return _currentRight + _currentLeft; }
+        double currentRight() const { return _currentRight; }
+        double currentLeft() const { return _currentLeft; }
         double widthLeft() const { return _widthLeft; }
         double widthRight() const { return _widthRight; }
         double viaArea() const { return _viaArea; }
@@ -159,7 +161,9 @@ class OASGEdge {
 
         void setViaEdge(bool viaEdge) { _viaEdge = viaEdge; }
 
-        void setCurrent(double current) { _current = current; }
+        // void setCurrent(double current) { _current = current; }
+        void setCurrentRight(double current) { _currentRight = current; }
+        void setCurrentLeft(double current) { _currentLeft = current; }
 
         void setWidthLeft(double widthLeft) { _widthLeft = widthLeft; }
 
@@ -184,7 +188,9 @@ class OASGEdge {
         size_t _layId;
         size_t _netId;
         size_t _typeEdgeId;
-        double _current;    // the current flowing from _sNode to _tNode, assigned in GlobalMgr::currentDistribution() 
+        // double _current;    // the current flowing from _sNode to _tNode, assigned in GlobalMgr::currentDistribution()
+        double _currentRight;
+        double _currentLeft; 
         double _widthLeft;  // the width to the left of the edge center line, assigned in GlobalMgr::currentDistribution() 
         double _widthRight; // the width to the left of the edge center line, assigned in GlobalMgr::currentDistribution()
         double _viaArea;    // the cross-sectional area of the via cluster of the edge, assigned in GlobalMgr::currentDistribution()

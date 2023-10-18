@@ -191,20 +191,20 @@ void DetailedMgr::naiveAStar() {
             }
         }
     }
-    int area = 0;
-    int overlapArea = 0;
-    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
-        for (size_t xId = 0; xId < _numXs; ++ xId) {
-            for (size_t yId = 0; yId < _numYs; ++ yId) {
-                Grid* grid = _vGrid[layId][xId][yId];
-                if (grid->congestCur() >= 1) area++;
-                overlapArea += grid->congestCur();
-            }
-        }
-    }
-    overlapArea -= area;
-    cerr << "area = " << area << endl;
-    cerr << "overlapArea = " << overlapArea << endl;
+    // int area = 0;
+    // int overlapArea = 0;
+    // for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+    //     for (size_t xId = 0; xId < _numXs; ++ xId) {
+    //         for (size_t yId = 0; yId < _numYs; ++ yId) {
+    //             Grid* grid = _vGrid[layId][xId][yId];
+    //             if (grid->congestCur() >= 1) area++;
+    //             overlapArea += grid->congestCur();
+    //         }
+    //     }
+    // }
+    // overlapArea -= area;
+    // cerr << "area = " << area << endl;
+    // cerr << "overlapArea = " << overlapArea << endl;
 }
 
 void DetailedMgr::clearNet(size_t layId, size_t netId) {

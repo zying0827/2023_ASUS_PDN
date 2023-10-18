@@ -6,6 +6,15 @@
 
 using namespace std;
 
+class PadStack {
+    public:
+    private:
+        string _name;
+        string _shape;
+        vector< double > _vRegular;   // if circle: radius; if square: width
+        vector< double > _vAnti;      // if circle: radius; if square: width
+};
+
 enum ViaType {
     Source,
     Target,
@@ -35,6 +44,10 @@ class Via{
         unsigned int _netId;
         ViaType _viaType;
         Shape* _shape;
+        string _padStackName;
+        double _padDiameter;
+        double _drillDiameter;
+        double _antiPadDiameter;
 };
 
 class ViaCluster{
