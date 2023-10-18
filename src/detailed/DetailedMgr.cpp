@@ -158,11 +158,11 @@ void DetailedMgr::plotGridMap() {
 }
 
 void DetailedMgr::naiveAStar() {
-    cerr << "naiveAStar..." << endl;
+    // cerr << "naiveAStar..." << endl;
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
-        cerr << "layId = " << layId;
+        // cerr << "layId = " << layId;
         for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
-            cerr << " netId = " << netId << endl;
+            // cerr << " netId = " << netId << endl;
     // size_t layId = 0;
     // size_t netId = 0;
             Net* net = _db.vNet(netId);

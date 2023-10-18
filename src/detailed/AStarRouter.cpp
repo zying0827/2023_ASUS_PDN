@@ -29,14 +29,14 @@ bool AStarRouter::route() {
             // cerr << _vGNode[-1][-1] << endl;
             return true;
         } else if (stepNode->status() != GNodeStatus::InPath) {
-            cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), address = " << stepNode;
+            // cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), address = " << stepNode;
             // cerr << ", cost = " << stepNode->cost() << ;
             newCurDist = orgNode->curDist()+1;
             newEstDist = estDistCost(xId, yId);
             newLineDist = lineDistCost(xId, yId);
-            cerr << ", lineDist = " << newLineDist;
+            // cerr << ", lineDist = " << newLineDist;
             newCongest = marginCongestCost(xId, yId, dir) + orgNode->congest();
-            cerr << ", marginCongestCost = " << marginCongestCost(xId, yId, dir);
+            // cerr << ", marginCongestCost = " << marginCongestCost(xId, yId, dir);
             newCost = _distWeight*(newCurDist + newEstDist + 0*newLineDist) + (1-_distWeight)*newCongest;
             if (stepNode->status() == GNodeStatus::Init) {
                 // cerr << stepNode << ": Init" << endl;
@@ -61,7 +61,7 @@ bool AStarRouter::route() {
                 }
             }
             // cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), cost = " << stepNode->cost() << ", address = " << stepNode << endl;
-            cerr << ", cost = " << stepNode->cost() << endl;
+            // cerr << ", cost = " << stepNode->cost() << endl;
             return false;
         }
         return false;
@@ -71,8 +71,8 @@ bool AStarRouter::route() {
     while (!Q.empty()) {
         GNode* node = *Q.begin();
         Q.erase(Q.begin());
-        cerr << "node = (" << node->xId() << ", " << node->yId() << "), ";
-        cerr << "node->cost() = " << node->cost() << endl;
+        // cerr << "node = (" << node->xId() << ", " << node->yId() << "), ";
+        // cerr << "node->cost() = " << node->cost() << endl;
         node->setStatus(GNodeStatus::InPath);
         if (legal(node->xId(), node->yId()+1)) {
             if (step(node, node->xId(), node->yId()+1, Direction::Up)) return true;
@@ -134,7 +134,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     // double length = _exactLength * _gridWidth;
     // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
     _exactWidth = ceil(_lbWidth/_gridWidth);
-    cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
+    // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
 
     // around the ending grid
     for (int xId = _tPos.first - floor(_exactWidth/2.0); xId <= _tPos.first + floor(_exactWidth/2.0); ++ xId) {
@@ -149,7 +149,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     // around the path
     node = _vGNode[_tPos.first][_tPos.second];
     while(node->parent() != node) {
-        cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
+        // cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
         // vector<Grid*> gg;
         // if (node->parent()->xId() == 21 && node->parent()->yId() ==  58) cerr << gg[2] << endl;
         if (node->parent()->xId() == node->xId()+1 && node->parent()->yId() == node->yId()) {   // Right

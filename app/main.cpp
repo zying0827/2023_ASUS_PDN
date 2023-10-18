@@ -40,13 +40,13 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
 
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 3.0);
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 1.0);
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 5.0);
     DB db(plot);
     Parser parser(fin, db, plot);
     // parser.parse();
     // NetworkMgr mgr(db, plot);
-
+    
     // replace this line with a real parser function
     parser.testInitialize(boardWidth, boardHeight, gridWidth);
 

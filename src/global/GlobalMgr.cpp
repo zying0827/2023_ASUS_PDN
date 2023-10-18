@@ -2,6 +2,8 @@
 #include "LayerILP.h"
 #include "VoltEigen.h"
 #include "FlowLP.h"
+#include "AddCapacity.h"
+#include <utility>
 
 // public functions
 
@@ -127,7 +129,7 @@ void GlobalMgr::buildOASG() {
 }
 
 void GlobalMgr::plotOASG() {
-    // _plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
+    //_plot.startPlot(_db.boardWidth()*_db.numLayers(), _db.boardHeight());
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
@@ -507,24 +509,112 @@ void GlobalMgr::currentDistribution() {
     // set capacity constraints
     // TODO for Tsai and Huang:
     // for each layer, for each neighboring OASGEdges,
+    
+    
+    //search each layer                                                                           
+    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+        cout << "LAYER :" << layId << endl << endl;
+        //search each net
+        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
+            //search each edge
+            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+                
+                pair<double, double> ratio;
+                pair<bool, bool> right;
+                double width;
+                
+                //compare other net edge
+                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
+                    //make sure to compare different net
+                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+    
+                    //    BuildCapacityConstraint(e1,e2,solver);
+                        if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
+                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
+                                         ratio, right, width))
+                            solver.addCapacityConstraints(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                        
+                    }   
+                } 
+
+                // obstacle constraint
+                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+                   
+                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+                    pair<double, double> S2, T2;
+                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
+                            // get the edge coordinates
+                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
+                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                        
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+
+                        }
+                    }
+                }
+
+                // board cnstraint
+                // bottom
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(_db.boardWidth(), 0),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // left
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(0, _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // top
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, _db.boardHeight()),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+                // right
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(_db.boardWidth(), 0),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    solver.addCapacityConstraints(e1, right.first, ratio.first, width);
+            }
+        }  
+    }
+    
+    
     // use solver.addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width)
     // to add their capacity constraints
-
+    
+    /*
     // layer0
+    
     solver.addCapacityConstraints(_rGraph.vOASGEdge(24), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(30), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(30), true, 1, _rGraph.vOASGEdge(36), false, 1, 150);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(36), true, 1, 80);
     // layer1
     solver.addCapacityConstraints(_rGraph.vOASGEdge(25), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(31), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(31), true, 1, _rGraph.vOASGEdge(43), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(24), true, 1, _rGraph.vOASGEdge(31), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(31), true, 1, _rGraph.vOASGEdge(43), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(43), true, 1, 80);
     //layer2
     solver.addCapacityConstraints(_rGraph.vOASGEdge(27), false, 1, 80);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(27), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(33), false, 1, 0);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(33), true, 1, _rGraph.vOASGEdge(44), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(33), true, 1, _rGraph.vOASGEdge(44), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(44), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(48), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(48), true, 1, 0);
@@ -532,14 +622,14 @@ void GlobalMgr::currentDistribution() {
     solver.addCapacityConstraints(_rGraph.vOASGEdge(46), true, 1, 80);
     // layer3
     solver.addCapacityConstraints(_rGraph.vOASGEdge(29), false, 1, 80);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(29), true, 1, _rGraph.vOASGEdge(35), false, 1, 100);
-    solver.addCapacityConstraints(_rGraph.vOASGEdge(35), true, 1, _rGraph.vOASGEdge(45), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(29), true, 1, _rGraph.vOASGEdge(35), false, 1, 100);
+    //solver.addCapacityConstraints(_rGraph.vOASGEdge(35), true, 1, _rGraph.vOASGEdge(45), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(45), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(49), false, 1, 100);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(49), true, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), false, 1, 0);
     solver.addCapacityConstraints(_rGraph.vOASGEdge(47), true, 1, 80);
-
+    */
     // solve the MCFP formulation and collect the result
     solver.solve();
     solver.collectResult();
