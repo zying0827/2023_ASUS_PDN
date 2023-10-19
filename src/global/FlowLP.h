@@ -21,11 +21,17 @@ class FlowLP {
         void solve();
         void collectResult();
         void printResult();
+        void solveRelaxed();
+        void collectRelaxedResult();
+        void printRelaxedResult();
+
+        int numCapConstrs() const { return _numCapConstrs; }
 
     private:
         RGraph& _rGraph;
         GRBEnv _env;
         GRBModel _model;
+        GRBModel* _modelRelaxed;
         // gurobi variables
         GRBVar*** _vPlaneLeftFlow;   // flows on the left of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
         GRBVar*** _vPlaneRightFlow;  // flows on the right of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]

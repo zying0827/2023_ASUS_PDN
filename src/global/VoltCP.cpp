@@ -41,6 +41,7 @@ VoltCP::VoltCP(DB& db, RGraph& rGraph) : _model(_env), _db(db), _rGraph(rGraph) 
 }
 
 void VoltCP::setVoltConstraints(double threshold) {
+    _model.set(GRB_IntParam_NonConvex, 2);
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
@@ -57,7 +58,7 @@ void VoltCP::setVoltConstraints(double threshold) {
                 } else {
                     tVolt += edge->tNode()->voltage();
                 }
-                _model.addConstr((sVolt - tVolt) * _vPEdgeInV[netId][layId][pEdgeId] == 1);
+                _model.addQConstr((sVolt - tVolt) * _vPEdgeInV[netId][layId][pEdgeId] == 1);
                 _model.addConstr(sVolt - tVolt >= threshold);
             }
         }
@@ -77,7 +78,7 @@ void VoltCP::setVoltConstraints(double threshold) {
                     } else {
                         tVolt += edge->tNode()->voltage();
                     }
-                    _model.addConstr((sVolt - tVolt) * _vVEdgeInV[netId][layPairId][vEdgeId] == 1);
+                    _model.addQConstr((sVolt - tVolt) * _vVEdgeInV[netId][layPairId][vEdgeId] == 1);
                     _model.addConstr(sVolt - tVolt >= threshold);
                 }
             }
@@ -155,16 +156,18 @@ void VoltCP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, do
     } else {
         e1Width += _vPEdgeInV[e1->netId()][e1->layId()][e1->typeEdgeId()] * e1->currentLeft() * widthWeight1 * ratio1;
     }
-    _model.addConstr(e1Width * 1E3 <= width, "capacity_" + to_string(_numCapConstrs));
+    _model.addConstr(e1Width * 1E3 <= width, "single_capacity_" + to_string(_numCapConstrs));
     // _model.update();
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
-    _numCapConstrs ++;
+    // _numCapConstrs ++;
 }
 
 void VoltCP::relaxCapacityConstraints(vector<double> vLambda) {
     assert(vLambda.size() == _numCapConstrs);
+    _model.update();
+    _modelRelaxed = new GRBModel(_model);
     for (size_t capId = 0; capId < _numCapConstrs; ++ capId) {
-        const GRBConstr& c = _model.getConstrByName("capacity_" + to_string(capId));
+        const GRBConstr& c = _modelRelaxed->getConstrByName("capacity_" + to_string(capId));
         // char sense = c->get ( GRB_CharAttr_Sense );
         // if ( sense != '>') {
         //     double coef = -1.0;
@@ -175,7 +178,7 @@ void VoltCP::relaxCapacityConstraints(vector<double> vLambda) {
         //     _model.addVar (0.0 , GRB_INFINITY , 1.0 , GRB_CONTINUOUS , 1 ,& c , & coef , " ArtP_ " + c-> get ( GRB_StringAttr_ConstrName ));
         // }
         double coef = -1.0;
-        _model.addVar(0.0 , GRB_INFINITY , vLambda[capId] , GRB_CONTINUOUS, 1, &c, &coef , " lambda_ " + c.get ( GRB_StringAttr_ConstrName ));
+        _modelRelaxed->addVar(0.0 , GRB_INFINITY , vLambda[capId] , GRB_CONTINUOUS, 1, &c, &coef , "lambda_" + c.get ( GRB_StringAttr_ConstrName ));
     }
 }
 
@@ -243,3 +246,58 @@ void VoltCP::collectResult(){
 //     // cerr << _model. << endl;
 //     // _model.printQuality();
 // }
+
+void VoltCP::solveRelaxed() {
+    _modelRelaxed->optimize();
+}
+
+void VoltCP::collectRelaxedResult() {
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        // collect voltage results
+        for(size_t netId = 0; netId < _db.numNets(); ++ netId) {
+            for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+                _rGraph.vNPortOASGNode(netId, nPortNodeId)->setVoltage( _modelRelaxed->getVarByName("V_n" + to_string(netId) + "_i_" + to_string(nPortNodeId)).get(GRB_DoubleAttr_X) );
+            }
+        }
+        // collect width results for horizontal flows
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                // cerr << "vPEdge[" << netId << "][" << layId << "][" << pEdgeId << "]: ";
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                double widthWeightRight = (e->length() * e->currentRight()) / (_db.vMetalLayer(e->layId())->conductivity() * _db.vMetalLayer(e->layId())->thickness());
+                double widthWeightLeft = (e->length() * e->currentLeft()) / (_db.vMetalLayer(e->layId())->conductivity() * _db.vMetalLayer(e->layId())->thickness());
+                double VoltInV = _modelRelaxed->getVarByName("PIV_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId)).get(GRB_DoubleAttr_X);
+                _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(VoltInV * widthWeightLeft * 1E3);
+                _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(VoltInV * widthWeightRight * 1E3);
+            }
+        }
+        // collect area results for vertical flows
+        for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+            double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X) / _db.vMetalLayer(0)->conductivity();
+            for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
+                // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
+                if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
+                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
+                }
+            }
+        }
+    }
+}
+
+void VoltCP::printRelaxedResult() {
+    double violation = 0;
+    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+        violation += _modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X);
+    }
+    cerr << "violation = " << violation << endl;
+    double planeArea = 0;
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                planeArea += e->length() * (e->widthLeft() + e->widthRight());
+            }
+        }
+    }
+    cerr << "planeArea = " << planeArea << endl;
+}

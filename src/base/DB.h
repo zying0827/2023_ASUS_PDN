@@ -113,7 +113,7 @@ class DB {
         }
 
         void addCircleVia(double x, double y, size_t netId, ViaType type) {
-            Shape* circle = new Circle(x, y, 16, _plot);
+            Shape* circle = new Circle(x, y, 4, _plot);
             Via* via = new Via(netId, type, circle);
             _vVia.push_back(via);
         }

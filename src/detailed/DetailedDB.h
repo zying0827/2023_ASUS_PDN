@@ -39,6 +39,8 @@ class Grid {
         int _congestCur;    // current congestion cost
         int _congestHis;    // history congestion cost
         vector<size_t> _vNetId;
+        int _xId;
+        int _yId;
 };
 
 enum GNodeStatus {

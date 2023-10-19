@@ -19,7 +19,7 @@ void Parser::testInitialize(double boardWidth, double boardHeight, double gridWi
     _db.initNet(3);
 
     ViaCluster* viaCstr;
-    double currentBase = 500;
+    double currentBase = 200;
 
     // _vNet[0]
     _db.addCircleVia(2*gridWidth, 2*gridWidth, 0, ViaType::Source);
@@ -27,44 +27,44 @@ void Parser::testInitialize(double boardWidth, double boardHeight, double gridWi
     _db.addCircleVia(2*gridWidth, 3*gridWidth, 0, ViaType::Source);
     _db.addCircleVia(3*gridWidth, 3*gridWidth, 0, ViaType::Source);
     viaCstr = _db.clusterVia({0,1,2,3});
-    _db.addPort(5.0, currentBase, viaCstr);
+    _db.addPort(1.7, currentBase, viaCstr);
     _db.addCircleVia(5*gridWidth, 14*gridWidth, 0, ViaType::Target);
     _db.addCircleVia(6*gridWidth, 14*gridWidth, 0, ViaType::Target);
     _db.addCircleVia(5*gridWidth, 15*gridWidth, 0, ViaType::Target);
     _db.addCircleVia(6*gridWidth, 15*gridWidth, 0, ViaType::Target);
     viaCstr = _db.clusterVia({4,5,6,7});
-    _db.addPort(4.5, currentBase, viaCstr);
+    _db.addPort(1.65, currentBase, viaCstr);
     // _vNet[1]
     _db.addCircleVia(6*gridWidth, 2*gridWidth, 1, ViaType::Source);
     _db.addCircleVia(7*gridWidth, 2*gridWidth, 1, ViaType::Source);
     _db.addCircleVia(6*gridWidth, 3*gridWidth, 1, ViaType::Source);
     _db.addCircleVia(7*gridWidth, 3*gridWidth, 1, ViaType::Source);
     viaCstr = _db.clusterVia({8,9,10,11});
-    _db.addPort(5.0, 2*currentBase, viaCstr);
+    _db.addPort(1.7, 2*currentBase, viaCstr);
     _db.addCircleVia(7*gridWidth, 12*gridWidth, 1, ViaType::Target);
     _db.addCircleVia(8*gridWidth, 12*gridWidth, 1, ViaType::Target);
     viaCstr = _db.clusterVia({12,13});
-    _db.addPort(4.5, currentBase, viaCstr);
+    _db.addPort(1.65, currentBase, viaCstr);
     _db.addCircleVia(12*gridWidth, 12*gridWidth, 1, ViaType::Target);
     _db.addCircleVia(13*gridWidth, 12*gridWidth, 1, ViaType::Target);
     viaCstr = _db.clusterVia({14,15});
-    _db.addPort(4.4, currentBase, viaCstr);
+    _db.addPort(1.5, currentBase, viaCstr);
     // _vNet[2]
     _db.addCircleVia(10*gridWidth, 2*gridWidth, 2, ViaType::Source);
     _db.addCircleVia(11*gridWidth, 2*gridWidth, 2, ViaType::Source);
     _db.addCircleVia(10*gridWidth, 3*gridWidth, 2, ViaType::Source);
     _db.addCircleVia(11*gridWidth, 3*gridWidth, 2, ViaType::Source);
     viaCstr = _db.clusterVia({16,17,18,19});
-    _db.addPort(5.0, 2*currentBase, viaCstr);
+    _db.addPort(1.7, 2*currentBase, viaCstr);
     _db.addCircleVia(10*gridWidth, 11*gridWidth, 2, ViaType::Target);
     _db.addCircleVia(10*gridWidth, 12*gridWidth, 2, ViaType::Target);
     viaCstr = _db.clusterVia({20,21});
-    _db.addPort(4.5, currentBase, viaCstr);
+    _db.addPort(1.65, currentBase, viaCstr);
     _db.addCircleVia(9*gridWidth, 17*gridWidth, 2, ViaType::Target);
     _db.addCircleVia(10*gridWidth, 17*gridWidth, 2, ViaType::Target);
     _db.addCircleVia(11*gridWidth, 17*gridWidth, 2, ViaType::Target);
     viaCstr = _db.clusterVia({22,23,24});
-    _db.addPort(4.4, currentBase, viaCstr);
+    _db.addPort(1.5, currentBase, viaCstr);
 
     // Obstacle
     _db.addRectObstacle(1, 8*gridWidth, 12*gridWidth, 14*gridWidth, 15*gridWidth);

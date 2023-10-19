@@ -22,6 +22,7 @@ class GlobalMgr {
         void layerDistribution();
         void buildTestNCOASG();
         void plotNCOASG();
+        void voltCurrOpt();
         void voltageAssignment();
         void currentDistribution();
         void plotCurrentPaths();

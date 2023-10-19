@@ -20,12 +20,16 @@ class VoltCP {
         void solve();
         void collectResult();
         // void printResult();
+        void solveRelaxed();
+        void collectRelaxedResult();
+        void printRelaxedResult();
 
     private:
         DB& _db;
         RGraph& _rGraph;
         GRBEnv _env;
         GRBModel _model;
+        GRBModel* _modelRelaxed;
         GRBVar** _vVoltage;    // non-port node voltage, index = [netId] [nPortnodeId]
         GRBVar*** _vPEdgeInV;   // inverse of the (plane) edge voltage difference, index = [netId] [layPairId] [pEdgeId]
         GRBVar*** _vVEdgeInV;   // inverse of the (via) edge voltage difference, index = [netId] [layPairId] [vEdgeId]

@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
     //     cerr << "Error opening output file" << endl;
     // }
 
-    double gridWidth = 40;
+    double gridWidth = 4;
     double boardWidth = 15*gridWidth;
     double boardHeight = 19*gridWidth;
     size_t numLayers = 4;
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
 
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 1.0);
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 5.0);
     DB db(plot);
     Parser parser(fin, db, plot);
@@ -64,18 +64,19 @@ int main(int argc, char* argv[]){
     // globalMgr.plotNCOASG();
     globalMgr.voltageAssignment();
     try {
-        globalMgr.currentDistribution();
+        // globalMgr.currentDistribution();
+        globalMgr.voltCurrOpt();
     } catch (GRBException e) {
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
 
-    DetailedMgr detailedMgr(db, plot, 10);
-    detailedMgr.initGridMap();
+    // DetailedMgr detailedMgr(db, plot, 2);
+    // detailedMgr.initGridMap();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.naiveAStar();
     // detailedMgr.plotGridMap();
-    detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
 
     globalMgr.plotDB();
 
