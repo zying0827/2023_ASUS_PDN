@@ -19,7 +19,7 @@ void Parser::testInitialize(double boardWidth, double boardHeight, double gridWi
     _db.initNet(3);
 
     ViaCluster* viaCstr;
-    double currentBase = 200;
+    double currentBase = 160;
 
     // _vNet[0]
     _db.addCircleVia(2*gridWidth, 2*gridWidth, 0, ViaType::Source);

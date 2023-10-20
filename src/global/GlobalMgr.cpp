@@ -3,6 +3,7 @@
 #include "VoltEigen.h"
 #include "FlowLP.h"
 #include "VoltCP.h"
+#include "VoltSLP.h"
 #include "AddCapacity.h"
 #include <utility>
 
@@ -447,7 +448,8 @@ void GlobalMgr::voltCurrOpt() {
     }
 
     FlowLP* currentSolver;
-    VoltCP* voltageSolver;
+    // VoltCP* voltageSolver;
+    VoltSLP* voltageSolver;
     vector<double> vLambda(vCapConstr.size(), 2.0);
 
     for (size_t ivIter = 0; ivIter < 1; ++ ivIter) {
@@ -474,32 +476,69 @@ void GlobalMgr::voltCurrOpt() {
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
             for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
-                vLambda[capId] *= vLambda[capId];
+                // vLambda[capId] *= vLambda[capId];
+                vLambda[capId] *= 2;
             }
         }
 
         // voltage optimization
-        voltageSolver = new VoltCP(_db, _rGraph);
-        voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
-        voltageSolver->setVoltConstraints(1E-10);
-        for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
-            CapConstr cap = vCapConstr[capId];
-            voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+        vector< vector< double > > vOldVoltage;
+        for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+            vector<double> temp;
+            for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+                temp.push_back(_rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage());
+                // vOldVoltage[netId][nPortNodeId] = _rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage();
+            }
+            vOldVoltage.push_back(temp);
         }
-        for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
-            SingleCapConstr sglCap = vSglCapConstr[sglCapId];
-            voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
-        }
-        for (size_t vIter = 0; vIter < 1; ++ vIter) {
+        for (size_t vIter = 0; vIter < 10; ++ vIter) {
+            voltageSolver = new VoltSLP(_db, _rGraph, vOldVoltage);
+            voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
+            voltageSolver->setVoltConstraints(1E-10);
+            voltageSolver->setLimitConstraint(0.5);
+            for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+                CapConstr cap = vCapConstr[capId];
+                voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+            }
+            for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
+                SingleCapConstr sglCap = vSglCapConstr[sglCapId];
+                voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
+            }
             voltageSolver->relaxCapacityConstraints(vLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
-            // for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
-            //     vLambda[capId] *= vLambda[capId];
-            // }
+            voltageSolver->collectRelaxedTempVoltage();
+            vOldVoltage = voltageSolver->vNewVoltage();
         }
+        // voltageSolver->collectRelaxedResult();
+        // // cerr << "vIter = " << vIter << endl;
+        // voltageSolver->printRelaxedResult();
+        
+
+        // voltage optimization
+        // voltageSolver = new VoltCP(_db, _rGraph);
+        // voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
+        // voltageSolver->setVoltConstraints(1E-10);
+        // for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+        //     CapConstr cap = vCapConstr[capId];
+        //     voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+        // }
+        // for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
+        //     SingleCapConstr sglCap = vSglCapConstr[sglCapId];
+        //     voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
+        // }
+        // for (size_t vIter = 0; vIter < 1; ++ vIter) {
+        //     voltageSolver->relaxCapacityConstraints(vLambda);
+        //     voltageSolver->solveRelaxed();
+        //     voltageSolver->collectRelaxedResult();
+        //     cerr << "vIter = " << vIter << endl;
+        //     voltageSolver->printRelaxedResult();
+        //     // for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+        //     //     vLambda[capId] *= vLambda[capId];
+        //     // }
+        // }
 
     }
 

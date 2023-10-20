@@ -70,11 +70,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
                     // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
                     double cost = costNum / costDen;
                     // cerr << "cost = " << cost << endl;
-                    _model.addConstr(viaWeight * cost * _vViaFlow[netId][layPairId][vEdgeId] <= _vMaxViaCost[netId][vEdgeId], 
+                    _model.addConstr(cost * _vViaFlow[netId][layPairId][vEdgeId] <= _vMaxViaCost[netId][vEdgeId], 
                                     "max_via_cost_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId));
                 }
             }
-            obj += _vMaxViaCost[netId][vEdgeId];
+            obj += viaWeight * _vMaxViaCost[netId][vEdgeId];
         }
     }
     // cerr << "_model.setObjective(obj, GRB_MINIMIZE)" << endl;
