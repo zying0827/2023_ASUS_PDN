@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <gurobi_c++.h>
 #include "base/Include.h"
 #include "base/DB.h"
@@ -72,11 +73,17 @@ int main(int argc, char* argv[]){
     }
     globalMgr.plotCurrentPaths();
 
-    // DetailedMgr detailedMgr(db, plot, 2);
-    // detailedMgr.initGridMap();
-    // // detailedMgr.plotGridMap();
-    // detailedMgr.naiveAStar();
+    DetailedMgr detailedMgr(db, plot, 2);
+    detailedMgr.initGridMap();
     // detailedMgr.plotGridMap();
+    detailedMgr.naiveAStar();
+    detailedMgr.plotGridMap();
+
+    printf("\n==================== print ===================\n");
+    detailedMgr.print();
+
+    printf("\n==================== buildMtx ===================\n");
+    detailedMgr.buildMtx();
 
     globalMgr.plotDB();
 

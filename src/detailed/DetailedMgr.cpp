@@ -1,4 +1,10 @@
 #include "DetailedMgr.h"
+#include "DetailedDB.h"
+#include "Shape.h"
+#include <cstddef>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 void DetailedMgr::initGridMap() {
     auto occupy = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
@@ -213,4 +219,88 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
         _vNetGrid[netId][layId][gridId]->decCongestCur();
     }
     _vNetGrid[netId][layId].clear();
+}
+
+void DetailedMgr::buildMtx() {
+    // https://i.imgur.com/rIwlXJQ.png
+    // return an impedance matrix for each net
+    // number of nodes: \sum_{layId=0}^{_vNetGrid[netID].size()} _vNetGrid[netID][layId].size()
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        printf("netID: %d\n", netId);
+        
+        size_t numNode = 0;
+        map< tuple<size_t, size_t, size_t>, size_t > getID; // i = getID[layID, xId, yId] = ith node
+        for (size_t layId = 0; layId < _vNetGrid[netId].size(); ++ layId) {
+            for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
+                getID[make_tuple(layId, _vNetGrid[netId][layId][gridId]->xId(), _vNetGrid[netId][layId][gridId]->yId())] = numNode;
+                numNode++;
+            }
+        }
+        printf("numNode: %d\n", numNode);
+
+        // initialize
+        vector< vector<double > > mtx;
+        for(int i=0; i<numNode; i++) {
+            mtx.push_back(vector<double>());
+            for(int j=0; j<numNode; j++)
+                mtx[i].push_back(0.0);
+        }
+
+        for (size_t layId = 0; layId < _vNetGrid[netId].size(); ++ layId) {
+            for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
+                Grid* grid_i = _vNetGrid[netId][layId][gridId];
+                size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
+            //    printf("x: %-4d, y: %-4d, lay: %-4d, ID: %-4d\n", i->xId(), i->yId(), layId, getID[make_tuple(layId, i->xId(), i->yId())]);
+            
+                double g2g_condutance = 1.0;
+                double via_condutance = 2.0;
+
+                // check left
+                if(grid_i->xId() > 0 && _vGrid[layId][grid_i->xId()-1][grid_i->yId()]->hasNet(netId)) {
+                    mtx[node_id][node_id] += g2g_condutance;
+                    mtx[node_id][getID[make_tuple(layId, grid_i->xId()-1, grid_i->yId())]] -= g2g_condutance;
+                }
+
+                // check right
+                if(grid_i->xId() < _numXs-1 && _vGrid[layId][grid_i->xId()+1][grid_i->yId()]->hasNet(netId)) {
+                    mtx[node_id][node_id] += g2g_condutance;
+                    mtx[node_id][getID[make_tuple(layId, grid_i->xId()+1, grid_i->yId())]] -= g2g_condutance;
+                }
+                
+                // check down
+                if(grid_i->yId() > 0 && _vGrid[layId][grid_i->xId()][grid_i->yId()-1]->hasNet(netId)) {
+                    mtx[node_id][node_id] += g2g_condutance;
+                    mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()-1)]] -= g2g_condutance;
+                }
+                
+                // check up
+                if(grid_i->yId() < _numYs-1 && _vGrid[layId][grid_i->xId()][grid_i->yId()+1]->hasNet(netId)) {
+                    mtx[node_id][node_id] += g2g_condutance;
+                    mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()+1)]] -= g2g_condutance;
+                }
+
+                // check top layer
+                if(layId > 0 && _vGrid[layId-1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
+                    mtx[node_id][node_id] += via_condutance;
+                    mtx[node_id][getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                }
+
+                // check bottom layer
+                if(layId < _db.numLayers()-1 && _vGrid[layId+1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
+                    mtx[node_id][node_id] += via_condutance;
+                    mtx[node_id][getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                }
+            }
+        }
+
+        for(int i=0; i<20; i++) {
+            for(int j=0; j<20; j++)
+                printf("%4.1f ", mtx[i][j]);
+            printf("\n");
+        }
+    }
+}
+
+double DetailedMgr::getResistance(Grid* g1, Grid* g2) {
+    return 0.0;
 }
