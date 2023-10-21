@@ -17,6 +17,14 @@ class GlobalMgr {
         void plotDB();
         void buildTestOASG();
         void buildOASG();
+
+        bool isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle);
+        bool onSegment(OASGNode* p, OASGNode* q, OASGNode* r);
+        int orientation(OASGNode* p, OASGNode* q, OASGNode* r);
+        bool doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* q2);
+        void connectWithObstacle(int netId, int layerId,OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle);
+        bool checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<vector<OASGNode*>>> viaOASGNodes);
+
         void plotOASG();
         void plotRGraph();
         void layerDistribution();
