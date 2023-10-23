@@ -285,6 +285,11 @@ bool GlobalMgr::checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, 
     return edgeTouchVia;
 }
 
+
+//Bug 1: Now obstacle are creating OASG nodes with fixed number(4 for rectangle)
+//Therefore, there will be bug when encountering polygon with number of vertices greater than 4.
+//Bug 2: Now there's only one obstacle, when we have more than 1, we will create redundant obstacle loop for other obstacles that is not connected.
+
 void GlobalMgr::buildOASG() {
     // TODO for Lo:
     // for each layer, for each net, use addOASGNode() and addOASGEdge() to construct a crossing OASG
@@ -410,13 +415,6 @@ void GlobalMgr::buildOASG() {
                     }
                 }
             }
-            //先把Obs 的四邊都加上ObsEdge
-            for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
-                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
-                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
-                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
-            }
 
             // int numScanNode = 1 + _db.vNet(netId)->numTPorts() + (4 * _db.numObstacles(layerId));
             int numScanNode = 1 + _db.vNet(netId)->numTPorts(); 
@@ -438,6 +436,13 @@ void GlobalMgr::buildOASG() {
                         double curY = traverseNodes[i]-> y();
 
                             if (isSegmentIntersectingWithObstacles(_rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes)){
+                                //先把Obs 的四邊都加上ObsEdge
+                                for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
+                                }
                                 connectWithObstacle(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes);
                                 thisNetTouchObsThisLayer = true;
                             }
@@ -463,6 +468,13 @@ void GlobalMgr::buildOASG() {
                         double curY = traverseNodes[i]-> y();
                         if(curX >= scanX && curY >= scanY){
                             if (isSegmentIntersectingWithObstacles(traverseNodes[i], traverseNodes[i+1], obsNodes)){
+                                //先把Obs 的四邊都加上ObsEdge
+                                for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
+                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
+                                }
                                 connectWithObstacle(netId, layerId, traverseNodes[i], traverseNodes[i+1], obsNodes);
                                 thisNetTouchObsThisLayer = true;
                             }
@@ -477,6 +489,13 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
+                                    //先把Obs 的四邊都加上ObsEdge
+                                    for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
+                                    }
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
@@ -510,6 +529,13 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
+                                    //先把Obs 的四邊都加上ObsEdge
+                                    for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
+                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
+                                    }
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
