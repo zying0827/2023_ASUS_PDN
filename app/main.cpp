@@ -56,21 +56,22 @@ int main(int argc, char* argv[]){
     
 
     // replace this line with a real OASG building function
-    globalMgr.buildTestOASG();
-    // globalMgr.plotOASG();
-    globalMgr.layerDistribution();
-    // globalMgr.plotRGraph();
-    globalMgr.buildTestNCOASG();
-    // globalMgr.plotNCOASG();
-    globalMgr.voltageAssignment();
-    try {
-        // globalMgr.currentDistribution();
-        globalMgr.voltCurrOpt();
-    } catch (GRBException e) {
-        cerr << "Error = " << e.getErrorCode() << endl;
-        cerr << e.getMessage() << endl;
-    }
-    globalMgr.plotCurrentPaths();
+    // globalMgr.buildTestOASG();
+    globalMgr.buildOASG();
+    globalMgr.plotOASG();
+    // globalMgr.layerDistribution();
+    // // globalMgr.plotRGraph();
+    // globalMgr.buildTestNCOASG();
+    // // globalMgr.plotNCOASG();
+    // globalMgr.voltageAssignment();
+    // try {
+    //     // globalMgr.currentDistribution();
+    //     globalMgr.voltCurrOpt();
+    // } catch (GRBException e) {
+    //     cerr << "Error = " << e.getErrorCode() << endl;
+    //     cerr << e.getMessage() << endl;
+    // }
+    // globalMgr.plotCurrentPaths();
 
     // DetailedMgr detailedMgr(db, plot, 2);
     // detailedMgr.initGridMap();

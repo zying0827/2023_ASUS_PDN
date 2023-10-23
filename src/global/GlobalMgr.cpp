@@ -6,8 +6,11 @@
 #include "VoltSLP.h"
 #include "AddCapacity.h"
 #include <utility>
-
+#include <vector>
+#include <cmath>
+#include <algorithm>
 // public functions
+using namespace std;
 
 void GlobalMgr::plotDB() {
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
@@ -25,6 +28,7 @@ void GlobalMgr::plotDB() {
     }
     
 }
+
 
 void GlobalMgr::buildTestOASG() {
     cerr << "buildTestOASG..." << endl;
@@ -123,11 +127,414 @@ void GlobalMgr::buildTestOASG() {
     _rGraph.addOASGEdge(2, 3, _rGraph.targetOASGNode(2,0,3), _rGraph.targetOASGNode(2,1,3), false);
 }
 
+// Given three collinear points p, q, r, the function checks if 
+// point q lies on line segment 'pr' 
+bool GlobalMgr::onSegment(OASGNode* p, OASGNode* q, OASGNode* r){
+    if (q->x() <= max(p->x(), r->x()) && q->x() >= min(p->x(), r->x()) && 
+        q->y() <= max(p->y(), r->y()) && q->y() >= min(p->y(), r->y())) 
+       return true; 
+  
+    return false; 
+}
+
+// To find orientation of ordered triplet (p, q, r). 
+// The function returns following values 
+// 0 --> p, q and r are collinear 
+// 1 --> Clockwise 
+// 2 --> Counterclockwise 
+int GlobalMgr::orientation(OASGNode* p, OASGNode* q, OASGNode* r){
+    // See https://www.geeksforgeeks.org/orientation-3-ordered-points/ 
+    // for details of below formula. 
+    int val = (q->y() - p->y()) * (r->x() - q->x()) - 
+              (q->x() - p->x()) * (r->y() - q->y()); 
+  
+    if (val == 0) return 0;  // collinear 
+  
+    return (val > 0)? 1: 2; // clock or counterclock wise 
+}
+// The main function that returns true if line segment 'p1q1' 
+// and 'p2q2' intersect. 
+bool GlobalMgr::doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* q2){
+    // Find the four orientations needed for general and 
+    // special cases 
+    int o1 = orientation(p1, q1, p2); 
+    int o2 = orientation(p1, q1, q2); 
+    int o3 = orientation(p2, q2, p1); 
+    int o4 = orientation(p2, q2, q1); 
+  
+    // General case 
+    if (o1 != o2 && o3 != o4) 
+        return true; 
+  
+    // Special Cases 
+    // p1, q1 and p2 are collinear and p2 lies on segment p1q1 
+    if (o1 == 0 && onSegment(p1, p2, q1)) return true; 
+  
+    // p1, q1 and q2 are collinear and q2 lies on segment p1q1 
+    if (o2 == 0 && onSegment(p1, q2, q1)) return true; 
+  
+    // p2, q2 and p1 are collinear and p1 lies on segment p2q2 
+    if (o3 == 0 && onSegment(p2, p1, q2)) return true; 
+  
+     // p2, q2 and q1 are collinear and q1 lies on segment p2q2 
+    if (o4 == 0 && onSegment(p2, q1, q2)) return true; 
+  
+    return false; // Doesn't fall in any of the above cases 
+}
+
+bool GlobalMgr::isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle){
+    int numObs = obstacle.size();
+    for(int i = 0; i< numObs;++i){
+        int numVertices = obstacle[0].size();
+        for (int j = 0; j< numVertices-1;++j){
+            if(doIntersect(a, b, obstacle[i][j], obstacle[i][j+1])){
+                return true;
+            }
+        }
+        if(doIntersect(a, b, obstacle[i][0], obstacle[i][numVertices-1])) return true;
+    }
+    return false;
+}
+
+void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle){
+    
+    // 紀錄這兩個點跟哪兩個
+    
+    int numObs = obstacle.size();
+    
+    bool obs1IsTested = false;
+
+    
+    bool inTouchWithThisObs = false;
+    for(int i = 0; i< numObs;++i){
+        inTouchWithThisObs = false;
+        OASGNode * obs1A;
+        OASGNode * obs1B;
+        OASGNode * obs2A;
+        OASGNode * obs2B;
+
+        int numVertices = obstacle[i].size();
+        
+        for (int j = 0; j< numVertices; j++){
+            
+            if(j == (numVertices-1)){
+                if(!obs1IsTested && doIntersect(a, b, obstacle[i][0], obstacle[i][numVertices-1])){
+                    inTouchWithThisObs = true;
+                    obs1A = obstacle[i][0];
+                    obs1B = obstacle[i][numVertices-1];
+                    obs1IsTested = true;
+                }
+                else if(obs1IsTested && doIntersect(a, b, obstacle[i][0], obstacle[i][numVertices-1])){
+                    inTouchWithThisObs = true;
+                    obs2A = obstacle[i][0];
+                    obs2B = obstacle[i][numVertices-1];
+                }
+            }
+            else{
+                if(!obs1IsTested && doIntersect(a, b, obstacle[i][j], obstacle[i][j+1])){
+                    inTouchWithThisObs = true;
+                    obs1A = obstacle[i][j];
+                    obs1B = obstacle[i][j+1];
+                    obs1IsTested = true;
+                }
+                else if(obs1IsTested && doIntersect(a, b, obstacle[i][j], obstacle[i][j+1])){
+                    inTouchWithThisObs = true;
+                    obs2A = obstacle[i][j];
+                    obs2B = obstacle[i][j+1];
+                }
+            }
+        }
+        
+        if(inTouchWithThisObs ==true){
+            for(int nodeId = 0; nodeId < (obstacle[i].size()-1); ++nodeId){
+                _rGraph.addOASGEdge(netId, layerId, obstacle[i][nodeId], obstacle[i][nodeId+1], false);
+            }
+            _rGraph.addOASGEdge(netId, layerId, obstacle[i][0], obstacle[i][(obstacle[i].size()-1)], false);
+            double scanX = a->x();
+            double scanY = a->y(); 
+            double dis1Aa = sqrt(pow(obs1A->x() - scanX, 2) + pow(obs1A->y() - scanY, 2));
+            double dis1Ba = sqrt(pow(obs1B->x() - scanX, 2) + pow(obs1B->y() - scanY, 2));
+            double dis2Aa = sqrt(pow(obs2A->x() - scanX, 2) + pow(obs2A->y() - scanY, 2));
+            double dis2Ba = sqrt(pow(obs2B->x() - scanX, 2) + pow(obs2B->y() - scanY, 2));
+            double minDis = std::min({dis1Aa , dis2Aa, dis1Ba, dis2Ba}); 
+            if (minDis == dis1Aa || minDis == dis1Ba){
+                _rGraph.addOASGEdge(netId, layerId, a, obs1A, false);
+                _rGraph.addOASGEdge(netId, layerId, a, obs1B, false);
+                _rGraph.addOASGEdge(netId, layerId, b, obs2A, false);
+                _rGraph.addOASGEdge(netId, layerId, b, obs2B, false);
+            }
+            else{
+                _rGraph.addOASGEdge(netId, layerId, b, obs1A, false);
+                _rGraph.addOASGEdge(netId, layerId, b, obs1B, false);
+                _rGraph.addOASGEdge(netId, layerId, a, obs2A, false);
+                _rGraph.addOASGEdge(netId, layerId, a, obs2B, false);
+            }
+        }
+    }
+}
+
+bool GlobalMgr::checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<vector<OASGNode*>>> viaOASGNodes){
+
+
+    bool edgeTouchVia = false;
+    for(int i = 0; i < viaOASGNodes.size();++i){
+        if(netId == i) continue;
+        int numVias = viaOASGNodes[i].size();
+        if(isSegmentIntersectingWithObstacles(a,b,viaOASGNodes[i])){
+
+            connectWithObstacle(netId, layerId, a,b,viaOASGNodes[i]);
+            edgeTouchVia = true;
+        }
+    }    
+    return edgeTouchVia;
+}
+
 void GlobalMgr::buildOASG() {
-    // TODO for Luo:
+    // TODO for Lo:
     // for each layer, for each net, use addOASGNode() and addOASGEdge() to construct a crossing OASG
     // in the later stage, all possible paths from the source to target ports and from target ports to lower-voltage target ports will be searched by DFS
     // so the OASGEdges should point from the source to the target ports or from higher-voltage to lower-voltage target ports all along
+    cout << "########################################\n";
+    cout << "Build OASG Start \n";
+    cout << "########################################\n";
+    
+    //Create viaOASGNodes
+    //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
+    vector<vector<vector<OASGNode*> > > viaOASGNodes;
+    viaOASGNodes.resize(_rGraph.numNets());
+    for(int i = 0; i < _rGraph.numNets(); ++i){
+
+        int viaNodeId = 0;
+        int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
+        vector<vector<OASGNode*>> tempViaOASGNodes;
+        tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
+
+        // Step1: Create Source Via        
+        double minX = 1000000000;
+        double minY = 1000000000;
+        double maxX = -1;
+        double maxY = -1;
+        double tempMinX, tempMinY, tempMaxX, tempMaxY;
+
+        for (int j = 0; j < numSourceVias; ++j ){
+            tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
+            tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
+            tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
+            tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
+            if(tempMinX<minX){
+                minX = tempMinX;
+            }
+            if(tempMinY<minY){
+                minY = tempMinY;
+            }
+            if(tempMaxX>maxX){
+                maxX = tempMaxX;
+            }
+            if(tempMaxY>maxY){
+                maxY = tempMaxY;
+            }
+        }
+
+        tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+        ++viaNodeId ;
+
+        //Secondly, check with the target viaclusters
+        for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
+            minX = 1000000000;
+            minY = 1000000000;
+            maxX = -1;
+            maxY = -1;
+            for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
+                tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
+                tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
+                tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
+                tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
+                if(tempMinX<minX){
+                    minX = tempMinX;
+                }
+                if(tempMinY<minY){
+                    minY = tempMinY;
+                }
+                if(tempMaxX>maxX){
+                    maxX = tempMaxX;
+                }
+                if(tempMaxY>maxY){
+                    maxY = tempMaxY;
+                }
+            }
+
+
+            tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+            ++viaNodeId;
+        }
+
+        viaOASGNodes[i] = tempViaOASGNodes;
+    }    
+
+
+    for (size_t layerId = 0; layerId < _rGraph.numLayers(); ++ layerId){
+        //Step 0: 先把每層的Middle 的OASG Node建完(因為每條Net的OASG Node都不一樣，所以直接包在裡面)
+        //Obs Node的順序是1左下、2右下、3右上、4左上
+        for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId){
+            vector<vector<OASGNode*>> obsNodes;
+
+            bool thisLayerHaveObs = false;
+            bool thisNetTouchObsThisLayer = false;
+
+            if(_db.numObstacles(layerId)>0){
+
+                thisLayerHaveObs = true;
+
+                obsNodes.resize(_db.numObstacles(layerId), vector<OASGNode*>(4, nullptr));
+                for (int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                    double tempX, tempY;
+                    for(int j = 0; j < 4; ++j){
+                        if(j == 0){
+                            tempX =  _db.vObstacle(layerId, obsId)->vShape(0)->minX();
+                            tempY =  _db.vObstacle(layerId, obsId)->vShape(0)->minY();
+                        } 
+                        else if(j == 1){
+                            tempX =  _db.vObstacle(layerId, obsId)->vShape(0)->maxX();
+                            tempY =  _db.vObstacle(layerId, obsId)->vShape(0)->minY();
+                        } 
+                        else if(j == 2){
+                            tempX =  _db.vObstacle(layerId, obsId)->vShape(0)->maxX();
+                            tempY =  _db.vObstacle(layerId, obsId)->vShape(0)->maxY();
+                        }                         else{
+                            tempX =  _db.vObstacle(layerId, obsId)->vShape(0)->minX();
+                            tempY =  _db.vObstacle(layerId, obsId)->vShape(0)->maxY();
+                        } 
+                        obsNodes[obsId][j] = _rGraph.addOASGNode(netId, tempX, tempY, OASGNodeType::MIDDLE);
+                    }
+                }
+            }
+            //先把Obs 的四邊都加上ObsEdge
+            for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][1], false);
+                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][1], obsNodes[obsId][2], false);
+                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][2], obsNodes[obsId][3], false);
+                _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][3], obsNodes[obsId][0], false);
+            }
+
+            // int numScanNode = 1 + _db.vNet(netId)->numTPorts() + (4 * _db.numObstacles(layerId));
+            int numScanNode = 1 + _db.vNet(netId)->numTPorts(); 
+            vector<OASGNode*> traverseNodes;
+            traverseNodes.push_back(_rGraph.sourceOASGNode(netId,layerId));
+            for (int netTPortId = 0; netTPortId < _db.vNet(netId)->numTPorts(); netTPortId++){
+                traverseNodes.push_back(_rGraph.targetOASGNode(netId,netTPortId,layerId));
+            }
+
+            //OASG Source
+            for (size_t currentScanNodeId = 0; currentScanNodeId < numScanNode; ++ currentScanNodeId){
+                // Current Scan Node Id: Source is 0; 1 ~ is target ports
+                if (currentScanNodeId == 0){
+                    double scanX = _rGraph.sourceOASGNode(netId,layerId)->x();
+                    double scanY = _rGraph.sourceOASGNode(netId,layerId)->y();
+
+                    for (int i = 1;i < numScanNode; ++i){
+                        double curX = traverseNodes[i]-> x();
+                        double curY = traverseNodes[i]-> y();
+
+                            if (isSegmentIntersectingWithObstacles(_rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes)){
+                                connectWithObstacle(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes);
+                                thisNetTouchObsThisLayer = true;
+                            }
+                            else {
+                                if(!checkWithVias(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i],viaOASGNodes)){
+                                    _rGraph.addOASGEdge(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], false);
+                                }
+                            }
+                    }
+
+                }
+                
+                //開始處理Target
+                else if(currentScanNodeId > 0 && currentScanNodeId <= _db.vNet(netId)->numTPorts()){
+                    // cout << "Start building for targets" << endl ;
+                    double scanX = traverseNodes[currentScanNodeId]->x();
+                    double scanY = traverseNodes[currentScanNodeId]->y();
+
+                    for (int i = 1;i < numScanNode-1; i++ ){
+                        if(i <= currentScanNodeId) continue;
+
+                        double curX = traverseNodes[i]-> x();
+                        double curY = traverseNodes[i]-> y();
+                        if(curX >= scanX && curY >= scanY){
+                            if (isSegmentIntersectingWithObstacles(traverseNodes[i], traverseNodes[i+1], obsNodes)){
+                                connectWithObstacle(netId, layerId, traverseNodes[i], traverseNodes[i+1], obsNodes);
+                                thisNetTouchObsThisLayer = true;
+                            }
+                            else {
+                                if(!checkWithVias(netId, layerId, traverseNodes[i], traverseNodes[i+1],viaOASGNodes)){
+                                    _rGraph.addOASGEdge(netId, layerId, traverseNodes[i], traverseNodes[i+1], false);
+                                }
+                            }
+                        }
+                        if(i == 1){
+                            curX = traverseNodes[numScanNode-1]-> x();
+                            curY = traverseNodes[numScanNode-1]-> y();
+                            if(curX >= scanX && curY >= scanY){
+                                if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
+                                    connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
+                                    thisNetTouchObsThisLayer = true;
+                                }
+                                else {
+                                    if(!checkWithVias(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1],viaOASGNodes)){
+                                        _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 1;i < numScanNode-1; i++ ){
+                        if(i == currentScanNodeId) continue;
+                        double curX = traverseNodes[i]-> x();
+                        double curY = traverseNodes[i]-> y();
+                        //後面是要判斷他們不是同一個點
+
+                        if(curX >= scanX && curY <= scanY){
+                            if (isSegmentIntersectingWithObstacles(traverseNodes[i], traverseNodes[i+1], obsNodes)){
+                                connectWithObstacle(netId, layerId, traverseNodes[i], traverseNodes[i+1], obsNodes);
+                                thisNetTouchObsThisLayer = true;
+                            }
+                            else {
+                                if(!checkWithVias(netId, layerId,  traverseNodes[i], traverseNodes[i+1],viaOASGNodes)){
+                                    _rGraph.addOASGEdge(netId, layerId,  traverseNodes[i], traverseNodes[i+1], false);
+                                }
+                            }
+                        }
+                        if(i == 1){
+                            curX = traverseNodes[numScanNode-1]-> x();
+                            curY = traverseNodes[numScanNode-1]-> y();
+                            if(curX >= scanX && curY >= scanY){
+                                if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
+                                    connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
+                                    thisNetTouchObsThisLayer = true;
+                                }
+                                else {
+                                    if(!checkWithVias(netId, layerId,  traverseNodes[1], traverseNodes[numScanNode-1],viaOASGNodes)){
+                                        _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    //Step 4: 判斷有沒有Net是和Obsticle撞到的，有撞到的把中間那段移動到Obsticle的旁邊
+    cout << "########################################\n";
+    cout << "Finishing Building OASG \n";
+    cout << "########################################\n";
 }
 
 void GlobalMgr::plotOASG() {
