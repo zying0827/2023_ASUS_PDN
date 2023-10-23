@@ -6,6 +6,8 @@ FlowLP::FlowLP(RGraph& rGraph, vector<double> vMediumLayerThickness, vector<doub
     // _env.set("OutputFlag", 0);
     // _env.start();
     // _model = new GRBModel(_env);
+    _area = 0;
+    _overlap = 0;
     _numCapConstrs = 0;
     _vPlaneLeftFlow = new GRBVar** [_rGraph.numNets()];
     _vPlaneRightFlow = new GRBVar** [_rGraph.numNets()];
@@ -296,6 +298,22 @@ void FlowLP::collectRelaxedResult() {
                 }
             }
         }
+    }
+
+    // record area and overlapped width
+    _area = 0;
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                _area += e->length() * (e->widthLeft() + e->widthRight());
+            }
+        }
+    }
+    _overlap = 0;
+    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+        _vOverlap.push_back(_modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X));
+        _overlap += _vOverlap[capId];
     }
 }
 

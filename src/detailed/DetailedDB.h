@@ -6,7 +6,7 @@ using namespace std;
 
 class Grid {
     public:
-        Grid() {
+        Grid(size_t xId, size_t yId) : _xId(xId), _yId(yId) {
             _congestion = 0;
             _congestCur = 0;
             _congestHis = 0;
@@ -39,8 +39,8 @@ class Grid {
         int _congestCur;    // current congestion cost
         int _congestHis;    // history congestion cost
         vector<size_t> _vNetId;
-        int _xId;
-        int _yId;
+        size_t _xId;
+        size_t _yId;
 };
 
 enum GNodeStatus {

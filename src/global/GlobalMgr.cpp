@@ -451,8 +451,15 @@ void GlobalMgr::voltCurrOpt() {
     // VoltCP* voltageSolver;
     VoltSLP* voltageSolver;
     vector<double> vLambda(vCapConstr.size(), 2.0);
+    vector<double> vLastOverlap(vCapConstr.size(), 0.0);
+    vector<double> vDiffLastOverlap;
+    double PRatio = 10.0;
+    double DRatio = 1.0;
+    size_t numIVIter = 3;
+    size_t numIIter = 6;
+    size_t numVIter = 10;
 
-    for (size_t ivIter = 0; ivIter < 1; ++ ivIter) {
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
                 vLambda[capId] = 2;
@@ -469,15 +476,33 @@ void GlobalMgr::voltCurrOpt() {
             SingleCapConstr sglCap = vSglCapConstr[sglCapId];
             currentSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
         }
-        for (size_t iIter = 0; iIter < 6; ++iIter) {
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
             currentSolver->relaxCapacityConstraints(vLambda);
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
+            _vArea.push_back(currentSolver->area());
+            _vOverlap.push_back(currentSolver->overlap());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
+            // lagrange multiplier scheduling
             for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+                // schedule1: exp(exp(.))
                 // vLambda[capId] *= vLambda[capId];
+
+                // schedule2: exp(.)
                 vLambda[capId] *= 2;
+
+                // schedule3: P control
+                // vLambda[capId] += PRatio * currentSolver->vOverlap(capId);
+
+                // schedule4: PD control
+                // double curOverlap = currentSolver->vOverlap(capId);
+                // double diffOverlap = 0;
+                // if (iIter > 0) {
+                //     diffOverlap = vLastOverlap[capId] - curOverlap;
+                // }
+                // vLambda[capId] += PRatio * curOverlap + DRatio * diffOverlap;
+                // vLastOverlap[capId] = curOverlap;
             }
         }
 
@@ -491,11 +516,11 @@ void GlobalMgr::voltCurrOpt() {
             }
             vOldVoltage.push_back(temp);
         }
-        for (size_t vIter = 0; vIter < 10; ++ vIter) {
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             voltageSolver = new VoltSLP(_db, _rGraph, vOldVoltage);
             voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
             voltageSolver->setVoltConstraints(1E-10);
-            voltageSolver->setLimitConstraint(0.5);
+            voltageSolver->setLimitConstraint(0.9);
             for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
                 CapConstr cap = vCapConstr[capId];
                 voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
@@ -507,6 +532,8 @@ void GlobalMgr::voltCurrOpt() {
             voltageSolver->relaxCapacityConstraints(vLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
+            _vArea.push_back(voltageSolver->area());
+            _vOverlap.push_back(voltageSolver->overlap());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
             voltageSolver->collectRelaxedTempVoltage();
@@ -553,6 +580,48 @@ void GlobalMgr::voltCurrOpt() {
                 }
             }
         }
+    }
+
+    // add vias of each net
+
+    // print the recorded area and overlapped width
+    cerr << "////////////////" << endl;
+    cerr << "//    area    //" << endl;
+    cerr << "////////////////" << endl;
+    size_t i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << _vArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << _vArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "////////////////////////////" << endl;
+    cerr << "//    overlapped width    //" << endl;
+    cerr << "////////////////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << _vOverlap[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << _vOverlap[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
     }
 
 }

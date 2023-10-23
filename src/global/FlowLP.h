@@ -26,6 +26,10 @@ class FlowLP {
         void printRelaxedResult();
 
         int numCapConstrs() const { return _numCapConstrs; }
+        double area() const { return _area; }
+        double overlap() const { return _overlap; }
+        vector<double> vOverlap() { return _vOverlap; }
+        double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
 
     private:
         RGraph& _rGraph;
@@ -44,6 +48,9 @@ class FlowLP {
         vector<double> _vMetalLayerThickness;
         vector<double> _vConductivity;
         double _currentNorm;      // the current value range (to avoid Gurobi error)
+        double _area;       // the resulting area, assigned in collectRelaxedResult
+        double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
+        vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
 };
 
 #endif

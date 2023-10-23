@@ -17,7 +17,7 @@ class DetailedMgr {
                 for (size_t xId = 0; xId < _numXs; ++ xId) {
                     vector<Grid*> vXGrid;
                     for (size_t yId = 0; yId < _numYs; ++ yId) {
-                        Grid* grid = new Grid;
+                        Grid* grid = new Grid(xId, yId);
                         vXGrid.push_back(grid);
                     }
                     vLayGrid.push_back(vXGrid);

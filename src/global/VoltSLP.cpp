@@ -2,6 +2,8 @@
 
 VoltSLP::VoltSLP(DB& db, RGraph& rGraph, vector< vector< double > > vOldVoltage)
  : _model(_env), _db(db), _rGraph(rGraph), _vOldVoltage(vOldVoltage) {
+    _area = 0;
+    _overlap = 0;
     _numCapConstrs = 0;
     _vVoltage = new GRBVar* [_rGraph.numNets()];
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
@@ -362,6 +364,21 @@ void VoltSLP::collectRelaxedResult() {
                 }
             }
         }
+    }
+
+    // record area and overlapped width
+    _area = 0;
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                _area += e->length() * (e->widthLeft() + e->widthRight());
+            }
+        }
+    }
+    _overlap = 0;
+    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+        _overlap += _modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X);
     }
 }
 

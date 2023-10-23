@@ -28,6 +28,8 @@ class VoltSLP {
         void printRelaxedResult();
 
         vector< vector< double > > vNewVoltage() { return _vNewVoltage; }
+        double area() const { return _area; }
+        double overlap() const { return _overlap; }
 
     private:
         GRBLinExpr linApprox(double cost, OASGEdge* edge);
@@ -52,6 +54,8 @@ class VoltSLP {
 
         // output
         vector< vector< double > > _vNewVoltage;    // non-port node voltage in this iteration, index = [netId] [nPortnodeId]
+        double _area;       // the resulting area, assigned in collectRelaxedResult
+        double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
 };
 
 #endif

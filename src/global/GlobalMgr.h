@@ -35,6 +35,8 @@ class GlobalMgr {
         DB& _db;
         SVGPlot& _plot;
         RGraph _rGraph;
+        vector<double> _vArea;  // record the plane area of each iteration in voltCurrOpt
+        vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
 };
 
 #endif
