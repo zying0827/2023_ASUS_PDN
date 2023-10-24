@@ -6,6 +6,29 @@
 #include "Shape.h"
 using namespace std;
 
+class DBNode {
+    public:
+        DBNode(string name, Node* node, size_t layId) : _name(name), _node(node), _layId(layId) {
+            _upViaEdge = NULL;
+            _lowViaEdge = NULL;
+        }
+        ~DBNode() {}
+
+        string name() const { return _name; }
+        Node* node() { return _node; }
+        ViaEdge* upViaEdge() { return _upViaEdge; }
+        ViaEdge* lowViaEdge() { return _lowViaEdge; }
+        size_t layId() const  { return _layId; }
+        void setUpViaEdge(ViaEdge* upViaEdge) { _upViaEdge = upViaEdge; }
+        void setLowViaEdge(ViaEdge* lowViaEdge) { _lowViaEdge = lowViaEdge; }
+    private:
+        string _name;
+        Node* _node;
+        ViaEdge* _upViaEdge;
+        ViaEdge* _lowViaEdge;
+        size_t _layId;
+};
+
 class Port {
     public:
         Port(size_t portId, double voltage, double current, ViaCluster* viaCstr)

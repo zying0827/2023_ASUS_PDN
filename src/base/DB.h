@@ -44,7 +44,8 @@ class DB {
         Net*         vNet(size_t netId)                       { return _vNet[netId]; }
         Obstacle*    vObstacle(size_t obsId)                  { return _vObstacle[obsId]; }
         Obstacle*    vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
-        Node*        vNode(string nodeName)                   { return _vNode[_nodeName2Id[nodeName]]; }
+        // Node*        vNode(string nodeName)                   { return _vNode[_nodeName2Id[nodeName]]; }
+        DBNode*      vDBNode(string nodeName)                 { return _vDBNode[_nodeName2Id[nodeName]]; }
 
         size_t numNets()                  const { return _vNet.size(); }
         size_t numLayers()                const { return _vMetalLayer.size(); } // number of metal layers
@@ -145,9 +146,17 @@ class DB {
 
         void addNode(string nodeName, double x, double y, size_t layId) {
             Node* node = new Node(x, y, _plot);
-            node->setLayId(layId);
-            _nodeName2Id[nodeName] = _vNode.size();
-            _vNode.push_back(node);
+            // node->setLayId(layId);
+            DBNode* dbNode = new DBNode(nodeName, node, layId);
+            _nodeName2Id[nodeName] = _vDBNode.size();
+            _vDBNode.push_back(dbNode);
+        }
+
+        void addViaEdge(string netName, string upNodeName, string lowNodeName, string padStackName) {
+            ViaEdge* viaEdge = new ViaEdge(netName, upNodeName, lowNodeName, padStackName);
+            _vViaEdge.push_back(viaEdge);
+            _vDBNode[_nodeName2Id[upNodeName]]->setLowViaEdge(viaEdge);
+            _vDBNode[_nodeName2Id[lowNodeName]]->setUpViaEdge(viaEdge);
         }
 
         void addObstacle (size_t layId, vector<Shape*> vShape) {
@@ -224,7 +233,9 @@ class DB {
         vector<Obstacle*>    _vObstacle;
         // vector< vector<Obstacle*> > _vObstacle;     // index = [layId] [obsId]
         vector<Port*>        _vPort;
-        vector<Node*>        _vNode;
+        // vector<Node*>        _vNode;
+        vector<DBNode*>      _vDBNode;
+        vector<ViaEdge*>     _vViaEdge;
         vector< vector< vector< Tile* > > > _vTile;     // index = [layId][rowId][colId], layId of the bottom layer is 0
         double               _boardWidth;
         double               _boardHeight;

@@ -6,6 +6,19 @@
 
 using namespace std;
 
+class ViaEdge {
+    public:
+        ViaEdge(string netName, string upNodeName, string lowNodeName, string padStackName)
+        : _netName(netName), _upNodeName(upNodeName), _lowNodeName(lowNodeName), _padStackName(padStackName) {}
+        ~ViaEdge() {}
+    private:
+        // string _name;
+        string _netName;
+        string _upNodeName;
+        string _lowNodeName;
+        string _padStackName;
+};
+
 class PadStack {
     public:
     private:

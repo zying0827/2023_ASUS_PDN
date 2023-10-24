@@ -164,8 +164,8 @@ void Parser::parse() {
     // parse shape
     _fin.seekg(_fin.beg);
     parseShape();
-    parseNodeTrace();
-    
+    data = parseNodeTrace();
+    parseVia(data);
     
 
 }
@@ -323,7 +323,7 @@ void Parser::parseShape() {
                 } else if (netName == "+VCCSA+") {
                     shape->plot(SVGPlotColor::purple, _layName2Id[layName]);
                 } else {
-                    shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
+                    // shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
                 } 
             } else if (data.substr(0,6) == "Circle") {
                 string netName;
@@ -355,7 +355,7 @@ void Parser::parseShape() {
                 } else if (netName == "+VCCSA+") {
                     shape->plot(SVGPlotColor::purple, _layName2Id[layName]);
                 } else {
-                    shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
+                    // shape->plot(SVGPlotColor::gray, _layName2Id[layName]);
                 }
                 // new line
                 getline(_fin, data);
@@ -372,7 +372,7 @@ void Parser::parseShape() {
     }
 }
 
-void Parser::parseNodeTrace() {
+string Parser::parseNodeTrace() {
     string data;
     stringstream ss;
     string garbage;
@@ -462,20 +462,80 @@ void Parser::parseNodeTrace() {
         assert (garbage == "=");
         width = extractDouble(ss, 2);
         // cerr << "width = " << width << endl;
-        Shape* shape = new Trace(_db.vNode(nodeSName), _db.vNode(nodeTName), width, _plot);
+        Shape* shape = new Trace(_db.vDBNode(nodeSName)->node(), _db.vDBNode(nodeTName)->node(), width, _plot);
         if (netName == "+VCCCORE+") {
-            shape->plot(SVGPlotColor::green, _db.vNode(nodeSName)->layId());
+            shape->plot(SVGPlotColor::green, _db.vDBNode(nodeSName)->layId());
         } else if (netName == "+VCCGT+") {
-            shape->plot(SVGPlotColor::lightsalmon, _db.vNode(nodeSName)->layId());
+            shape->plot(SVGPlotColor::lightsalmon, _db.vDBNode(nodeSName)->layId());
         } else if (netName == "+VCCSA+") {
-            shape->plot(SVGPlotColor::purple, _db.vNode(nodeSName)->layId());
+            shape->plot(SVGPlotColor::purple, _db.vDBNode(nodeSName)->layId());
         } else {
-            shape->plot(SVGPlotColor::black, _db.vNode(nodeSName)->layId());
+            // shape->plot(SVGPlotColor::black, _db.vDBNode(nodeSName)->layId());
         }
 
         getline(_fin, data);
         ss.str(data);
 
+    }
+    return data;
+}
+
+void Parser::parseVia(string data) {
+    stringstream ss;
+    string garbage;
+    ss.str(data);
+    while (data.substr(0,3) == "Via") {
+        string netName;
+        if (ss.str().find("::") != string::npos) {
+            ss.ignore(numeric_limits<streamsize>::max(), ':');
+            ss.ignore(numeric_limits<streamsize>::max(), ':');
+            ss >> netName;
+            // cerr << "netName = " << netName << endl;
+        } else {
+            // via with no net name
+            ss >> garbage;
+        }
+        string nodeUName, nodeLName;
+        stringstream sNodeName;
+        // starting node
+        ss >> garbage;
+        assert (garbage == "UpperNode");
+        ss >> garbage;
+        assert (garbage == "=");
+        ss >> nodeUName;
+        sNodeName.clear();
+        sNodeName.str(nodeUName);
+        getline(sNodeName, nodeUName, ':');
+        nodeUName.erase(0,4);
+        // cerr << "nodeUName = " << nodeUName << endl;
+        // ending node
+        ss >> garbage;
+        assert (garbage == "LowerNode");
+        ss >> garbage;
+        assert (garbage == "=");
+        ss >> nodeLName;
+        sNodeName.clear();
+        sNodeName.str(nodeLName);
+        getline(sNodeName, nodeLName, ':');
+        nodeLName.erase(0,4);
+        // cerr << "nodeLName = " << nodeLName << endl;
+        ss >> garbage;
+        assert(garbage == "Color");
+        ss >> garbage;
+        assert(garbage == "=");
+        ss >> garbage;
+        ss >> garbage;
+        assert(garbage == "PadStack");
+        ss >> garbage;
+        assert(garbage == "=");
+        string padStackName;
+        ss >> padStackName;
+        // cerr << "padStackName = " << padStackName << endl;
+
+        _db.addViaEdge(netName, nodeUName, nodeLName, padStackName);
+
+        getline(_fin, data);
+        ss.str(data);
     }
 }
 

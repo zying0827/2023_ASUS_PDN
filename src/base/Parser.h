@@ -15,7 +15,8 @@ class Parser {
     private:
         void parseLayer();
         void parseShape();
-        void parseNodeTrace();
+        string parseNodeTrace();
+        void parseVia(string data);
         string toLineBegin(string word);
         double extractDouble(stringstream& ss, int eraseLength);
         ifstream& _fin;
