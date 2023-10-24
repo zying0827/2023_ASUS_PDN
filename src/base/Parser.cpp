@@ -69,6 +69,23 @@ void Parser::testInitialize(double boardWidth, double boardHeight, double gridWi
     // Obstacle
     _db.addRectObstacle(1, 8*gridWidth, 12*gridWidth, 14*gridWidth, 15*gridWidth);
     _db.addRectObstacle(2, 2*gridWidth, 8*gridWidth, 6*gridWidth, 8*gridWidth);
+    _db.addRectObstacle(0, 2*gridWidth, 6*gridWidth, 4*gridWidth, 6*gridWidth);
+    _db.addRectObstacle(0, 2*gridWidth, 6*gridWidth, 9*gridWidth, 11*gridWidth);
+
+
+    vector<Shape*> obs1;
+    obs1.resize(1);
+    
+    vector< pair<double, double>> obs1Coordinates;
+    obs1Coordinates.resize(5);
+    obs1Coordinates[0] = std::make_pair(3*gridWidth, 5*gridWidth);
+    obs1Coordinates[1] = std::make_pair(6*gridWidth, 7*gridWidth);
+    obs1Coordinates[2] = std::make_pair(6*gridWidth, 10*gridWidth);
+    obs1Coordinates[3] = std::make_pair(5*gridWidth, 10*gridWidth);
+    obs1Coordinates[4] = std::make_pair(1*gridWidth, 6*gridWidth);
+    obs1[0] = new Polygon(obs1Coordinates, _plot);
+    _db.addObstacle(3,  obs1);
+
 
     // area & via weight
     _db.setFlowWeight(0.5, 0.5);
