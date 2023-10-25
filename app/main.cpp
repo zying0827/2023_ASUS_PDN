@@ -62,8 +62,8 @@ int main(int argc, char* argv[]){
     globalMgr.layerDistribution();
     // // globalMgr.plotRGraph();
     globalMgr.buildTestNCOASG();
-    // // globalMgr.plotNCOASG();
-    globalMgr.voltageAssignment();
+    // globalMgr.plotNCOASG();
+    // globalMgr.voltageAssignment();
     try {
         // globalMgr.currentDistribution();
         globalMgr.voltCurrOpt();
@@ -71,13 +71,13 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    globalMgr.plotCurrentPaths();
+    // globalMgr.plotCurrentPaths();
 
-    // DetailedMgr detailedMgr(db, plot, 2);
-    // detailedMgr.initGridMap();
-    // // detailedMgr.plotGridMap();
-    // detailedMgr.naiveAStar();
+    DetailedMgr detailedMgr(db, plot, 2);
+    detailedMgr.initGridMap();
     // detailedMgr.plotGridMap();
+    detailedMgr.naiveAStar();
+    detailedMgr.plotGridMap();
 
     globalMgr.plotDB();
 
