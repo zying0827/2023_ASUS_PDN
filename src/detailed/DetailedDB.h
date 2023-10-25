@@ -2,6 +2,7 @@
 #define DETAILED_DB_H
 
 #include "../base/Include.h"
+#include <cstddef>
 using namespace std;
 
 class Grid {
@@ -34,6 +35,16 @@ class Grid {
             }
             return false;
         }
+
+        void print() {
+            printf("(%d, %d), net: ", _xId, _yId);
+            for(int i=0; i<_vNetId.size(); i++)
+                printf("%d ", _vNetId[i]);
+            printf("\n");
+        }
+
+        int xId() { return _xId; }
+        int yId() { return _yId; }
     private:
         int _congestion;    // _congestHis + _congestCur
         int _congestCur;    // current congestion cost
