@@ -74,17 +74,19 @@ int main(int argc, char* argv[]){
     }
     // globalMgr.plotCurrentPaths();
 
-    DetailedMgr detailedMgr(db, plot, 2);
+    DetailedMgr detailedMgr(db, plot, 1);
     detailedMgr.initGridMap();
     // detailedMgr.plotGridMap();
     detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
+    // detailedMgr.plotGridMap();
+    detailedMgr.addViaGrid();
 
     printf("\n==================== print ===================\n");
     detailedMgr.print();
 
     printf("\n==================== buildMtx ===================\n");
     detailedMgr.buildMtx();
+    detailedMgr.plotGridMapVoltage();
 
     globalMgr.plotDB();
 

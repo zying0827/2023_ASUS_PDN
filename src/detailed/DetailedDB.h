@@ -11,13 +11,29 @@ class Grid {
             _congestion = 0;
             _congestCur = 0;
             _congestHis = 0;
+            _voltage = -1;
+            _current = -1;
         }
         ~Grid() {}
+
+        // get function
         int congestion() const { return _congestion; }
         int congestCur() const { return _congestCur; }
         int congestHis() const { return _congestHis; }
         size_t vNetId(size_t i) const { return _vNetId[i]; }
         size_t numNets() const { return _vNetId.size(); }
+        bool hasNet(size_t netId) {
+            for (size_t i = 0; i<_vNetId.size(); ++ i) {
+                if (_vNetId[i] == netId) return true;
+            }
+            return false;
+        }
+        int xId() { return _xId; }
+        int yId() { return _yId; }
+        double voltage() const { return _voltage; }
+        double current() const { return _current; }
+
+        // set function
         void incCongestCur() { _congestCur ++; _congestion ++; }
         void decCongestCur() { _congestCur --; _congestion --; }
         void addNet(size_t netId) { _vNetId.push_back(netId); }
@@ -29,22 +45,17 @@ class Grid {
                 }
             }
         }
-        bool hasNet(size_t netId) {
-            for (size_t i = 0; i<_vNetId.size(); ++ i) {
-                if (_vNetId[i] == netId) return true;
-            }
-            return false;
-        }
+        void setVoltage(double voltage) { _voltage = voltage; }
+        void setCurrent(double current) { _current = current; }
 
+        // other function
         void print() {
             printf("(%d, %d), net: ", _xId, _yId);
             for(int i=0; i<_vNetId.size(); i++)
                 printf("%d ", _vNetId[i]);
             printf("\n");
         }
-
-        int xId() { return _xId; }
-        int yId() { return _yId; }
+        
     private:
         int _congestion;    // _congestHis + _congestCur
         int _congestCur;    // current congestion cost
@@ -52,6 +63,8 @@ class Grid {
         vector<size_t> _vNetId;
         size_t _xId;
         size_t _yId;
+        double _voltage;    // the voltage of the grid center point, assigned in detailedMgr::buildMtx
+        double _current;    // the current through the grid center point
 };
 
 enum GNodeStatus {

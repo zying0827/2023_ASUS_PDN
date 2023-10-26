@@ -38,7 +38,9 @@ class DetailedMgr {
 
         void initGridMap();
         void plotGridMap();
+        void plotGridMapVoltage();
         void naiveAStar();
+        void addViaGrid();
 
         void print() {
             printf("\n===print=====\n");

@@ -5,6 +5,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <Eigen/IterativeLinearSolvers>
 
 void DetailedMgr::initGridMap() {
     auto occupy = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
@@ -163,6 +164,64 @@ void DetailedMgr::plotGridMap() {
     cerr << "overlapArea = " << overlapArea << endl;
 }
 
+void DetailedMgr::plotGridMapVoltage() {
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        // cerr << "netId = " << netId << endl;
+        double ubVolt = _db.vNet(netId)->sourcePort()->voltage();
+        // double lbVolt = _db.vNet(netId)->targetPort(0)->voltage();
+        // for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+        //     if (_db.vNet(netId)->targetPort(tPortId)->voltage() < lbVolt) {
+        //         lbVolt = _db.vNet(netId)->targetPort(tPortId)->voltage();
+        //     }
+        // }
+        double lbVolt = ubVolt * 0.2;
+        _plot.setColorValueRange(lbVolt, ubVolt);
+        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+            // cerr << " layId = " << layId << endl;
+            for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
+                Grid* grid = _vNetGrid[netId][layId][gridId];
+                // cerr << "   voltage = " << grid->voltage() << endl;
+                Square* square = new Square(grid->xId()*_gridWidth, grid->yId()*_gridWidth, _gridWidth, _plot);
+                square->plotValue(grid->voltage(), layId);
+            }
+        }
+    }
+    // for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+    //     for (size_t xId = 0; xId < _numXs; ++ xId) {
+    //         for (size_t yId = 0; yId < _numYs; ++ yId) {
+    //             Grid* grid = _vGrid[layId][xId][yId];
+    //             vector< pair<double, double> > vVtx;
+    //             vVtx.push_back(make_pair(xId*_gridWidth, yId*_gridWidth));
+    //             vVtx.push_back(make_pair((xId+1)*_gridWidth, yId*_gridWidth));
+    //             vVtx.push_back(make_pair((xId+1)*_gridWidth, (yId+1)*_gridWidth));
+    //             vVtx.push_back(make_pair(xId*_gridWidth, (yId+1)*_gridWidth));
+    //             Polygon* p = new Polygon(vVtx, _plot);
+    //             if (grid->congestCur() == 0) {
+    //                 p->plot(SVGPlotColor::white, layId);
+    //             } else {
+    //                 for (size_t netId = 0; netId < grid->numNets(); ++ netId) {
+    //                     p->plot(grid->vNetId(netId), layId);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // int area = 0;
+    // int overlapArea = 0;
+    // for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+    //     for (size_t xId = 0; xId < _numXs; ++ xId) {
+    //         for (size_t yId = 0; yId < _numYs; ++ yId) {
+    //             Grid* grid = _vGrid[layId][xId][yId];
+    //             if (grid->congestCur() >= 1) area++;
+    //             overlapArea += grid->congestCur();
+    //         }
+    //     }
+    // }
+    // overlapArea -= area;
+    // cerr << "area = " << area << endl;
+    // cerr << "overlapArea = " << overlapArea << endl;
+}
+
 void DetailedMgr::naiveAStar() {
     // cerr << "naiveAStar..." << endl;
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
@@ -221,10 +280,60 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
     _vNetGrid[netId][layId].clear();
 }
 
+void DetailedMgr::addViaGrid() {
+    auto gridEnclose = [&] (Grid* grid, double x, double y) -> bool {
+        double gridLX = grid->xId() * _gridWidth;
+        double gridUX = (grid->xId()+1) * _gridWidth;
+        double gridLY = grid->yId() * _gridWidth;
+        double gridUY = (grid->yId()+1) * _gridWidth;
+        // to avoid a via enclosed by multiple grids, set ">=" but "<" only
+        return ((x >= gridLX) && (x < gridUX) && (y >= gridLY) && (y < gridUY));
+    };
+    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+        for (size_t xId = 0; xId < _numXs; ++ xId) {
+            for (size_t yId = 0; yId < _numYs; ++ yId) {
+                Grid* grid = _vGrid[layId][xId][yId];
+                for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+                    if (!grid->hasNet(netId)) {
+                        for (size_t sViaId = 0; sViaId < _db.vNet(netId)->sourceViaCstr()->numVias(); ++ sViaId) {
+                            double sX = _db.vNet(netId)->sourceViaCstr()->vVia(sViaId)->x();
+                            double sY = _db.vNet(netId)->sourceViaCstr()->vVia(sViaId)->y();
+                            if (gridEnclose(grid, sX, sY)) {
+                                _vNetGrid[netId][layId].push_back(grid);
+                                grid->addNet(netId);
+                            }
+                        }
+                        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+                            for (size_t tViaId = 0; tViaId < _db.vNet(netId)->vTargetViaCstr(tPortId)->numVias(); ++ tViaId) {
+                                double tX = _db.vNet(netId)->vTargetViaCstr(tPortId)->vVia(tViaId)->x();
+                                double tY = _db.vNet(netId)->vTargetViaCstr(tPortId)->vVia(tViaId)->y();
+                                if (gridEnclose(grid, tX, tY)) {
+                                    _vNetGrid[netId][layId].push_back(grid);
+                                    grid->addNet(netId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void DetailedMgr::buildMtx() {
     // https://i.imgur.com/rIwlXJQ.png
     // return an impedance matrix for each net
     // number of nodes: \sum_{layId=0}^{_vNetGrid[netID].size()} _vNetGrid[netID][layId].size()
+
+    auto gridEnclose = [&] (Grid* grid, double x, double y) -> bool {
+        double gridLX = grid->xId() * _gridWidth;
+        double gridUX = (grid->xId()+1) * _gridWidth;
+        double gridLY = grid->yId() * _gridWidth;
+        double gridUY = (grid->yId()+1) * _gridWidth;
+        // to avoid a via enclosed by multiple grids, set ">=" but "<" only
+        return ((x >= gridLX) && (x < gridUX) && (y >= gridLY) && (y < gridUY));
+    };
+
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         printf("netID: %d\n", netId);
         
@@ -238,66 +347,146 @@ void DetailedMgr::buildMtx() {
         }
         printf("numNode: %d\n", numNode);
 
-        // initialize
-        vector< vector<double > > mtx;
-        for(int i=0; i<numNode; i++) {
-            mtx.push_back(vector<double>());
-            for(int j=0; j<numNode; j++)
-                mtx[i].push_back(0.0);
+        // initialize matrix and vector
+        Eigen::SparseMatrix<double, Eigen::RowMajor> Y(numNode, numNode);
+        Eigen::VectorXd I(numNode);
+        Eigen::VectorXd V(numNode);
+        vector< Eigen::Triplet<double> > vTplY;
+        vTplY.reserve(6 * numNode);
+
+        // // initialize
+        // vector< vector<double > > mtx;
+        // // numNode += (_db.vNet(netId)->numTPorts() + 1) * _db.numLayers();    // add the source/target via nodes on each layer
+        // for(int i=0; i<numNode; i++) {
+        //     mtx.push_back(vector<double>());
+        //     for(int j=0; j<numNode; j++)
+        //         mtx[i].push_back(0.0);
+        // }
+
+        for (size_t layId = 0; layId < _vNetGrid[netId].size(); ++ layId) {
+            for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
+                Grid* grid_i = _vNetGrid[netId][layId][gridId];
+                // cerr << "grid = (" << grid_i->xId() << " " << grid_i->yId() << ")" << endl;
+                size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
+            //    printf("x: %-4d, y: %-4d, lay: %-4d, ID: %-4d\n", i->xId(), i->yId(), layId, getID[make_tuple(layId, i->xId(), i->yId())]);
+            
+                double g2g_condutance = _db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(0)->thickness() * 1E-3;
+                double via_condutance = (_db.vMetalLayer(0)->conductivity() * _db.vVia(0)->shape()->area() * 1E-6) / (_db.vMediumLayer(0)->thickness() * 1E-3);
+                double small_conductance = 1.0;
+
+                // check left
+                if(grid_i->xId() > 0 && _vGrid[layId][grid_i->xId()-1][grid_i->yId()]->hasNet(netId)) {
+                    // mtx[node_id][node_id] += g2g_condutance;
+                    // mtx[node_id][getID[make_tuple(layId, grid_i->xId()-1, grid_i->yId())]] -= g2g_condutance;
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, g2g_condutance));
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId, grid_i->xId()-1, grid_i->yId())], -g2g_condutance));
+                }
+
+                // check right
+                if(grid_i->xId() < _numXs-1 && _vGrid[layId][grid_i->xId()+1][grid_i->yId()]->hasNet(netId)) {
+                    // mtx[node_id][node_id] += g2g_condutance;
+                    // mtx[node_id][getID[make_tuple(layId, grid_i->xId()+1, grid_i->yId())]] -= g2g_condutance;
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, g2g_condutance));
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId, grid_i->xId()+1, grid_i->yId())], -g2g_condutance));
+                }
+                
+                // check down
+                if(grid_i->yId() > 0 && _vGrid[layId][grid_i->xId()][grid_i->yId()-1]->hasNet(netId)) {
+                    // mtx[node_id][node_id] += g2g_condutance;
+                    // mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()-1)]] -= g2g_condutance;
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, g2g_condutance));
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId, grid_i->xId(), grid_i->yId()-1)], -g2g_condutance));
+                }
+                
+                // check up
+                if(grid_i->yId() < _numYs-1 && _vGrid[layId][grid_i->xId()][grid_i->yId()+1]->hasNet(netId)) {
+                    // mtx[node_id][node_id] += g2g_condutance;
+                    // mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()+1)]] -= g2g_condutance;
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, g2g_condutance));
+                    vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId, grid_i->xId(), grid_i->yId()+1)], -g2g_condutance));
+                }
+
+                // // check top layer
+                // if(layId > 0 && _vGrid[layId-1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
+                //     mtx[node_id][node_id] += via_condutance;
+                //     mtx[node_id][getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                // }
+
+                // // check bottom layer
+                // if(layId < _db.numLayers()-1 && _vGrid[layId+1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
+                //     mtx[node_id][node_id] += via_condutance;
+                //     mtx[node_id][getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                // }
+
+                for (size_t sViaId = 0; sViaId < _db.vNet(netId)->sourceViaCstr()->numVias(); ++ sViaId) {
+                    double sX = _db.vNet(netId)->sourceViaCstr()->vVia(sViaId)->x();
+                    double sY = _db.vNet(netId)->sourceViaCstr()->vVia(sViaId)->y();
+                    if (gridEnclose(grid_i, sX, sY)) {
+                        // cerr << "Enclose: net" << netId << " layer" << layId << " source, grid = (" << grid_i->xId() << ", " << grid_i->yId() << ")" << endl; 
+                        if (layId > 0) {
+                            // mtx[node_id][node_id] += via_condutance;
+                            // mtx[node_id][getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                            vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance));
+                            vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())], -via_condutance));
+                        } else {
+                            vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance));
+                            I(node_id) = _db.vNet(netId)->sourcePort()->voltage() * via_condutance;
+                        }
+                        if (layId < _db.numLayers()-1) {
+                            // mtx[node_id][node_id] += via_condutance;
+                            // mtx[node_id][getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                            vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance));
+                            vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())], -via_condutance));
+                        }
+                    }
+                }
+                for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+                    for (size_t tViaId = 0; tViaId < _db.vNet(netId)->vTargetViaCstr(tPortId)->numVias(); ++ tViaId) {
+                        double tX = _db.vNet(netId)->vTargetViaCstr(tPortId)->vVia(tViaId)->x();
+                        double tY = _db.vNet(netId)->vTargetViaCstr(tPortId)->vVia(tViaId)->y();
+                        if (gridEnclose(grid_i, tX, tY)) {
+                            if (layId > 0) {
+                                // mtx[node_id][node_id] += via_condutance;
+                                // mtx[node_id][getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                                vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance));
+                                vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())], -via_condutance));
+                            }
+                            if (layId < _db.numLayers()-1) {
+                                // mtx[node_id][node_id] += via_condutance;
+                                // mtx[node_id][getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
+                                vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance));
+                                vTplY.push_back(Eigen::Triplet<double>(node_id, getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())], -via_condutance));
+                            } else {
+                                double loadConductance = _db.vNet(netId)->targetPort(tPortId)->current() / _db.vNet(netId)->targetPort(tPortId)->voltage();
+                                vTplY.push_back(Eigen::Triplet<double>(node_id, node_id, via_condutance + loadConductance));
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        Y.setFromTriplets(vTplY.begin(), vTplY.end());
+        Eigen::ConjugateGradient<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::Upper> solver;
+        solver.setMaxIterations(1000000);
+        solver.setTolerance(1e-10);
+        solver.compute(Y);
+        V = solver.solveWithGuess(I, V);
+        // cerr << Y << endl;
+        // assert(false);
 
         for (size_t layId = 0; layId < _vNetGrid[netId].size(); ++ layId) {
             for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
                 Grid* grid_i = _vNetGrid[netId][layId][gridId];
                 size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
-            //    printf("x: %-4d, y: %-4d, lay: %-4d, ID: %-4d\n", i->xId(), i->yId(), layId, getID[make_tuple(layId, i->xId(), i->yId())]);
-            
-                double g2g_condutance = 1.0;
-                double via_condutance = 2.0;
-
-                // check left
-                if(grid_i->xId() > 0 && _vGrid[layId][grid_i->xId()-1][grid_i->yId()]->hasNet(netId)) {
-                    mtx[node_id][node_id] += g2g_condutance;
-                    mtx[node_id][getID[make_tuple(layId, grid_i->xId()-1, grid_i->yId())]] -= g2g_condutance;
-                }
-
-                // check right
-                if(grid_i->xId() < _numXs-1 && _vGrid[layId][grid_i->xId()+1][grid_i->yId()]->hasNet(netId)) {
-                    mtx[node_id][node_id] += g2g_condutance;
-                    mtx[node_id][getID[make_tuple(layId, grid_i->xId()+1, grid_i->yId())]] -= g2g_condutance;
-                }
-                
-                // check down
-                if(grid_i->yId() > 0 && _vGrid[layId][grid_i->xId()][grid_i->yId()-1]->hasNet(netId)) {
-                    mtx[node_id][node_id] += g2g_condutance;
-                    mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()-1)]] -= g2g_condutance;
-                }
-                
-                // check up
-                if(grid_i->yId() < _numYs-1 && _vGrid[layId][grid_i->xId()][grid_i->yId()+1]->hasNet(netId)) {
-                    mtx[node_id][node_id] += g2g_condutance;
-                    mtx[node_id][getID[make_tuple(layId, grid_i->xId(), grid_i->yId()+1)]] -= g2g_condutance;
-                }
-
-                // check top layer
-                if(layId > 0 && _vGrid[layId-1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
-                    mtx[node_id][node_id] += via_condutance;
-                    mtx[node_id][getID[make_tuple(layId-1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
-                }
-
-                // check bottom layer
-                if(layId < _db.numLayers()-1 && _vGrid[layId+1][grid_i->xId()][grid_i->yId()]->hasNet(netId)) {
-                    mtx[node_id][node_id] += via_condutance;
-                    mtx[node_id][getID[make_tuple(layId+1, grid_i->xId(), grid_i->yId())]] -= via_condutance;
-                }
+                grid_i->setVoltage(V[node_id]);
             }
         }
-
-        for(int i=0; i<20; i++) {
-            for(int j=0; j<20; j++)
-                printf("%4.1f ", mtx[i][j]);
-            printf("\n");
-        }
+        // for(int i=0; i<20; i++) {
+        //     for(int j=0; j<20; j++)
+        //         printf("%4.1f ", mtx[i][j]);
+        //     printf("\n");
+        // }
     }
 }
 

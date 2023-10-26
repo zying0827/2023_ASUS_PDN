@@ -265,6 +265,7 @@ void FlowLP::solveRelaxed() {
 }
 
 void FlowLP::collectRelaxedResult() {
+    _viaArea = 0;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // collect results for horizontal flows
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
@@ -287,6 +288,7 @@ void FlowLP::collectRelaxedResult() {
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
             // double viaArea = _vMaxViaCost[netId][vEdgeId].get(GRB_DoubleAttr_X) * _currentNorm / _vConductivity[0];
             double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X) * _currentNorm / _vConductivity[0];
+            _viaArea += viaArea * 1E6;
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {

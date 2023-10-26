@@ -973,6 +973,7 @@ void GlobalMgr::voltCurrOpt() {
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
             _vArea.push_back(currentSolver->area());
+            _vViaArea.push_back(currentSolver->viaArea());
             _vOverlap.push_back(currentSolver->overlap());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
@@ -1025,6 +1026,7 @@ void GlobalMgr::voltCurrOpt() {
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
             _vArea.push_back(voltageSolver->area());
+            _vViaArea.push_back(voltageSolver->viaArea());
             _vOverlap.push_back(voltageSolver->overlap());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
@@ -1092,6 +1094,25 @@ void GlobalMgr::voltCurrOpt() {
         cerr << "V opt: ";
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             cerr << _vArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "///////////////////" << endl;
+    cerr << "//    viaArea    //" << endl;
+    cerr << "///////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << _vViaArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << _vViaArea[i] << " -> ";
             i++;
         }
         cerr << endl;
