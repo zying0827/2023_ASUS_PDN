@@ -58,6 +58,7 @@ tuple<int, int, int> SVGPlot::value2color(double value) {
         case 2: r=0;     g=255;   b=y;   break;
         case 3: r=0;     g=255-y; b=255; break;
         case 4: r=0;     g=0;     b=255; break;
+        default: r=165;  g=42;   b=42; break;
     }
     return make_tuple(r, g, b);
 }

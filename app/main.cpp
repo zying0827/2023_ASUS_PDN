@@ -86,7 +86,8 @@ int main(int argc, char* argv[]){
 
     printf("\n==================== buildMtx ===================\n");
     detailedMgr.buildMtx();
-    detailedMgr.plotGridMapVoltage();
+    // detailedMgr.plotGridMapVoltage();
+    detailedMgr.plotGridMapCurrent();
 
     globalMgr.plotDB();
 
