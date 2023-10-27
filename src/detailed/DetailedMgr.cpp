@@ -175,6 +175,8 @@ void DetailedMgr::naiveAStar() {
                 int tYId = floor(segment->tY() / _gridWidth);
                 AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2);
                 router.route();
+                cout << router.pathLength(3, 0) << endl;
+                cout << "現在這裡在判斷PathLength" << endl;
                 segment->setWidth(router.exactWidth() * _gridWidth);
                 segment->setLength(router.exactLength() * _gridWidth);
                 for (size_t pGridId = 0; pGridId < router.numPGrids(); ++ pGridId) {

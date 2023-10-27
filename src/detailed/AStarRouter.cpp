@@ -363,65 +363,126 @@ double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
     return congestion;
 }
 
-double AStarRouter::pathLength(int threshold) {
-    int gridCount = 0;
-    double pathLength = 0;
-    int buffer = 0;
-    bool turned = false;
-    bool turn = false;
-    GNode* node = _vGNode[_tPos.first][_tPos.second];
+Direction AStarRouter::giveDirection (GNode* curNode){
+
+    // Up, Down, Right, Left,
+    // UpRight, UpLeft, DownRight, DownLeft
+    assert( curNode->parent() != curNode);
+
     Direction dir;
-    if (node->parent()->xId() == node->xId()+1) {
+    if (curNode->parent()->xId() == curNode->xId()+1 && curNode->parent()->yId() == curNode->yId()+1) {
+        dir = Direction::UpRight;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1 && curNode->parent()->yId() == curNode->yId()+1 ) {
+        dir = Direction::UpLeft;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1 && curNode->parent()->yId() == curNode->yId()-1) {
+        dir = Direction::DownLeft;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()+1 && curNode->parent()->yId() == curNode->yId()-1){
+        dir = Direction::DownRight;
+    }
+    else if (curNode->parent()->xId() == curNode->xId()+1) {
         dir = Direction::Right;
-    } else if (node->parent()->xId() == node->xId()-1) {
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1) {
         dir = Direction::Left;
-    } else if (node->parent()->yId() == node->yId()+1) {
+    } 
+    else if (curNode->parent()->yId() == curNode->yId()+1) {
         dir = Direction::Up;
-    } else {
-        assert(node->parent()->yId() == node->yId()-1);
+    } 
+    else {
+        assert(curNode->parent()->yId() == curNode->yId()-1);
         dir = Direction::Down;
     }
-    buffer ++;
-    node = node->parent();
+    return dir;
+}
 
-    while(node->parent() != node) {
-        turn = false;
-        if (node->parent()->xId() == node->xId()+1) {
-            if (dir == Direction::Right) {
-                turn = true;
+double AStarRouter::pathLength(int threshold, int method) {
+    
+    // 0 for heuristic
+    if(method == 0){
+        /////////////////////////
+        //1st method: Heuristic//
+        /////////////////////////
+
+        //Situation 1: If walk diogonally(1 step), then move and pathLength += 2^(1/2)
+        //Situation 2: If walk strqight and then walk diogonally(2 step), then move to 2nd step and pathLength += 1+2^(1/2)
+        //Situation 3: If walk strqight and then turn right or left(2 step), then move to 2nd step and pathLength += 2^(1/2)
+        //Situation 4: If walk strqight and then walk straight again(2 step), then move to 1st step and pathLength += 1
+
+        int gridCount = 0;
+        double pathLength = 0;
+        int buffer = 0;
+        bool turned = false;
+        bool turn = false;
+        GNode* node = _vGNode[_tPos.first][_tPos.second];
+        //一開始的Node就是從Target開始找，所以直接用_tPos，也就是target Pos。
+        cout << "Coordinate of this pt -> X =" <<   _tPos.first << "Y = " << _tPos.second << endl;
+        
+        bool firstStepStraight = false;
+        Direction dir, prevDir;
+
+        while(node -> parent() != node) {
+            dir = giveDirection(node);
+            if( !firstStepStraight && (dir == UpRight || dir == UpLeft || dir == DownLeft || dir == DownRight) ){
+                pathLength += pow(2, 0.5);
+                node = node->parent();
+                //不知道這樣合不合法
+                ++ gridCount;
+                ++ gridCount;
+                prevDir = dir;
             }
-        } else if (node->parent()->xId() == node->xId()-1) {
-            if (dir == Direction::Left) {
-                turn = true;
+            else if(!firstStepStraight && (dir == Up || dir == Right || dir == Down || dir == Left) ){
+                firstStepStraight = true;
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
             }
-        } else if (node->parent()->yId() == node->yId()+1) {
-            if (dir == Direction::Up) {
-                turn = true;
+            else if ( firstStepStraight && (dir == UpRight || dir == UpLeft || dir == DownLeft || dir == DownRight)) {
+                firstStepStraight = false;
+                pathLength += (1+pow(2, 0.5));
+                node = node->parent();
+                ++gridCount;
+                ++gridCount;
+                prevDir = dir;
             }
-        } else {
-            assert(node->parent()->yId() == node->yId()-1);
-            if (dir == Direction::Down) {
-                turn = true;
+            else if (firstStepStraight && (prevDir != dir)){
+                firstStepStraight = false;
+                pathLength += (pow(2, 0.5));
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
             }
+            else if (firstStepStraight && (prevDir == dir)){
+                pathLength += 1;
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
+            }
+
         }
-        if (turned) {
-            if (buffer <= threshold) {
 
-            }
+        // buffer ++;
+        //             if (!turned && buffer > threshold) {
+        //                 pathLength += buffer;
+        //                 buffer = 0;
+        //             }
+        //         } else {
+        //             if (!turned) {
+        //                 turned = true;
+        //             }
+        for (size_t pGridId = 0; pGridId < _path.size(); ++pGridId) {
+            Grid* grid = _path[pGridId];
         }
-        node = node->parent();
-    }
+        cout << endl;
+        cout << "Grid Count is  " << gridCount << endl;
+        cout << "Path Length is  " << pathLength << endl;
 
-    // buffer ++;
-    //             if (!turned && buffer > threshold) {
-    //                 pathLength += buffer;
-    //                 buffer = 0;
-    //             }
-    //         } else {
-    //             if (!turned) {
-    //                 turned = true;
-    //             }
-    for (size_t pGridId = 0; pGridId < _path.size(); ++pGridId) {
-        Grid* grid = _path[pGridId];
+        // return gridCount;
+        return pathLength;
     }
+    // i for pattern matching 
+    
+
 }
