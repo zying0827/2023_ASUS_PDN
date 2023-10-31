@@ -28,6 +28,12 @@ class PadStack {
             _metalArea = M_PI * (pow(drillRadius, 2) - pow(drillRadius-_copperWidth, 2));
         }
         ~PadStack() {}
+
+        double padRadius(size_t layId) const { return _vRegular[layId]; }
+        double antiPadRadius(size_t layId) const { return _vAnti[layId]; }
+        double drillRadius() const { return _drillRadius; }
+        double copperWidth() const { return _copperWidth; }
+        double metalArea() const { return _metalArea; }
     private:
         string _name;
         string _shape;

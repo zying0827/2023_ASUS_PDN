@@ -56,8 +56,9 @@
     },
     "cmake.debugConfig": {
         "args": [
+            "${workspaceFolder}/exp/input/ST_Components_1.txt",
             "${workspaceFolder}/exp/input/Example_Project_1.txt",
-            "${workspaceFolder}/exp/output/gridMapCurr_102701.html"
+            "${workspaceFolder}/exp/output/OASG_103002.html"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
             // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
             // "--ntuplace3",

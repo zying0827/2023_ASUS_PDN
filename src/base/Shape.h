@@ -101,6 +101,22 @@ class Polygon : public Shape {
         double bPolygonX(size_t vtxId) { return _vVtx[vtxId].first; }
         double bPolygonY(size_t vtxId) { return _vVtx[vtxId].second; }
         size_t numBPolyVtcs() { return _vVtx.size(); }
+        double area() {
+            // reference: https://www.geeksforgeeks.org/area-of-a-polygon-with-given-n-ordered-vertices/
+            // Initialize area
+            double area = 0.0;
+        
+            // Calculate value of shoelace formula
+            int j = _vVtx.size() - 1;
+            for (int i = 0; i < _vVtx.size(); i++)
+            {
+                area += (_vVtx[j].first + _vVtx[i].first) * (_vVtx[j].second - _vVtx[i].second);
+                j = i;  // j is previous vertex to i
+            }
+        
+            // Return absolute value
+            return abs(area / 2.0);
+        }
     private:
         vector< pair<double, double> > _vVtx;
 };
@@ -196,7 +212,7 @@ class Node : public Shape {
             cerr << "Node {center=(" << _ctr.first << " " << _ctr.second << ")}" << endl;
         }
         void plot(size_t colorId, size_t layId) {
-            _plot.drawCircle(_ctr.first, _ctr.second, 2, colorId, layId);
+            _plot.drawCircle(_ctr.first, _ctr.second, 4*0.0254, colorId, layId);
         } 
         double maxX() { return _ctr.first; }
         double minX() { return _ctr.first; }
