@@ -304,7 +304,8 @@ void DetailedMgr::buildMtx() {
 }
 
 void DetailedMgr::writeColorMap(const char* path, bool isVoltage) {
-/*
+
+
     for(int i=0; i<_vGrid.size(); i++) {
         for(int j=0; j<_vGrid[i].size(); j++) {
             for(int k=0; k<_vGrid[i][j].size(); k++) {
@@ -314,7 +315,7 @@ void DetailedMgr::writeColorMap(const char* path, bool isVoltage) {
             }
         }
     }
-*/    
+
     FILE *fp = fopen(path, "w");
 
     fprintf(fp, "%d\n", _db.numLayers());
@@ -323,7 +324,7 @@ void DetailedMgr::writeColorMap(const char* path, bool isVoltage) {
     fprintf(fp, "%d\n\n", _db.numVias());
 
     for(int i=0; i<_db.numVias(); i++)
-            fprintf(fp, "%f %f %f\n", _db.vVia(i)->shape()->ctrX() / _gridWidth, _db.vVia(i)->shape()->ctrY() / _gridWidth, _db.vVia(i)->shape()->radius() / _gridWidth);
+            fprintf(fp, "%f %f %f\n", (double)_db.vVia(i)->shape()->ctrX() / _gridWidth, (double)_db.vVia(i)->shape()->ctrY() / _gridWidth, (double)_db.vVia(i)->shape()->radius() / _gridWidth);
 
     fprintf(fp, "\n");
 
