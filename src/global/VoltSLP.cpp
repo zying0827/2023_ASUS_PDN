@@ -336,7 +336,6 @@ void VoltSLP::collectRelaxedTempVoltage() {
 }
 
 void VoltSLP::collectRelaxedResult() {
-    _viaArea = 0;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // collect voltage results
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
@@ -358,7 +357,6 @@ void VoltSLP::collectRelaxedResult() {
         // collect area results for vertical flows
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
             double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X) / _db.vMetalLayer(0)->conductivity();
-            _viaArea += viaArea * 1E6;
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {

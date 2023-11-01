@@ -7,14 +7,12 @@ using namespace std;
 
 class Grid {
     public:
-        Grid(size_t xId, size_t yId, size_t numNets) : _xId(xId), _yId(yId) {
+        Grid(size_t xId, size_t yId) : _xId(xId), _yId(yId) {
             _congestion = 0;
             _congestCur = 0;
             _congestHis = 0;
-            for (size_t netId = 0; netId < numNets; ++ netId) {
-                _vVoltage.push_back(-1);
-                _vCurrent.push_back(-1);
-            }
+            _voltage = -1;
+            _current = -1;
         }
         ~Grid() {}
 
@@ -32,8 +30,8 @@ class Grid {
         }
         int xId() { return _xId; }
         int yId() { return _yId; }
-        double voltage(size_t netId) const { return _vVoltage[netId]; }
-        double current(size_t netId) const { return _vCurrent[netId]; }
+        double voltage() const { return _voltage; }
+        double current() const { return _current; }
 
         // set function
         void incCongestCur() { _congestCur ++; _congestion ++; }
@@ -47,8 +45,8 @@ class Grid {
                 }
             }
         }
-        void setVoltage(size_t netId, double voltage) { _vVoltage[netId] = voltage; }
-        void setCurrent(size_t netId, double current) { _vCurrent[netId] = current; }
+        void setVoltage(double voltage) { _voltage = voltage; }
+        void setCurrent(double current) { _current = current; }
 
         // other function
         void print() {
@@ -65,8 +63,8 @@ class Grid {
         vector<size_t> _vNetId;
         size_t _xId;
         size_t _yId;
-        vector<double> _vVoltage;    // index = [netId], the voltage of the grid center point, assigned in detailedMgr::buildMtx
-        vector<double> _vCurrent;    // index = [netId], the current through the grid center point
+        double _voltage;    // the voltage of the grid center point, assigned in detailedMgr::buildMtx
+        double _current;    // the current through the grid center point
 };
 
 enum GNodeStatus {

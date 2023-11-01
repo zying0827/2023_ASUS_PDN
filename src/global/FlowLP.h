@@ -27,7 +27,6 @@ class FlowLP {
 
         int numCapConstrs() const { return _numCapConstrs; }
         double area() const { return _area; }
-        double viaArea() const { return _viaArea; }
         double overlap() const { return _overlap; }
         vector<double> vOverlap() { return _vOverlap; }
         double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
@@ -50,7 +49,6 @@ class FlowLP {
         vector<double> _vConductivity;
         double _currentNorm;      // the current value range (to avoid Gurobi error)
         double _area;       // the resulting area, assigned in collectRelaxedResult
-        double _viaArea;
         double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
         vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
 };

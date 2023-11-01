@@ -6,22 +6,6 @@
 #include "../base/DB.h"
 #include "RGraph.h"
 
-struct CapConstr {
-    OASGEdge* e1;
-    bool right1;
-    double ratio1;
-    OASGEdge* e2;
-    bool right2;
-    double ratio2;
-    double width;
-};
-struct SingleCapConstr {
-    OASGEdge* e1;
-    bool right1;
-    double ratio1;
-    double width;
-};
-
 class GlobalMgr {
     public:
         GlobalMgr(DB& db, SVGPlot& plot): _db(db), _plot(plot) {
@@ -33,7 +17,6 @@ class GlobalMgr {
         void plotDB();
         void buildTestOASG();
         void buildOASG();
-        void buildOASGXObs();
 
         bool isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle);
         bool onSegment(OASGNode* p, OASGNode* q, OASGNode* r);
@@ -47,7 +30,6 @@ class GlobalMgr {
         void layerDistribution();
         void buildTestNCOASG();
         void plotNCOASG();
-        void genCapConstrs();
         void voltCurrOpt();
         void voltageAssignment();
         void currentDistribution();
@@ -62,10 +44,7 @@ class GlobalMgr {
         SVGPlot& _plot;
         RGraph _rGraph;
         vector<double> _vArea;  // record the plane area of each iteration in voltCurrOpt
-        vector<double> _vViaArea;
         vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
-        vector<CapConstr> _vCapConstr;
-        vector<SingleCapConstr> _vSglCapConstr;
 };
 
 #endif

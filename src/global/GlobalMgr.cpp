@@ -371,108 +371,80 @@ void GlobalMgr::buildOASG() {
     //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
     vector<vector<vector<OASGNode*> > > viaOASGNodes;
     viaOASGNodes.resize(_rGraph.numNets());
-    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    for(int i = 0; i < _rGraph.numNets(); ++i){
+
         int viaNodeId = 0;
+        int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
         vector<vector<OASGNode*>> tempViaOASGNodes;
-        tempViaOASGNodes.resize((1+_db.vNet(netId)->numTPorts()), vector<OASGNode*>(4, nullptr));
+        tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
+
         // Step1: Create Source Via        
-        double minX = _db.vNet(netId)->sourcePort()->boundPolygon()->minX();
-        double minY = _db.vNet(netId)->sourcePort()->boundPolygon()->minY();
-        double maxX = _db.vNet(netId)->sourcePort()->boundPolygon()->maxX();
-        double maxY = _db.vNet(netId)->sourcePort()->boundPolygon()->maxY();
-        tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(netId, minX, minY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(netId, maxX, minY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(netId, maxX, maxY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(netId, minX, maxY, OASGNodeType::MIDDLE);
+        double minX = 1000000000;
+        double minY = 1000000000;
+        double maxX = -1;
+        double maxY = -1;
+        double tempMinX, tempMinY, tempMaxX, tempMaxY;
+
+        for (int j = 0; j < numSourceVias; ++j ){
+            tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
+            tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
+            tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
+            tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
+            if(tempMinX<minX){
+                minX = tempMinX;
+            }
+            if(tempMinY<minY){
+                minY = tempMinY;
+            }
+            if(tempMaxX>maxX){
+                maxX = tempMaxX;
+            }
+            if(tempMaxY>maxY){
+                maxY = tempMaxY;
+            }
+        }
+
+        tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
         ++viaNodeId ;
+
         //Secondly, check with the target viaclusters
-        for(size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
-            double minX = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->minX();
-            double minY = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->minY();
-            double maxX = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->maxX();
-            double maxY = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->maxY();
-            tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(netId, minX, minY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(netId, maxX, minY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(netId, maxX, maxY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(netId, minX, maxY, OASGNodeType::MIDDLE);
+        for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
+            minX = 1000000000;
+            minY = 1000000000;
+            maxX = -1;
+            maxY = -1;
+            for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
+                tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
+                tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
+                tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
+                tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
+                if(tempMinX<minX){
+                    minX = tempMinX;
+                }
+                if(tempMinY<minY){
+                    minY = tempMinY;
+                }
+                if(tempMaxX>maxX){
+                    maxX = tempMaxX;
+                }
+                if(tempMaxY>maxY){
+                    maxY = tempMaxY;
+                }
+            }
+
+
+            tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
             ++viaNodeId;
         }
-        viaOASGNodes[netId] = tempViaOASGNodes;
-    }
-    // for(int i = 0; i < _rGraph.numNets(); ++i){
 
-    //     int viaNodeId = 0;
-    //     int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
-    //     vector<vector<OASGNode*>> tempViaOASGNodes;
-    //     tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
-
-    //     // Step1: Create Source Via        
-    //     double minX = 1000000000;
-    //     double minY = 1000000000;
-    //     double maxX = -1;
-    //     double maxY = -1;
-    //     double tempMinX, tempMinY, tempMaxX, tempMaxY;
-
-    //     for (int j = 0; j < numSourceVias; ++j ){
-    //         tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
-    //         tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
-    //         tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
-    //         tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
-    //         if(tempMinX<minX){
-    //             minX = tempMinX;
-    //         }
-    //         if(tempMinY<minY){
-    //             minY = tempMinY;
-    //         }
-    //         if(tempMaxX>maxX){
-    //             maxX = tempMaxX;
-    //         }
-    //         if(tempMaxY>maxY){
-    //             maxY = tempMaxY;
-    //         }
-    //     }
-
-    //     tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
-    //     ++viaNodeId ;
-
-    //     //Secondly, check with the target viaclusters
-    //     for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
-    //         minX = 1000000000;
-    //         minY = 1000000000;
-    //         maxX = -1;
-    //         maxY = -1;
-    //         for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
-    //             tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
-    //             tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
-    //             tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
-    //             tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
-    //             if(tempMinX<minX){
-    //                 minX = tempMinX;
-    //             }
-    //             if(tempMinY<minY){
-    //                 minY = tempMinY;
-    //             }
-    //             if(tempMaxX>maxX){
-    //                 maxX = tempMaxX;
-    //             }
-    //             if(tempMaxY>maxY){
-    //                 maxY = tempMaxY;
-    //             }
-    //         }
-
-
-    //         tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
-    //         ++viaNodeId;
-    //     }
-
-    //     viaOASGNodes[i] = tempViaOASGNodes;
-    // }    
+        viaOASGNodes[i] = tempViaOASGNodes;
+    }    
 
 
     for (size_t layerId = 0; layerId < _rGraph.numLayers(); ++ layerId){
@@ -648,23 +620,6 @@ void GlobalMgr::buildOASG() {
     cout << "########################################\n";
     cout << "Finishing Building OASG \n";
     cout << "########################################\n";
-}
-
-void GlobalMgr::buildOASGXObs() {
-    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
-            OASGNode* sNode = _rGraph.sourceOASGNode(netId, layId);
-            for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
-                OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, layId);
-                _rGraph.addOASGEdge(netId, layId, sNode, tNode, false);
-                for (size_t tPortId1 = tPortId+1; tPortId1 < _rGraph.numTPorts(netId); ++ tPortId1) {
-                    OASGNode* tNode1 = _rGraph.targetOASGNode(netId, tPortId1, layId);
-                    _rGraph.addOASGEdge(netId, layId, tNode, tNode1, false);
-                }
-            }
-        }
-        
-    }
 }
 
 void GlobalMgr::plotOASG() {
@@ -847,118 +802,118 @@ void GlobalMgr::plotNCOASG() {
 
 void GlobalMgr::voltCurrOpt() {
     // store capacity constraints
-    // struct CapConstr {
-    //     OASGEdge* e1;
-    //     bool right1;
-    //     double ratio1;
-    //     OASGEdge* e2;
-    //     bool right2;
-    //     double ratio2;
-    //     double width;
-    // };
-    // struct SingleCapConstr {
-    //     OASGEdge* e1;
-    //     bool right1;
-    //     double ratio1;
-    //     double width;
-    // };
-    // vector<CapConstr> vCapConstr;
-    // vector<SingleCapConstr> vSglCapConstr;
-    // auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
-    //     CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
-    //     vCapConstr.push_back(capConstr);
-    // };
-    // auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
-    //     SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
-    //     vSglCapConstr.push_back(sglCapConstr);
-    // };
-    // // set capacity constraints
-    // // TODO for Tsai and Huang:
-    // // for each layer, for each neighboring OASGEdges,
+    struct CapConstr {
+        OASGEdge* e1;
+        bool right1;
+        double ratio1;
+        OASGEdge* e2;
+        bool right2;
+        double ratio2;
+        double width;
+    };
+    struct SingleCapConstr {
+        OASGEdge* e1;
+        bool right1;
+        double ratio1;
+        double width;
+    };
+    vector<CapConstr> vCapConstr;
+    vector<SingleCapConstr> vSglCapConstr;
+    auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+        CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
+        vCapConstr.push_back(capConstr);
+    };
+    auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
+        SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
+        vSglCapConstr.push_back(sglCapConstr);
+    };
+    // set capacity constraints
+    // TODO for Tsai and Huang:
+    // for each layer, for each neighboring OASGEdges,
     
     
-    // //search each layer                                                                           
-    // for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
-    //     cout << "LAYER :" << layId << endl << endl;
-    //     //search each net
-    //     for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
-    //         //search each edge
-    //         for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
-    //             OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+    //search each layer                                                                           
+    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+        cout << "LAYER :" << layId << endl << endl;
+        //search each net
+        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
+            //search each edge
+            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
                 
-    //             pair<double, double> ratio;
-    //             pair<bool, bool> right;
-    //             double width;
+                pair<double, double> ratio;
+                pair<bool, bool> right;
+                double width;
                 
-    //             //compare other net edge
-    //             for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
-    //                 //make sure to compare different net
-    //                 for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
-    //                     OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+                //compare other net edge
+                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
+                    //make sure to compare different net
+                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
     
-    //                 //    BuildCapacityConstraint(e1,e2,solver);
-    //                     if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                                      make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                                      make_pair(e2->sNode()->x(), e2->sNode()->y()),
-    //                                      make_pair(e2->tNode()->x(), e2->tNode()->y()),
-    //                                      ratio, right, width))
-    //                         addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                    //    BuildCapacityConstraint(e1,e2,solver);
+                        if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
+                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
+                                         ratio, right, width))
+                            addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                         
-    //                 }   
-    //             } 
+                    }   
+                } 
 
-    //             // obstacle constraint
-    //             for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+                // obstacle constraint
+                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
                    
-    //                 Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
-    //                 pair<double, double> S2, T2;
-    //                 for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
-    //                     for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
-    //                         // get the edge coordinates
-    //                         S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
-    //                         T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+                    pair<double, double> S2, T2;
+                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
+                            // get the edge coordinates
+                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
+                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
                         
-    //                         if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                                          make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                                          S2, T2, ratio, right, width))
-    //                             addSglCapConstr(e1, right.first, ratio.first, width);
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                addSglCapConstr(e1, right.first, ratio.first, width);
 
-    //                     }
-    //                 }
-    //             }
+                        }
+                    }
+                }
 
-    //             // board cnstraint
-    //             // bottom
-    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                              make_pair(0, 0),
-    //                              make_pair(_db.boardWidth(), 0),
-    //                              ratio, right, width))
-    //                 addSglCapConstr(e1, right.first, ratio.first, width);
-    //             // left
-    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                              make_pair(0, 0),
-    //                              make_pair(0, _db.boardHeight()),
-    //                              ratio, right, width))
-    //                 addSglCapConstr(e1, right.first, ratio.first, width);
-    //             // top
-    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                              make_pair(0, _db.boardHeight()),
-    //                              make_pair(_db.boardWidth(), _db.boardHeight()),
-    //                              ratio, right, width))
-    //                 addSglCapConstr(e1, right.first, ratio.first, width);
-    //             // right
-    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-    //                              make_pair(_db.boardWidth(), 0),
-    //                              make_pair(_db.boardWidth(), _db.boardHeight()),
-    //                              ratio, right, width))
-    //                 addSglCapConstr(e1, right.first, ratio.first, width);
-    //         }
-    //     }  
-    // }
+                // board cnstraint
+                // bottom
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(_db.boardWidth(), 0),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // left
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(0, _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // top
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, _db.boardHeight()),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // right
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(_db.boardWidth(), 0),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+            }
+        }  
+    }
 
     voltageAssignment();
 
@@ -987,8 +942,8 @@ void GlobalMgr::voltCurrOpt() {
     FlowLP* currentSolver;
     // VoltCP* voltageSolver;
     VoltSLP* voltageSolver;
-    vector<double> vLambda(_vCapConstr.size(), 2.0);
-    vector<double> vLastOverlap(_vCapConstr.size(), 0.0);
+    vector<double> vLambda(vCapConstr.size(), 2.0);
+    vector<double> vLastOverlap(vCapConstr.size(), 0.0);
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
@@ -998,19 +953,19 @@ void GlobalMgr::voltCurrOpt() {
 
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
-        for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+        for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
                 vLambda[capId] = 2;
             }
         // current optimization
         currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
         currentSolver->setObjective(_db.areaWeight(), _db.viaWeight());
         currentSolver->setConserveConstraints();
-        for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
-            CapConstr cap = _vCapConstr[capId];
+        for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+            CapConstr cap = vCapConstr[capId];
             currentSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
         }
-        for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
-            SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
+        for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
+            SingleCapConstr sglCap = vSglCapConstr[sglCapId];
             currentSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
         }
         for (size_t iIter = 0; iIter < numIIter; ++iIter) {
@@ -1018,12 +973,11 @@ void GlobalMgr::voltCurrOpt() {
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
             _vArea.push_back(currentSolver->area());
-            _vViaArea.push_back(currentSolver->viaArea());
             _vOverlap.push_back(currentSolver->overlap());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
             // lagrange multiplier scheduling
-            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+            for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
                 // schedule1: exp(exp(.))
                 // vLambda[capId] *= vLambda[capId];
 
@@ -1059,19 +1013,18 @@ void GlobalMgr::voltCurrOpt() {
             voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
             voltageSolver->setVoltConstraints(1E-10);
             voltageSolver->setLimitConstraint(0.9);
-            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
-                CapConstr cap = _vCapConstr[capId];
+            for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+                CapConstr cap = vCapConstr[capId];
                 voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
             }
-            for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
-                SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
+            for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
+                SingleCapConstr sglCap = vSglCapConstr[sglCapId];
                 voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
             }
             voltageSolver->relaxCapacityConstraints(vLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
             _vArea.push_back(voltageSolver->area());
-            _vViaArea.push_back(voltageSolver->viaArea());
             _vOverlap.push_back(voltageSolver->overlap());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
@@ -1143,25 +1096,6 @@ void GlobalMgr::voltCurrOpt() {
         }
         cerr << endl;
     }
-    cerr << "///////////////////" << endl;
-    cerr << "//    viaArea    //" << endl;
-    cerr << "///////////////////" << endl;
-    i = 0;
-    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
-        cerr << "ivIter = " << ivIter << endl;
-        cerr << "I opt: ";
-        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
-            cerr << _vViaArea[i] << " -> ";
-            i++;
-        }
-        cerr << endl;
-        cerr << "V opt: ";
-        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
-            cerr << _vViaArea[i] << " -> ";
-            i++;
-        }
-        cerr << endl;
-    }
     cerr << "////////////////////////////" << endl;
     cerr << "//    overlapped width    //" << endl;
     cerr << "////////////////////////////" << endl;
@@ -1185,58 +1119,8 @@ void GlobalMgr::voltCurrOpt() {
 }
 
 void GlobalMgr::voltageAssignment() {
-    auto viaEdgeArea = [&] (OASGEdge* e) -> double {
-        assert(e->viaEdge());
-        double polygonArea = e->boundPolygon()->area();
-        double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
-        double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
-        double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
-        return polygonArea * ratio;
-    };
-
-    for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
-        OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
-        double sglWidth = _vSglCapConstr[sCapId].width / _vSglCapConstr[sCapId].ratio1;
-        bool sglRight = _vSglCapConstr[sCapId].right1;
-        if (sglRight) {
-            if (sglWidth < sglEdge->widthRight()) {
-                sglEdge->setWidthRight(sglWidth);
-            }
-        } else {
-            if (sglWidth < sglEdge->widthLeft()) {
-                sglEdge->setWidthLeft(sglWidth);
-            }
-        }
-    }
-    for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
-        OASGEdge* e1 = _vCapConstr[capId].e1;
-        OASGEdge* e2 = _vCapConstr[capId].e2;
-        double width1 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio1;
-        double width2 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio2;
-        bool right1 = _vCapConstr[capId].right1;
-        bool right2 = _vCapConstr[capId].right2;
-        if (right1) {
-            if (width1 < e1->widthRight()) {
-                e1->setWidthRight(width1);
-            }
-        } else {
-            if (width1 < e1->widthLeft()) {
-                e1->setWidthLeft(width1);
-            }
-        }
-        if (right2) {
-            if (width2 < e2->widthRight()) {
-                e2->setWidthRight(width2);
-            }
-        } else {
-            if (width2 < e2->widthLeft()) {
-                e2->setWidthLeft(width2);
-            }
-        }
-    }
-
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-        VoltEigen solver(_rGraph.numNPortOASGNodes(netId) + _db.vNet(netId)->numTPorts());
+        VoltEigen solver(_rGraph.numNPortOASGNodes(netId));
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
             OASGNode* nPortNode = _rGraph.vNPortOASGNode(netId, nPortNodeId);
             // set matrix and input vector for outNodes
@@ -1245,34 +1129,25 @@ void GlobalMgr::voltageAssignment() {
                 OASGNode* outNode = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId))->tNode();
                 double resistance;
                 double l;
-                double A;
                 if (outEdge->viaEdge()) {
-                    cerr << "viaEdge "; 
+                    // cerr << "viaEdge "; 
                     l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
                         + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
                     // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(outEdge);
-                    resistance = (l * 1E-3) / (_db.vMetalLayer(0)->conductivity() * A * 1E-6);
+                    resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
                 } else {
-                    cerr << "planeEdge ";
+                    // cerr << "planeEdge ";
                     l = outEdge->length();
-                    cerr << "length = " << l << " ";
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
-                    double width = outEdge->widthLeft() + outEdge->widthRight();
-                    cerr << "width = " << width << " ";
-                    resistance =  (l * 1E-3) / (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3);
+                    resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
                 }
-                cerr << "resistance = " << resistance << endl;
+                // cerr << "resistance = " << resistance << endl;
 
-                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
-                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
                 if (outNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
                 } else {
-                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
-                    solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), resistance);
+                    solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), resistance);
                     // cerr << "voltage = " << outNode->port()->voltage() << endl;
                 }
             }
@@ -1283,110 +1158,25 @@ void GlobalMgr::voltageAssignment() {
                 OASGNode* inNode = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId))->sNode();
                 double resistance;
                 double l;
-                double A;
                 if (inEdge->viaEdge()) {
-                    cerr << "viaEdge ";
+                    // cerr << "viaEdge ";
                     l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(inEdge);
-                    resistance = (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * A*1E-6);
+                    resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
                 } else {
-                    cerr << "planeEdge ";
+                    // cerr << "planeEdge ";
                     l = inEdge->length();
-                    cerr << "length = " << l << " " ;
-                    double width = inEdge->widthLeft() + inEdge->widthRight();
-                    cerr << "width = " << width << " ";
-                    resistance =  (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3);
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                    resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
                 }
-                cerr << "resistance = " << resistance << endl;
+                // cerr << "resistance = " << resistance << endl;
 
                 if (inNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), resistance);
                 } else {
-                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
                     solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), resistance);
-                    cerr << "voltage = " << inNode->port()->voltage() << endl;
-                }
-            }
-        }
-
-        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
-            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
-            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
-            double tPortResistance = tNode->port()->voltage() / tNode->port()->current();
-            solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, tPortResistance);
-            // set matrix and input vector for outNodes
-            for (size_t outEdgeId = 0; outEdgeId < tNode->numOutEdges(); ++ outEdgeId) {
-                OASGEdge* outEdge = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId));
-                OASGNode* outNode = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId))->tNode();
-                double resistance;
-                double l;
-                double A;
-                assert(!outEdge->viaEdge());
-                if (outEdge->viaEdge()) {
-                    cerr << "viaEdge "; 
-                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
-                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
-                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
-                    // cerr << "l=" << l << " ";
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(outEdge);
-                    resistance = (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * A * 1E-6);
-                } else {
-                    cerr << "planeEdge ";
-                    l = outEdge->length();
-                    cerr << "length = " << l << " ";
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
-                    double width = outEdge->widthLeft() + outEdge->widthRight();
-                    cerr << "width = " << width << " ";
-                    resistance =  (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3);
-                }
-                cerr << "resistance = " << resistance << endl;
-                if (outNode->nPort()) {
-                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, outNode->nPortNodeId(), resistance);
-                } else {
-                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
-                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + outNode->port()->netTPortId(), resistance);
-                }
-                
-            }
-            // set matrix and input vector for inNodes
-            for (size_t inEdgeId = 0; inEdgeId < tNode->numInEdges(); ++ inEdgeId) {
-                OASGEdge* inEdge = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId));
-                OASGNode* inNode = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId))->sNode();
-                double resistance;
-                double l;
-                double A;
-                if (inEdge->viaEdge()) {
-                    cerr << "viaEdge ";
-                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
-                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
-                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(inEdge);
-                    resistance = (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * A * 1E-6);
-                } else {
-                    cerr << "planeEdge ";
-                    l = inEdge->length();
-                    cerr << "length = " << l << " ";
-                    double width = inEdge->widthLeft() + inEdge->widthRight();
-                    cerr << "width = " << width << " ";
-                    resistance =  (l*1E-3) / (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3);
-                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
-                }
-                cerr << "resistance = " << resistance << endl;
-
-                if (inNode->nPort()) {
-                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->nPortNodeId(), resistance);
-                } else if (inNode->port()->netTPortId() >= 0) {
-                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + inNode->port()->netTPortId(), resistance);
-                } else {
-                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
-                    solver.setInputVector(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->port()->voltage(), resistance);
-                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                    // cerr << "voltage = " << inNode->port()->voltage() << endl;
                 }
             }
         }
@@ -1419,18 +1209,10 @@ void GlobalMgr::voltageAssignment() {
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
             _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(solver.V(nPortNodeId));
         }
-        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
-            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
-            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
-            double tPortResistance = tNode->port()->voltage() / tNode->port()->current();
-            cerr << "net" << netId << " tPort" << tPortId << ": voltage = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId);
-            cerr << ", current = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId) / tPortResistance << endl;
-        }
         _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
         for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
             _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
         }
-        // assert(false);
     }
 
     // for (size_t nodeId = 0; nodeId < _rGraph.numOASGNodes(); ++ nodeId) {
@@ -1737,100 +1519,4 @@ Segment* GlobalMgr::edge2Segment(OASGEdge* edge) {
     return segment;
 }
 
-void GlobalMgr::genCapConstrs() {
-    auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
-        CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
-        _vCapConstr.push_back(capConstr);
-    };
-    auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
-        SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
-        _vSglCapConstr.push_back(sglCapConstr);
-    };
-    // set capacity constraints
-    // TODO for Tsai and Huang:
-    // for each layer, for each neighboring OASGEdges,
-    
-    
-    //search each layer                                                                           
-    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
-        // cout << "LAYER :" << layId << endl << endl;
-        //search each net
-        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
-            //search each edge
-            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
-                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
-                
-                pair<double, double> ratio;
-                pair<bool, bool> right;
-                double width;
-                
-                //compare other net edge
-                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
-                    //make sure to compare different net
-                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
-                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
-    
-                    //    BuildCapacityConstraint(e1,e2,solver);
-                        if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
-                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
-                                         ratio, right, width))
-                            addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
-                        
-                    }   
-                } 
 
-                // obstacle constraint
-                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
-                   
-                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
-                    pair<double, double> S2, T2;
-                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
-                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
-                            // get the edge coordinates
-                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
-                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
-                        
-                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                             S2, T2, ratio, right, width))
-                                addSglCapConstr(e1, right.first, ratio.first, width);
-
-                        }
-                    }
-                }
-
-                // board cnstraint
-                // bottom
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, 0),
-                                 make_pair(_db.boardWidth(), 0),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // left
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, 0),
-                                 make_pair(0, _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // top
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, _db.boardHeight()),
-                                 make_pair(_db.boardWidth(), _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // right
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(_db.boardWidth(), 0),
-                                 make_pair(_db.boardWidth(), _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-            }
-        }  
-    }
-}

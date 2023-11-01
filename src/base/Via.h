@@ -21,27 +21,11 @@ class ViaEdge {
 
 class PadStack {
     public:
-        friend class Via;
-        PadStack(string name, string shape, double drillRadius, vector<double> vRegular, vector<double> vAnti)
-        : _name(name), _shape(shape), _drillRadius(drillRadius), _vRegular(vRegular), _vAnti(vAnti) {
-            _copperWidth = 0.8 * 0.0254;
-            _metalArea = M_PI * (pow(drillRadius, 2) - pow(drillRadius-_copperWidth, 2));
-        }
-        ~PadStack() {}
-
-        double padRadius(size_t layId) const { return _vRegular[layId]; }
-        double antiPadRadius(size_t layId) const { return _vAnti[layId]; }
-        double drillRadius() const { return _drillRadius; }
-        double copperWidth() const { return _copperWidth; }
-        double metalArea() const { return _metalArea; }
     private:
         string _name;
         string _shape;
         vector< double > _vRegular;   // if circle: radius; if square: width
         vector< double > _vAnti;      // if circle: radius; if square: width
-        double _drillRadius;
-        double _copperWidth;
-        double _metalArea;
 };
 
 enum ViaType {
@@ -54,24 +38,13 @@ class Via{
     public:
         // Via(unsigned int rowId, unsigned int colId, unsigned int netId, ViaType type, Shape* shape): _rowId(rowId), _colId(colId), _netId(netId), _viaType(type), _shape(shape) {}
         Via(unsigned int netId, ViaType type, Shape* shape): _netId(netId), _viaType(type), _shape(shape) {}
-        Via(double x, double y, PadStack* padStack, size_t netId, SVGPlot& plot): _x(x), _y(y), _padStack(padStack), _netId(netId) {
-            _shape = new Circle(x, y, padStack->_drillRadius, plot);
-        }
         ~Via() {}
         
         // unsigned int rowId() const { return _rowId; }
         // unsigned int colId() const { return _colId; }
-        size_t netId() const {return _netId; }
+        unsigned int netId() const {return _netId; }
         ViaType viaType() const { return _viaType; }
-        // drill circle of the via
         Shape* shape() {return _shape;}
-        double x() const { return _shape->ctrX(); }     // 改 _x
-        double y() const { return _shape->ctrY(); }     // 改 _y
-        double padRadius(size_t layId) const { return _padStack->_vRegular[layId]; }
-        double antiPadRadius(size_t layId) const { return _padStack->_vAnti[layId]; }
-        double drillRadius() const { return _padStack->_drillRadius; }
-        double copperWidth() const { return _padStack->_copperWidth; }
-        double metalArea() const { return _padStack->_metalArea; }
         void print() {
             cerr << "Via {netId=" << _netId << ", viaType=" << _viaType << endl;
             cerr << ", shape=";
@@ -81,16 +54,13 @@ class Via{
     private:
         // unsigned int _rowId;
         // unsigned int _colId;
-        size_t _netId;
+        unsigned int _netId;
         ViaType _viaType;
         Shape* _shape;
-        PadStack* _padStack;
-        double _x;
-        double _y;
-        // string _padStackName;
-        // double _padDiameter;
-        // double _drillDiameter;
-        // double _antiPadDiameter;
+        string _padStackName;
+        double _padDiameter;
+        double _drillDiameter;
+        double _antiPadDiameter;
 };
 
 class ViaCluster{
