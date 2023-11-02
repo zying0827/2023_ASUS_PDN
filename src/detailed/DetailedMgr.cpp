@@ -8,7 +8,7 @@
 #include <Eigen/IterativeLinearSolvers>
 
 void DetailedMgr::initGridMap() {
-    auto occupy = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
+    auto occupiedBySegments = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
         for (size_t segId = 0; segId < _db.vNet(netId)->numSegments(layId); ++ segId) {
             Trace* trace = _db.vNet(netId)->vSegment(layId, segId)->trace();
             if (trace->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
@@ -18,13 +18,29 @@ void DetailedMgr::initGridMap() {
         }
         return false;
     };
+    auto occupiedByPorts = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
+        Polygon* sBPolygon = _db.vNet(netId)->sourcePort()->boundPolygon();
+        if (sBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+        if (sBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+        if (sBPolygon->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+        if (sBPolygon->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            Polygon* tBPolygon = _db.vNet(netId)->targetPort(tPortId)->boundPolygon();
+            if (tBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+            if (tBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+            if (tBPolygon->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+            if (tBPolygon->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+        }
+        return false;
+    };
 
+    // init grids occupied by segments and ports
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
         for (size_t xId = 0; xId < _numXs; ++ xId) {
             for (size_t yId = 0; yId < _numYs; ++ yId) {
                 Grid* grid = _vGrid[layId][xId][yId];
                 for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
-                    if (occupy(layId, xId, yId, netId)) {
+                    if (occupiedBySegments(layId, xId, yId, netId) || occupiedByPorts(layId, xId, yId, netId)) {
                         grid->addNet(netId);
                         grid->incCongestCur();
                         _vNetGrid[netId][layId].push_back(grid);
@@ -34,6 +50,7 @@ void DetailedMgr::initGridMap() {
         }
     }
 
+    // init grids occupied by circular pad
     // for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
     //     Net* net = _db.vNet(netId);
     //     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
@@ -84,47 +101,48 @@ void DetailedMgr::initGridMap() {
     //     }    
     // }
     
-    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
-        Net* net = _db.vNet(netId);
-        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
-            for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
-                Segment* segment = net->vSegment(layId, segId);
-                int sXId = floor(segment->sX() / _gridWidth);
-                int sYId = floor(segment->sY() / _gridWidth);
-                int tXId = floor(segment->tX() / _gridWidth);
-                int tYId = floor(segment->tY() / _gridWidth);
-                int boxWidth = ceil(segment->width() / _gridWidth);
-                for (int xId = sXId - floor(boxWidth/2.0); xId <= sXId + floor(boxWidth/2.0); ++ xId) {
-                    if (xId >= 0 && xId < _vGrid[0].size()) {
-                        for (int yId = sYId - floor(boxWidth/2.0); yId <= sYId + floor(boxWidth/2.0); ++ yId) {
-                            if (yId >= 0 && yId < _vGrid[0][0].size()) {
-                                Grid* grid = _vGrid[layId][xId][yId];
-                                if (!grid->hasNet(netId)) {
-                                    grid->addNet(netId);
-                                    grid->incCongestCur();
-                                    _vNetGrid[netId][layId].push_back(grid);
-                                }
-                            }
-                        }
-                    }
-                }
-                for (int xId = tXId - floor(boxWidth/2.0); xId <= tXId + floor(boxWidth/2.0); ++ xId) {
-                    if (xId >= 0 && xId < _vGrid[0].size()) {
-                        for (int yId = tYId - floor(boxWidth/2.0); yId <= tYId + floor(boxWidth/2.0); ++ yId) {
-                            if (yId >= 0 && yId < _vGrid[0][0].size()) {
-                                Grid* grid = _vGrid[layId][xId][yId];
-                                if (!grid->hasNet(netId)) {
-                                    grid->addNet(netId);
-                                    grid->incCongestCur();
-                                    _vNetGrid[netId][layId].push_back(grid);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // init grids occupied by squared pads
+    // for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+    //     Net* net = _db.vNet(netId);
+    //     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+    //         for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
+    //             Segment* segment = net->vSegment(layId, segId);
+    //             int sXId = floor(segment->sX() / _gridWidth);
+    //             int sYId = floor(segment->sY() / _gridWidth);
+    //             int tXId = floor(segment->tX() / _gridWidth);
+    //             int tYId = floor(segment->tY() / _gridWidth);
+    //             int boxWidth = ceil(segment->width() / _gridWidth);
+    //             for (int xId = sXId - floor(boxWidth/2.0); xId <= sXId + floor(boxWidth/2.0); ++ xId) {
+    //                 if (xId >= 0 && xId < _vGrid[0].size()) {
+    //                     for (int yId = sYId - floor(boxWidth/2.0); yId <= sYId + floor(boxWidth/2.0); ++ yId) {
+    //                         if (yId >= 0 && yId < _vGrid[0][0].size()) {
+    //                             Grid* grid = _vGrid[layId][xId][yId];
+    //                             if (!grid->hasNet(netId)) {
+    //                                 grid->addNet(netId);
+    //                                 grid->incCongestCur();
+    //                                 _vNetGrid[netId][layId].push_back(grid);
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             for (int xId = tXId - floor(boxWidth/2.0); xId <= tXId + floor(boxWidth/2.0); ++ xId) {
+    //                 if (xId >= 0 && xId < _vGrid[0].size()) {
+    //                     for (int yId = tYId - floor(boxWidth/2.0); yId <= tYId + floor(boxWidth/2.0); ++ yId) {
+    //                         if (yId >= 0 && yId < _vGrid[0][0].size()) {
+    //                             Grid* grid = _vGrid[layId][xId][yId];
+    //                             if (!grid->hasNet(netId)) {
+    //                                 grid->addNet(netId);
+    //                                 grid->incCongestCur();
+    //                                 _vNetGrid[netId][layId].push_back(grid);
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void DetailedMgr::plotGridMap() {

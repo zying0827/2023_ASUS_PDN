@@ -33,6 +33,7 @@ class PreMgr {
         void assignPortPolygon();
     private:
         void kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs, int k);
+        Polygon* convexHull(vector<DBNode*> vNode);
         DB& _db;
         SVGPlot& _plot;
         vector< size_t > _vNumTPorts;       // index = [netId]

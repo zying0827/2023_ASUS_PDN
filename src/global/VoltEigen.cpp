@@ -1,15 +1,23 @@
 #include "VoltEigen.h"
 
-void VoltEigen::setMatrix(size_t rowNodeId, double resistance) {
-    _G[rowNodeId][rowNodeId] += (1/resistance);
+void VoltEigen::setMatrix(size_t rowNodeId, double conductance) {
+    // _G[rowNodeId][rowNodeId] += (1/resistance);
+    _G[rowNodeId][rowNodeId] += conductance;
 }
-void VoltEigen::setMatrix(size_t rowNodeId, size_t colNodeId, double resistance) {
-    _G[rowNodeId][rowNodeId] += (1/resistance);
-    _G[rowNodeId][colNodeId] -= (1/resistance);
+void VoltEigen::setMatrix(size_t rowNodeId, size_t colNodeId, double conductance) {
+    // _G[rowNodeId][rowNodeId] += (1/resistance);
+    // _G[rowNodeId][colNodeId] -= (1/resistance);
+    _G[rowNodeId][rowNodeId] += conductance;
+    _G[rowNodeId][colNodeId] -= conductance;
 }
-void VoltEigen::setInputVector(size_t rowNodeId, double inputVolt, double resistance) {
-    _G[rowNodeId][rowNodeId] += (1/resistance);
-    _I[rowNodeId] += (inputVolt/resistance);
+void VoltEigen::setInputVector(size_t rowNodeId, double inputVolt, double conductance) {
+    // _G[rowNodeId][rowNodeId] += (1/resistance);
+    // _I[rowNodeId] += (inputVolt/resistance);
+    _G[rowNodeId][rowNodeId] += conductance;
+    _I[rowNodeId] += (inputVolt*conductance);
+}
+void VoltEigen::setInputVector(size_t rowNodeId, double inputCurrent) {
+    _I[rowNodeId] += inputCurrent;
 }
 void VoltEigen::solve() {
     cerr << "G = " << endl;
@@ -30,8 +38,10 @@ void VoltEigen::solve() {
         cerr << _I[rowId] << ";" << endl;
     }
     _model.optimize();
+    cerr << "voltage = " << endl;
     for (size_t rowId = 0; rowId < _numNodes; ++ rowId) {
         _V[rowId] = _vVoltage[rowId].get(GRB_DoubleAttr_X);
         cerr << setprecision(15) << _V[rowId] << " ";
     }
+    cerr << endl;
 }

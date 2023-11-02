@@ -65,7 +65,7 @@ bool Shape::enclose(double x, double y) {
  
     // Create a point at infinity, y is same as point p
     Point p = {x, y};
-    Line exline = { p, { -1.0, -1.0 } };
+    Line exline = { p, { 10000, y } };
     int count = 0;
     int i = 0;
     do {

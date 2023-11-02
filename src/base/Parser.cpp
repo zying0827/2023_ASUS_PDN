@@ -175,9 +175,9 @@ void Parser::parse() {
     //     // cerr << "layer[" << layId << "] = " << _db.vMetalLayer(layId)->layName() << endl;
     //     // _db.vMetalLayer(layId)->print();
     // }
-    parseST();
     parseLayer();
     _db.setVIA16D8A24();
+    parseST();
 
 
     // parse shape

@@ -9,6 +9,9 @@ void PreMgr::nodeClustering() {
             }
             // cerr << "kMeans..." << endl;
             kMeansClustering(netId, vTNode, 10, _vNumTPorts[netId]);
+            for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
+                assert(_vTClusteredNode[netId][tPortId].size() > 0);
+            }
         }
         else {
             for (size_t tNodeId = 0; tNodeId < _db.numTNodes(netId); ++ tNodeId) {
@@ -67,24 +70,29 @@ void PreMgr::nodeClustering() {
 }
 
 void PreMgr::plotBoundBox() {
-    for (size_t netId =0; netId < _db.numNets(); ++ netId) {
-        vector< pair<double, double> > vVtx;
-        vVtx.push_back(make_pair(_vSBoundBox[netId].minX, _vSBoundBox[netId].minY));
-        vVtx.push_back(make_pair(_vSBoundBox[netId].maxX, _vSBoundBox[netId].minY));
-        vVtx.push_back(make_pair(_vSBoundBox[netId].maxX, _vSBoundBox[netId].maxY));
-        vVtx.push_back(make_pair(_vSBoundBox[netId].minX, _vSBoundBox[netId].maxY));
-        Polygon* p = new Polygon(vVtx, _plot);
-        p->plot(netId, 0);
-        for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
-            vector< pair<double, double> > vVtx;
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
-            Polygon* p = new Polygon(vVtx, _plot);
-            p->plot(netId, 0);
+    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+        for (size_t netId =0; netId < _db.numNets(); ++ netId) {
+            // vector< pair<double, double> > vVtx;
+            // vVtx.push_back(make_pair(_vSBoundBox[netId].minX, _vSBoundBox[netId].minY));
+            // vVtx.push_back(make_pair(_vSBoundBox[netId].maxX, _vSBoundBox[netId].minY));
+            // vVtx.push_back(make_pair(_vSBoundBox[netId].maxX, _vSBoundBox[netId].maxY));
+            // vVtx.push_back(make_pair(_vSBoundBox[netId].minX, _vSBoundBox[netId].maxY));
+            // Polygon* p = new Polygon(vVtx, _plot);
+            // p->plot(netId, 0);
+            _db.vNet(netId)->sourcePort()->boundPolygon()->plot(netId, layId);
+            for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
+                // vector< pair<double, double> > vVtx;
+                // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
+                // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
+                // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
+                // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
+                // Polygon* p = new Polygon(vVtx, _plot);
+                // p->plot(netId, 0);
+                _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->plot(netId, layId);
+            }
         }
     }
+    
 }
 
 void PreMgr::assignPortPolygon() {
@@ -97,12 +105,14 @@ void PreMgr::assignPortPolygon() {
         Polygon* p = new Polygon(vVtx, _plot);
         _db.vNet(netId)->sourcePort()->setBoundPolygon(p);
         for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
-            vector< pair<double, double> > vVtx;
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
-            Polygon* p = new Polygon(vVtx, _plot);
+            // vector< pair<double, double> > vVtx;
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
+            // Polygon* p = new Polygon(vVtx, _plot);
+            // _db.vNet(netId)->targetPort(tPortId)->setBoundPolygon(p);
+            Polygon* p = convexHull(_vTClusteredNode[netId][tPortId]);
             _db.vNet(netId)->targetPort(tPortId)->setBoundPolygon(p);
         }
     }
@@ -212,3 +222,78 @@ void PreMgr::kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs
     
 }
 
+Polygon* PreMgr::convexHull(vector<DBNode*> vNode) {
+    struct Point 
+    { 
+        double x, y; 
+    }; 
+
+    auto orientation = [] (Point p, Point q, Point r) -> int {
+        double val = (q.y - p.y) * (r.x - q.x) - 
+              (q.x - p.x) * (r.y - q.y); 
+  
+        if (val == 0) return 0;  // collinear 
+        return (val > 0)? 1: 2; // clock or counterclock wise 
+    };
+
+    vector<Point> points;
+    for (size_t nodeId = 0; nodeId < vNode.size(); ++ nodeId) {
+        Point p = {vNode[nodeId]->node()->ctrX(), vNode[nodeId]->node()->ctrY()};
+        points.push_back(p);
+    }
+
+    size_t n = points.size();
+    // There must be at least 3 points 
+    // if (n < 3) return; 
+    assert(points.size() >= 3);
+  
+    // Initialize Result 
+    vector<Point> hull; 
+  
+    // Find the leftmost point 
+    int l = 0; 
+    for (int i = 1; i < n; i++) 
+        if (points[i].x < points[l].x) 
+            l = i; 
+  
+    // Start from leftmost point, keep moving counterclockwise 
+    // until reach the start point again.  This loop runs O(h) 
+    // times where h is number of points in result or output. 
+    int p = l, q; 
+    do
+    { 
+        // Add current point to result 
+        hull.push_back(points[p]); 
+  
+        // Search for a point 'q' such that orientation(p, q, 
+        // x) is counterclockwise for all points 'x'. The idea 
+        // is to keep track of last visited most counterclock- 
+        // wise point in q. If any point 'i' is more counterclock- 
+        // wise than q, then update q. 
+        q = (p+1)%n; 
+        for (int i = 0; i < n; i++) 
+        { 
+           // If i is more counterclockwise than current q, then 
+           // update q 
+           if (orientation(points[p], points[i], points[q]) == 2) 
+               q = i; 
+        } 
+  
+        // Now q is the most counterclockwise with respect to p 
+        // Set p as q for next iteration, so that q is added to 
+        // result 'hull' 
+        p = q; 
+  
+    } while (p != l);  // While we don't come to first point 
+  
+    // Print Result 
+    // for (int i = 0; i < hull.size(); i++) 
+    //     cout << "(" << hull[i].x << ", "
+    //           << hull[i].y << ")\n"; 
+    vector< pair<double, double> > vVtx;
+    for (int i = 0; i < hull.size(); i++) {
+        vVtx.push_back(make_pair(hull[i].x, hull[i].y));
+    }
+    Polygon* boundPolygon = new Polygon(vVtx, _plot);
+    return boundPolygon;
+}

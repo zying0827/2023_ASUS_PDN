@@ -27,6 +27,10 @@ class GlobalMgr {
         GlobalMgr(DB& db, SVGPlot& plot): _db(db), _plot(plot) {
             cerr << "numNets = " << _db.numNets() << endl;
             _rGraph.initRGraph(db);
+            for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+                vector<double> temp(_rGraph.numViaOASGEdges(netId), -1);
+                _vUBViaArea.push_back(temp);
+            }
         }
         ~GlobalMgr() {}
 
@@ -49,9 +53,12 @@ class GlobalMgr {
         void plotNCOASG();
         void genCapConstrs();
         void voltCurrOpt();
-        void voltageAssignment();
+        void voltageAssignment(bool currentBased);
+        void voltageDemandAssignment();
         void currentDistribution();
         void plotCurrentPaths();
+        void checkFeasible(bool currentBased);
+        void checkVoltDemandFeasible();
     private:
         Trace* edge2Trace(OASGEdge* edge);
         Segment* edge2Segment(OASGEdge* edge);
@@ -66,6 +73,7 @@ class GlobalMgr {
         vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
         vector<CapConstr> _vCapConstr;
         vector<SingleCapConstr> _vSglCapConstr;
+        vector< vector< double > > _vUBViaArea;     // the upper bound of a via area, index = [netId] [vEdgeId]
 };
 
 #endif

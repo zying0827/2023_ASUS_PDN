@@ -5,7 +5,7 @@ void SVGPlot::startPlot(double canvasW, double canvasH) {
     _fout << "<body>" << endl;
     _fout << "<svg width=\"" << canvasW <<"\" height=\"" << canvasH << "\">" << endl;
     // drawRect(0, 0, canvasW, canvasH, SVGPlotColor::black, 0);
-    for (size_t layId = 0; layId < 12; ++ layId) {
+    for (size_t layId = 0; layId < _numLayers; ++ layId) {
         drawRect(0, 0, _boardWidth, _boardHeight, SVGPlotColor::white, layId);
     }
 }

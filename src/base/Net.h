@@ -42,7 +42,9 @@ class Port {
         double current() const { return _current; }
         ViaCluster* viaCluster() { return _viaCluster; }
         Polygon* boundPolygon() { return _boundPolygon; }
+        double viaArea() const { return _viaArea; }
         void setBoundPolygon(Polygon* polygon) { _boundPolygon = polygon; }
+        void setViaArea(double viaArea) { _viaArea = viaArea; }
         void print() {
             cerr << "Port {portId=" << _portId << ", voltage=" << _voltage << ", current=" << _current << endl;
             cerr << ", netPortId=" << _netTPortId << ", boundPolygon=";
@@ -58,6 +60,7 @@ class Port {
         double _current;
         ViaCluster* _viaCluster;
         Polygon* _boundPolygon;
+        double _viaArea;    // assigned in GlobalMgr::currVoltOpt()
 };
 
 // class TwoPinNet {

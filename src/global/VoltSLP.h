@@ -15,6 +15,7 @@ class VoltSLP {
         void setObjective(double areaWeight, double viaWeight);
         void setVoltConstraints(double threshold);
         void setLimitConstraint(double ratio);
+        void addViaAreaConstraints(size_t netId, size_t vEdgeId, double area);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width);
         void relaxCapacityConstraints(vector<double> vLambda);
@@ -49,7 +50,7 @@ class VoltSLP {
         // gurobi variable
         GRBVar** _vVoltage;    // non-port node voltage, index = [netId] [nPortnodeId]
         GRBVar*** _vPEdgeInV;   // inverse of the (plane) edge voltage difference, index = [netId] [layId] [pEdgeId]
-        GRBVar*** _vVEdgeInV;   // inverse of the (via) edge voltage difference, index = [netId] [layPairId] [vEdgeId]
+        // GRBVar*** _vVEdgeInV;   // inverse of the (via) edge voltage difference, index = [netId] [layPairId] [vEdgeId]
         GRBVar**  _vMaxViaCost;      // the maximum flow on an OASGEdge, index = [netId] [vEdgeId]
         int _numCapConstrs;          // number of non-obstacle/boundary capacity constraints
 

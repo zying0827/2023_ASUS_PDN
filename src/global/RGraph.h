@@ -23,6 +23,7 @@ class OASGNode {
             _redundant = false;
             _vOutEdgeId.clear();
             _vInEdgeId.clear();
+            // assert(false);
         }
         ~OASGNode() {}
 
