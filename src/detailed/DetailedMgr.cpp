@@ -324,7 +324,7 @@ void DetailedMgr::writeColorMap(const char* path, bool isVoltage) {
     fprintf(fp, "%d\n\n", _db.numVias());
 
     for(int i=0; i<_db.numVias(); i++)
-            fprintf(fp, "%f %f %f\n", (double)_db.vVia(i)->shape()->ctrX() / _gridWidth, (double)_db.vVia(i)->shape()->ctrY() / _gridWidth, (double)_db.vVia(i)->shape()->radius() / _gridWidth);
+        fprintf(fp, "%f %f %f\n", (double)_db.vVia(i)->shape()->ctrX() / _gridWidth, (double)_db.vVia(i)->shape()->ctrY() / _gridWidth, (double)_db.vVia(i)->shape()->radius() / _gridWidth);
 
     fprintf(fp, "\n");
 
