@@ -20,23 +20,23 @@ void VoltEigen::setInputVector(size_t rowNodeId, double inputCurrent) {
     _I[rowNodeId] += inputCurrent;
 }
 void VoltEigen::solve() {
-    cerr << "G = " << endl;
+    // cerr << "G = " << endl;
     for (size_t rowId = 0; rowId < _numNodes; ++ rowId) {
         GRBLinExpr current;
         for (size_t colId = 0; colId < _numNodes; ++ colId) {
             current += _G[rowId][colId] * _vVoltage[colId];
-            cerr << _G[rowId][colId];
-            if (colId < _numNodes - 1) {
-                cerr << ", ";
-            }
+            // cerr << _G[rowId][colId];
+            // if (colId < _numNodes - 1) {
+            //     cerr << ", ";
+            // }
         }
-        cerr << ";" << endl;
+        // cerr << ";" << endl;
         _model.addConstr(current == _I[rowId], "I_constr_n" + to_string(rowId));
     }
-    cerr << "I = " << endl;
-    for (size_t rowId = 0; rowId < _numNodes; ++ rowId) {
-        cerr << _I[rowId] << ";" << endl;
-    }
+    // cerr << "I = " << endl;
+    // for (size_t rowId = 0; rowId < _numNodes; ++ rowId) {
+    //     cerr << _I[rowId] << ";" << endl;
+    // }
     _model.optimize();
     cerr << "voltage = " << endl;
     for (size_t rowId = 0; rowId < _numNodes; ++ rowId) {

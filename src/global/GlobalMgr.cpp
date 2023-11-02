@@ -993,7 +993,7 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 3; //3
+    size_t numIVIter = 0; //3
     size_t numIIter = 6; //6
     size_t numVIter = 10; //10
 
@@ -2493,11 +2493,23 @@ void GlobalMgr::genCapConstrs() {
     
                     //    BuildCapacityConstraint(e1,e2,solver);
                         if (e1 != e2) {
+                            // bool isSameNet = (T_netId == S_netId);
+                            // if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                            //              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                            //              make_pair(e2->sNode()->x(), e2->sNode()->y()),
+                            //              make_pair(e2->tNode()->x(), e2->tNode()->y()),
+                            //              ratio, right, width, isSameNet))
+                            //     addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                            double vtxX = e2->tNode()->x() - e2->sNode()->x();
+                            double vtxY = e2->tNode()->y() - e2->sNode()->y();
+                            pair<double, double> S2, T2;
+
+                            S2 = make_pair((e2->sNode()->x() + pow(10,-5)*vtxX), ( e2->sNode()->y() + pow(10,-5)*vtxY));
+                            T2 = make_pair((e2->tNode()->x() - pow(10,-5)*vtxX), ( e2->tNode()->y() - pow(10,-5)*vtxY));
+
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
-                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
-                                         ratio, right, width))
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2,ratio, right, width))
                                 addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                         }
                     }   

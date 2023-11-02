@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    // preMgr.plotBoundBox();
+    preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -97,13 +97,13 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
 
-    DetailedMgr detailedMgr(db, plot, 0.5);
-    detailedMgr.initGridMap();
+    // DetailedMgr detailedMgr(db, plot, 0.5);
+    // detailedMgr.initGridMap();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.naiveAStar();
     // detailedMgr.plotGridMap();
-    detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
     // detailedMgr.addViaGrid();
 
     // printf("\n==================== print ===================\n");

@@ -33,7 +33,7 @@ bool isRight(pair<double, double> S, pair<double, double> T, pair<double, double
     return (v1x*v2y - v1y*v2x) <= 0;
 }
 
-bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double, double> S2, pair<double, double> T2, pair<double, double> &ratio, pair<bool, bool> &right, double &width) {
+bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double, double> S2, pair<double, double> T2, pair<double, double> &ratio, pair<bool, bool> &right, double &width, bool isSameNet) {
     // input 4 points, return true if they are constrained
     // pass ratio1, ratio2, right1, right2, width by reference
     double v1x = T1.first - S1.first, v1y = T1.second - S1.second;
@@ -99,6 +99,18 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
             right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
         }
     }
+    if(isSameNet) {
+        if(S1 == S2)
+            right = make_pair(isRight(S1, T1, T2),isRight(S2, T2, T1));
+            
+        else if(S1 == T2)
+            right = make_pair(isRight(S1, T1, S2),isRight(S2, T2, T1));
+        else if(S2 == T1)
+            right = make_pair(isRight(S1, T1, T2),isRight(S2, T2, S1));
+        else if(S2 == T2)
+            right = make_pair(isRight(S1, T1, S2),isRight(S2, T2, S1));
+    }
+
     width = min_dist;
     return ratio.first >= 0;
 }

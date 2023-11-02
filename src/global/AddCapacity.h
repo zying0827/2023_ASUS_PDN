@@ -10,6 +10,6 @@
 
 double shortest_distance(pair<double, double>, pair<double, double>, pair<double, double>, pair<double, double>&);
 bool isRight(pair<double, double>, pair<double, double>, pair<double, double>);
-bool addConstraint(pair<double, double>, pair<double, double>, pair<double, double>, pair<double, double>, pair<double, double>&, pair<bool, bool>&, double&);
+bool addConstraint(pair<double, double>, pair<double, double>, pair<double, double>, pair<double, double>, pair<double, double>&, pair<bool, bool>&, double&, bool isSameNet = false);
 
 #endif
