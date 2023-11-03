@@ -65,6 +65,6 @@ tuple<int, int, int> SVGPlot::value2color(double value) {
 
 void SVGPlot::drawSquareValue(double leftX, double bottY, double width, double colorValue, size_t layId) {
     tuple<int, int, int> rgb = value2color(colorValue);
-    _fout << "  <rect x=\"" << (leftX + _boardWidth*layId)*_plotRatio << "\" y=\"" << (_boardHeight - bottY)*_plotRatio << "\" width=\"" << width*_plotRatio << "\" height=\"" << width*_plotRatio;
+    _fout << "  <rect x=\"" << (leftX + _boardWidth*layId)*_plotRatio << "\" y=\"" << (_boardHeight - bottY - width)*_plotRatio << "\" width=\"" << width*_plotRatio << "\" height=\"" << width*_plotRatio;
     _fout << "\" style=\"fill:rgb(" << get<0>(rgb) << "," << get<1>(rgb) << "," << get<2>(rgb) << ");stroke:gray;stroke-width:1\" />\n";
 }

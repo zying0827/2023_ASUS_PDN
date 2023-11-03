@@ -25,7 +25,8 @@ bool AStarRouter::route() {
         //     (dir == Direction::Right && xId + floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second) ||
         //     (dir == Direction::Left && xId - floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second)) {
             stepNode->setParent(orgNode);
-            backTrace(xId, yId);
+            backTraceNoPad();
+            // backTrace(xId, yId);
             // cerr << _vGNode[-1][-1] << endl;
             return true;
         } else if (stepNode->status() != GNodeStatus::InPath) {
@@ -263,10 +264,11 @@ void AStarRouter::backTraceNoPad() {
     _exactWidth = ceil(_lbWidth/_gridWidth);
     int halfWidth = floor(0.5 * _lbWidth / _gridWidth);
     // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
-    size_t sPathId = _path.size();
+    size_t sPathId = _path.size()-1;
     size_t tPathId = 0;
     bool TEncloseS = false;
     bool SEncloseT = false;
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second));
     while(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second)) {
         if (sPathId == 0) {
             TEncloseS == true;
@@ -276,6 +278,7 @@ void AStarRouter::backTraceNoPad() {
     }
     sPathId ++;
     assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second));
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second));
     while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second)) {
         if (tPathId == _path.size()) {
             SEncloseT = true;
@@ -289,16 +292,117 @@ void AStarRouter::backTraceNoPad() {
 
     if (TEncloseS) {
         size_t cPathId = _path.size() / 2;
-    }
-    // around the ending grid
-    for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
-        if (xId >= 0 && xId < numXId()) {
-            for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
-                if (yId >= 0 && yId < numYId()) {
-                    _vPGrid.push_back(_vGrid[xId][yId]);
+        for (int xId = _path[cPathId]->xId() - halfWidth; xId <= _path[cPathId]->xId() + halfWidth; ++ xId) {
+            if (xId >= 0 && xId < numXId()) {
+                for (int yId = _path[cPathId]->yId() - halfWidth; yId <= _path[cPathId]->yId() + halfWidth; ++ yId) {
+                    if (yId >= 0 && yId < numYId()) {
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+                    }
                 }
             }
         }
+    } else {
+        // around the ending grid
+        for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
+            if (xId >= 0 && xId < numXId()) {
+                for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
+                    if (yId >= 0 && yId < numYId()) {
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+                    }
+                }
+            }
+        }
+        // around the path
+        // node = _vGNode[_tPos.first][_tPos.second];
+        // while(node->parent() != node) {
+        for (size_t pathId = tPathId; pathId < sPathId; ++ pathId) {
+            // cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
+            // vector<Grid*> gg;
+            // if (node->parent()->xId() == 21 && node->parent()->yId() ==  58) cerr << gg[2] << endl;
+            if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()) {   // Right
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+                // if (node->parent()->xId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()-1  && _path[pathId+1]->yId() == _path[pathId]->yId()) {   // Left
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+                // if (node->parent()->xId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId() && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {    // Up
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                // if (node->parent()->xId() == _sPos.first && node->parent()->yId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId() && _path[pathId+1]->yId() == _path[pathId]->yId()-1) {    // Down
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                // if (node->parent()->xId() == _sPos.first && node->parent()->yId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {  // UpRight
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth-1; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()-1 && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {  // UpLeft
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth-1; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()-1) {  // DownRight
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth+1; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+            } else {  // DownLeft
+                assert(_path[pathId+1]->xId() == _path[pathId]->xId()-1 && _path[pathId+1]->yId() == _path[pathId]->yId()-1);
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth+1; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+            }
+            // node = node->parent();
+        } 
     }
 }
 
