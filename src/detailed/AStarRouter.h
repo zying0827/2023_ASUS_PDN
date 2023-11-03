@@ -6,7 +6,8 @@
 using namespace std;
 
 enum Direction {
-    Up, Down, Right, Left
+    Up, Down, Right, Left,
+    UpRight, UpLeft, DownRight, DownLeft
 };
 
 class AStarRouter {
@@ -28,7 +29,10 @@ class AStarRouter {
         void backTrace(int tXId, int tYId);
         double marginCongestCost(int xId, int yId, Direction dir);
         double estDistCost(int xId, int yId) {
-            return abs(_tPos.first - xId) + abs(_tPos.second - yId);
+            // return abs(_tPos.first - xId) + abs(_tPos.second - yId);
+            double longer = max(abs(_tPos.first - xId), abs(_tPos.second - yId));
+            double shorter = min(abs(_tPos.first - xId), abs(_tPos.second - yId));
+            return longer + shorter * (sqrt(2.0)-1.0);
         }
         double lineDistCost(int xId, int yId) {
             double den = abs(xId*(_tPos.second-_sPos.first) + _tPos.first*(_sPos.second-yId) + _sPos.first*(yId-_tPos.second));

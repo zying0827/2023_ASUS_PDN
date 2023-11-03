@@ -23,6 +23,7 @@ class OASGNode {
             _redundant = false;
             _vOutEdgeId.clear();
             _vInEdgeId.clear();
+            // assert(false);
         }
         ~OASGNode() {}
 
@@ -85,6 +86,8 @@ class OASGEdge {
         : _OASGEdgeId(edgeId), _netId(netId), _layId(layId), _typeEdgeId(typeEdgeId), _sNode(sNode), _tNode(tNode), _viaEdge(viaEdge) {
             _length = sqrt( pow(_sNode->x() - _tNode->x(), 2) + pow(_sNode->y() - _tNode->y(), 2) );
             _redundant = false;
+            _widthLeft = numeric_limits<double>::infinity();
+            _widthRight = numeric_limits<double>:: infinity();
         }
         ~OASGEdge() {}
 
@@ -97,11 +100,14 @@ class OASGEdge {
         size_t netId() const { return _netId; }
         size_t typeEdgeId() const { return _typeEdgeId; }
         size_t edgeId() const { return _OASGEdgeId; }
-        double current() const { return _current; }
+        double current() { return _currentRight + _currentLeft; }
+        double currentRight() const { return _currentRight; }
+        double currentLeft() const { return _currentLeft; }
         double widthLeft() const { return _widthLeft; }
         double widthRight() const { return _widthRight; }
         double viaArea() const { return _viaArea; }
         bool redundant() const { return _redundant; }
+        Polygon* boundPolygon() { return _boundPolygon; }
 
         bool cross(OASGEdge* e) {
             // reference: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
@@ -159,7 +165,9 @@ class OASGEdge {
 
         void setViaEdge(bool viaEdge) { _viaEdge = viaEdge; }
 
-        void setCurrent(double current) { _current = current; }
+        // void setCurrent(double current) { _current = current; }
+        void setCurrentRight(double current) { _currentRight = current; }
+        void setCurrentLeft(double current) { _currentLeft = current; }
 
         void setWidthLeft(double widthLeft) { _widthLeft = widthLeft; }
 
@@ -169,8 +177,15 @@ class OASGEdge {
 
         void setRedundant() { _redundant = true; }
 
+        void setBoundPolygon(Polygon* boundPolygon) {
+            assert(_viaEdge);
+            _boundPolygon = boundPolygon; 
+        }
+
         void print() {
             cerr << "OASGEdge[" << _OASGEdgeId << "], length=" << _length << ", (" << _sNode->x()/40 << " " << _sNode->y()/40 << ") -> (" << _tNode->x()/40 << " " << _tNode->y()/40 << ")" << endl;
+            cerr << "bPolygon = ";
+            _boundPolygon->print();
         }
 
         // void setNode(size_t sNodeId, size_t tNodeId) { _sNodeId = sNodeId; _tNodeId = tNodeId; }
@@ -184,11 +199,14 @@ class OASGEdge {
         size_t _layId;
         size_t _netId;
         size_t _typeEdgeId;
-        double _current;    // the current flowing from _sNode to _tNode, assigned in GlobalMgr::currentDistribution() 
+        // double _current;    // the current flowing from _sNode to _tNode, assigned in GlobalMgr::currentDistribution()
+        double _currentRight;
+        double _currentLeft; 
         double _widthLeft;  // the width to the left of the edge center line, assigned in GlobalMgr::currentDistribution() 
         double _widthRight; // the width to the left of the edge center line, assigned in GlobalMgr::currentDistribution()
         double _viaArea;    // the cross-sectional area of the via cluster of the edge, assigned in GlobalMgr::currentDistribution()
         bool _redundant;    // true if this edge is not in the current loop (usually occurs with via edges on upper layers)
+        Polygon* _boundPolygon;     // bounding polygon of the via edge
 
         // size_t _sNodeId;    // the node with higher voltage
         // size_t _tNodeId;    // the node with lower voltage
@@ -285,6 +303,7 @@ class RGraph {
         vector< vector<OASGEdge*> > DFS(OASGNode* node, size_t netId);
         OASGNode* addOASGNode(size_t netId, double x, double y, OASGNodeType type, Port* port = NULL, bool nPort = true);
         size_t addOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, bool viaEdge);
+        size_t addViaOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, Polygon* boundPolygon);
         // void addRGEdge(RGEdge* edge, size_t twoPinNetId, size_t layId, size_t RGEdgeId) { _vRGEdge[twoPinNetId][layId][RGEdgeId] = edge; }
     private:
         RGraphType _type;

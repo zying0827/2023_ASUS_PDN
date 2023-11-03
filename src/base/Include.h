@@ -3,11 +3,11 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include <fstream>
 #include <random>
 #include <cstdlib>
 #include <ctime>

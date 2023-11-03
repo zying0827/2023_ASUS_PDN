@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <gurobi_c++.h>
 #include "base/Include.h"
 #include "base/DB.h"
@@ -5,12 +6,26 @@
 #include "global/GlobalMgr.h"
 #include "base/SVGPlot.h"
 #include "detailed/DetailedMgr.h"
+#include "global/PreMgr.h"
 
 using namespace std;
 
 int main(int argc, char* argv[]){
+    ifstream finST, fin;
     ofstream fout;
-    fout.open(argv[1], ofstream::out);
+    finST.open(argv[1], ifstream::in);
+    if (finST.is_open()) {
+        cout << "input file (st components) is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file (st components)" << endl;
+    }
+    fin.open(argv[2], ifstream::in);
+    if (fin.is_open()) {
+        cout << "input file is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file" << endl;
+    }
+    fout.open(argv[3], ofstream::out);
     if (fout.is_open()) {
         cout << "output file is opened successfully" << endl;
     } else {
@@ -24,47 +39,82 @@ int main(int argc, char* argv[]){
     //     cerr << "Error opening output file" << endl;
     // }
 
-    double gridWidth = 40;
-    double boardWidth = 15*gridWidth;
-    double boardHeight = 19*gridWidth;
+    // double gridWidth = 4;
+    // double boardWidth = 15*gridWidth;
+    // double boardHeight = 19*gridWidth;
+    // size_t numLayers = 4;
+    // double gridWidth = 8;
+    // double boardWidth = 50*gridWidth;
+    // double boardHeight = 15*gridWidth;
+    // size_t numLayers = 12;
+    double gridWidth = 1;
+    double boardWidth = 75*gridWidth;
+    double boardHeight = 40*gridWidth;
     size_t numLayers = 4;
+    double offsetX = 40;
+    double offsetY = 40;
 
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers);
+    // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
     DB db(plot);
-    Parser parser(db);
+    db.setBoundary(boardWidth, boardHeight);
+    db.setFlowWeight(0.5, 0.5);
+    Parser parser(finST, fin, db, offsetX, offsetY, plot);
+    parser.parse();
     // NetworkMgr mgr(db, plot);
-
-    // replace this line with a real parser function
-    parser.testInitialize(boardWidth, boardHeight, gridWidth);
+    PreMgr preMgr(db, plot);
+    preMgr.nodeClustering();
+    preMgr.assignPortPolygon();
+    preMgr.plotBoundBox();
+    
+    // // replace this line with a real parser function
+    // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
     // db.print();
     
     GlobalMgr globalMgr(db, plot);
     
 
-    // replace this line with a real OASG building function
-    globalMgr.buildTestOASG();
-    //globalMgr.plotOASG();
-    globalMgr.layerDistribution();
-    // globalMgr.plotRGraph();
-    globalMgr.buildTestNCOASG();
-    // globalMgr.plotNCOASG();
-    globalMgr.voltageAssignment();
+    // // replace this line with a real OASG building function
+    // globalMgr.buildTestOASG();
+    // globalMgr.buildOASG();
+    globalMgr.buildOASGXObs();
+    // globalMgr.plotOASG();
+    // globalMgr.layerDistribution();
+    // // // globalMgr.plotRGraph();
+    // globalMgr.buildTestNCOASG();
+    // // globalMgr.plotNCOASG();
+    // // globalMgr.voltageAssignment();
+    globalMgr.genCapConstrs();
     try {
-        globalMgr.currentDistribution();
+        // globalMgr.voltageDemandAssignment();
+        // globalMgr.voltageAssignment();
+        // globalMgr.currentDistribution();
+        globalMgr.voltCurrOpt();
+        // globalMgr.checkFeasible();
+        // globalMgr.checkVoltDemandFeasible();
     } catch (GRBException e) {
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
     globalMgr.plotCurrentPaths();
 
-    //DetailedMgr detailedMgr(db, plot, 10);
-    //detailedMgr.initGridMap();
-    //detailedMgr.plotGridMap();
-    //detailedMgr.naiveAStar();
-    //detailedMgr.plotGridMap();
+    // DetailedMgr detailedMgr(db, plot, 0.5);
+    // detailedMgr.initGridMap();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.naiveAStar();
+    // detailedMgr.plotGridMap();
+    // detailedMgr.addViaGrid();
 
-    globalMgr.plotDB();
+    // printf("\n==================== print ===================\n");
+    // detailedMgr.print();
+
+    // printf("\n==================== buildMtx ===================\n");
+    // detailedMgr.buildMtx();
+    // // detailedMgr.plotGridMapVoltage();
+    // detailedMgr.plotGridMapCurrent();
+
+    // globalMgr.plotDB();
 
 
     // mgr.genRGraph();

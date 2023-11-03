@@ -56,7 +56,9 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "${workspaceFolder}/exp/output/OASG_101201.html"
+            "${workspaceFolder}/exp/input/ST_Components_1.txt",
+            "${workspaceFolder}/exp/input/Example_Project_1.txt",
+            "${workspaceFolder}/exp/output/voltAssign_110203.html"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
             // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
             // "--ntuplace3",

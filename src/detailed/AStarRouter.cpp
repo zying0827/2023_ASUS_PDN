@@ -29,15 +29,15 @@ bool AStarRouter::route() {
             // cerr << _vGNode[-1][-1] << endl;
             return true;
         } else if (stepNode->status() != GNodeStatus::InPath) {
-            cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), address = " << stepNode;
+            // cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), address = " << stepNode;
             // cerr << ", cost = " << stepNode->cost() << ;
             newCurDist = orgNode->curDist()+1;
             newEstDist = estDistCost(xId, yId);
             newLineDist = lineDistCost(xId, yId);
-            cerr << ", lineDist = " << newLineDist;
+            // cerr << ", lineDist = " << newLineDist;
             newCongest = marginCongestCost(xId, yId, dir) + orgNode->congest();
-            cerr << ", marginCongestCost = " << marginCongestCost(xId, yId, dir);
-            newCost = _distWeight*(newCurDist + newEstDist + newLineDist) + (1-_distWeight)*newCongest;
+            // cerr << ", marginCongestCost = " << marginCongestCost(xId, yId, dir);
+            newCost = _distWeight*(newCurDist + newEstDist + 0*newLineDist) + (1-_distWeight)*newCongest;
             if (stepNode->status() == GNodeStatus::Init) {
                 // cerr << stepNode << ": Init" << endl;
                 stepNode->setCurDist(newCurDist);
@@ -61,7 +61,7 @@ bool AStarRouter::route() {
                 }
             }
             // cerr << "stepNode = (" << stepNode->xId() << ", " << stepNode->yId() << "), cost = " << stepNode->cost() << ", address = " << stepNode << endl;
-            cerr << ", cost = " << stepNode->cost() << endl;
+            // cerr << ", cost = " << stepNode->cost() << endl;
             return false;
         }
         return false;
@@ -71,8 +71,8 @@ bool AStarRouter::route() {
     while (!Q.empty()) {
         GNode* node = *Q.begin();
         Q.erase(Q.begin());
-        cerr << "node = (" << node->xId() << ", " << node->yId() << "), ";
-        cerr << "node->cost() = " << node->cost() << endl;
+        // cerr << "node = (" << node->xId() << ", " << node->yId() << "), ";
+        // cerr << "node->cost() = " << node->cost() << endl;
         node->setStatus(GNodeStatus::InPath);
         if (legal(node->xId(), node->yId()+1)) {
             if (step(node, node->xId(), node->yId()+1, Direction::Up)) return true;
@@ -85,6 +85,18 @@ bool AStarRouter::route() {
         }
         if (legal(node->xId()-1, node->yId())) {
             if (step(node, node->xId()-1, node->yId(), Direction::Left)) return true;
+        }
+        if (legal(node->xId()+1, node->yId()+1)) {
+            if (step(node, node->xId()+1, node->yId()+1, Direction::UpRight)) return true;
+        }
+        if (legal(node->xId()-1, node->yId()+1)) {
+            if (step(node, node->xId()-1, node->yId()+1, Direction::UpLeft)) return true;
+        }
+        if (legal(node->xId()+1, node->yId()-1)) {
+            if (step(node, node->xId()+1, node->yId()-1, Direction::DownRight)) return true;
+        }
+        if (legal(node->xId()-1, node->yId()-1)) {
+            if (step(node, node->xId()-1, node->yId()-1, Direction::DownLeft)) return true;
         }
         // if (node->yId() < numYId()-1-floor(ceil(_lbWidth)/2.0)) {
         //     if (step(node, node->xId(), node->yId()+1, Direction::Up)) return true;
@@ -122,7 +134,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     // double length = _exactLength * _gridWidth;
     // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
     _exactWidth = ceil(_lbWidth/_gridWidth);
-    cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
+    // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
 
     // around the ending grid
     for (int xId = _tPos.first - floor(_exactWidth/2.0); xId <= _tPos.first + floor(_exactWidth/2.0); ++ xId) {
@@ -137,10 +149,10 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     // around the path
     node = _vGNode[_tPos.first][_tPos.second];
     while(node->parent() != node) {
-        cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
+        // cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
         // vector<Grid*> gg;
         // if (node->parent()->xId() == 21 && node->parent()->yId() ==  58) cerr << gg[2] << endl;
-        if (node->parent()->xId() == node->xId()+1) {
+        if (node->parent()->xId() == node->xId()+1 && node->parent()->yId() == node->yId()) {   // Right
             for (int y = node->parent()->yId()-floor(_exactWidth/2.0); y <= node->parent()->yId()+floor(_exactWidth/2.0); ++ y) {
                 if (legal(node->parent()->xId() + floor(_exactWidth/2.0), y)) {
                     _vPGrid.push_back(_vGrid[node->parent()->xId() + floor(_exactWidth/2.0)][y]);
@@ -149,7 +161,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
             // if (node->parent()->xId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
             //     break;
             // }
-        } else if (node->parent()->xId() == node->xId()-1) {
+        } else if (node->parent()->xId() == node->xId()-1  && node->parent()->yId() == node->yId()) {   // Left
             for (int y = node->parent()->yId()-floor(_exactWidth/2.0); y <= node->parent()->yId()+floor(_exactWidth/2.0); ++ y) {
                 if (legal(node->parent()->xId() - floor(_exactWidth/2.0), y)) {
                     _vPGrid.push_back(_vGrid[node->parent()->xId() - floor(_exactWidth/2.0)][y]);
@@ -158,7 +170,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
             // if (node->parent()->xId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
             //     break;
             // }
-        } else if (node->parent()->yId() == node->yId()+1) {
+        } else if (node->parent()->xId() == node->xId() && node->parent()->yId() == node->yId()+1) {    // Up
             for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
                 if (legal(x, node->parent()->yId() + floor(_exactWidth/2.0))) {
                     _vPGrid.push_back(_vGrid[x][node->parent()->yId() + floor(_exactWidth/2.0)]);
@@ -167,8 +179,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
             // if (node->parent()->xId() == _sPos.first && node->parent()->yId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
             //     break;
             // }
-        } else {
-            assert(node->parent()->yId() == node->yId()-1);
+        } else if (node->parent()->xId() == node->xId() && node->parent()->yId() == node->yId()-1) {    // Down
             for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
                 if (legal(x, node->parent()->yId() - floor(_exactWidth/2.0))) {
                     _vPGrid.push_back(_vGrid[x][node->parent()->yId() - floor(_exactWidth/2.0)]);
@@ -177,9 +188,54 @@ void AStarRouter::backTrace(int tXId, int tYId) {
             // if (node->parent()->xId() == _sPos.first && node->parent()->yId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
             //     break;
             // }
+        } else if (node->parent()->xId() == node->xId()+1 && node->parent()->yId() == node->yId()+1) {  // UpRight
+            for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
+                if (legal(x, node->parent()->yId() + floor(_exactWidth/2.0))) {
+                    _vPGrid.push_back(_vGrid[x][node->parent()->yId() + floor(_exactWidth/2.0)]);
+                }
+            }
+            for (int y = node->parent()->yId()-floor(_exactWidth/2.0); y <= node->parent()->yId()+floor(_exactWidth/2.0)-1; ++ y) {
+                if (legal(node->parent()->xId() + floor(_exactWidth/2.0), y)) {
+                    _vPGrid.push_back(_vGrid[node->parent()->xId() + floor(_exactWidth/2.0)][y]);
+                }
+            }
+        } else if (node->parent()->xId() == node->xId()-1 && node->parent()->yId() == node->yId()+1) {  // UpLeft
+            for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
+                if (legal(x, node->parent()->yId() + floor(_exactWidth/2.0))) {
+                    _vPGrid.push_back(_vGrid[x][node->parent()->yId() + floor(_exactWidth/2.0)]);
+                }
+            }
+            for (int y = node->parent()->yId()-floor(_exactWidth/2.0); y <= node->parent()->yId()+floor(_exactWidth/2.0)-1; ++ y) {
+                if (legal(node->parent()->xId() - floor(_exactWidth/2.0), y)) {
+                    _vPGrid.push_back(_vGrid[node->parent()->xId() - floor(_exactWidth/2.0)][y]);
+                }
+            }
+        } else if (node->parent()->xId() == node->xId()+1 && node->parent()->yId() == node->yId()-1) {  // DownRight
+            for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
+                if (legal(x, node->parent()->yId() - floor(_exactWidth/2.0))) {
+                    _vPGrid.push_back(_vGrid[x][node->parent()->yId() - floor(_exactWidth/2.0)]);
+                }
+            }
+            for (int y = node->parent()->yId()-floor(_exactWidth/2.0)+1; y <= node->parent()->yId()+floor(_exactWidth/2.0); ++ y) {
+                if (legal(node->parent()->xId() + floor(_exactWidth/2.0), y)) {
+                    _vPGrid.push_back(_vGrid[node->parent()->xId() + floor(_exactWidth/2.0)][y]);
+                }
+            }
+        } else {  // DownLeft
+            assert(node->parent()->xId() == node->xId()-1 && node->parent()->yId() == node->yId()-1);
+            for (int x = node->parent()->xId()-floor(_exactWidth/2.0); x <= node->parent()->xId()+floor(_exactWidth/2.0); ++ x) {
+                if (legal(x, node->parent()->yId() - floor(_exactWidth/2.0))) {
+                    _vPGrid.push_back(_vGrid[x][node->parent()->yId() - floor(_exactWidth/2.0)]);
+                }
+            }
+            for (int y = node->parent()->yId()-floor(_exactWidth/2.0)+1; y <= node->parent()->yId()+floor(_exactWidth/2.0); ++ y) {
+                if (legal(node->parent()->xId() - floor(_exactWidth/2.0), y)) {
+                    _vPGrid.push_back(_vGrid[node->parent()->xId() - floor(_exactWidth/2.0)][y]);
+                }
+            }
         }
         node = node->parent();
-    }
+    } 
 }
 
 double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
@@ -187,7 +243,7 @@ double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
         return pow(1-_widthRatio, w-ceil(_lbWidth/_gridWidth)) * _widthRatio;
     };
     double congestion = 0.0;
-    double threshold = 0.85;
+    double threshold = 0.0001;
     for (int w = ceil(_lbWidth/_gridWidth); prob(w) > threshold; ++ w) {
         // cerr << "w = " << w << ", prob = " << prob(w) << endl;
         double wCongestion = 0.0;
@@ -221,10 +277,78 @@ double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
                     wCongestion += _obsCongest;
                 }
             }
-        } else {
-            assert (dir == Direction::Left);
+        } else if (dir == Direction::Left) {
             // cerr << "Left" << endl;
             for (int y = yId-floor(w/2.0); y <= yId+floor(w/2.0); ++ y) {
+                // cerr << "x = " << xId-floor(w/2.0) << ", y = " << y << endl;
+                if (legal(xId-floor(w/2.0), y)) {
+                    wCongestion += _vGrid[xId-floor(w/2.0)][y]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+        } else if (dir == Direction::UpRight) {
+            for (int x = xId-floor(w/2.0); x <= xId+floor(w/2.0); ++ x) {
+                // cerr << "x = " << x << ", y = " << yId+floor(w/2.0) << endl;
+                if (legal(x, yId+floor(w/2.0))) {
+                    wCongestion += _vGrid[x][yId+floor(w/2.0)]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+            for (int y = yId-floor(w/2.0); y <= yId+floor(w/2.0)-1; ++ y) {
+                // cerr << "x = " << xId+floor(w/2.0) << ", y = " << y << endl;
+                if (legal(xId+floor(w/2.0), y)) {
+                    wCongestion += _vGrid[xId+floor(w/2.0)][y]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+        } else if (dir == Direction::UpLeft) {
+            for (int x = xId-floor(w/2.0); x <= xId+floor(w/2.0); ++ x) {
+                // cerr << "x = " << x << ", y = " << yId+floor(w/2.0) << endl;
+                if (legal(x, yId+floor(w/2.0))) {
+                    wCongestion += _vGrid[x][yId+floor(w/2.0)]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+            for (int y = yId-floor(w/2.0); y <= yId+floor(w/2.0)-1; ++ y) {
+                // cerr << "x = " << xId-floor(w/2.0) << ", y = " << y << endl;
+                if (legal(xId-floor(w/2.0), y)) {
+                    wCongestion += _vGrid[xId-floor(w/2.0)][y]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+        } else if (dir == Direction::DownRight) {
+            for (int x = xId-floor(w/2.0); x <= xId+floor(w/2.0); ++ x) {
+                // cerr << "x = " << x << ", y = " << yId-floor(w/2.0) << endl;
+                if (legal(x, yId-floor(w/2.0))) {
+                    wCongestion += _vGrid[x][yId-floor(w/2.0)]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+            for (int y = yId-floor(w/2.0)+1; y <= yId+floor(w/2.0); ++ y) {
+                // cerr << "x = " << xId+floor(w/2.0) << ", y = " << y << endl;
+                if (legal(xId+floor(w/2.0), y)) {
+                    wCongestion += _vGrid[xId+floor(w/2.0)][y]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+        } else {
+            assert(dir == Direction::DownLeft);
+            for (int x = xId-floor(w/2.0); x <= xId+floor(w/2.0); ++ x) {
+                // cerr << "x = " << x << ", y = " << yId-floor(w/2.0) << endl;
+                if (legal(x, yId-floor(w/2.0))) {
+                    wCongestion += _vGrid[x][yId-floor(w/2.0)]->congestion();
+                } else {
+                    wCongestion += _obsCongest;
+                }
+            }
+            for (int y = yId-floor(w/2.0)+1; y <= yId+floor(w/2.0); ++ y) {
                 // cerr << "x = " << xId-floor(w/2.0) << ", y = " << y << endl;
                 if (legal(xId-floor(w/2.0), y)) {
                     wCongestion += _vGrid[xId-floor(w/2.0)][y]->congestion();
@@ -244,6 +368,7 @@ double AStarRouter::pathLength(int threshold) {
     double pathLength = 0;
     int buffer = 0;
     bool turned = false;
+    bool turn = false;
     GNode* node = _vGNode[_tPos.first][_tPos.second];
     Direction dir;
     if (node->parent()->xId() == node->xId()+1) {
@@ -260,28 +385,42 @@ double AStarRouter::pathLength(int threshold) {
     node = node->parent();
 
     while(node->parent() != node) {
+        turn = false;
         if (node->parent()->xId() == node->xId()+1) {
             if (dir == Direction::Right) {
-                buffer ++;
-                if (!turned && buffer > threshold) {
-                    pathLength += buffer;
-                    buffer = 0;
-                }
-            } else {
-                if (!turned) {
-                    turned = true;
-                }
+                turn = true;
             }
         } else if (node->parent()->xId() == node->xId()-1) {
-            
+            if (dir == Direction::Left) {
+                turn = true;
+            }
         } else if (node->parent()->yId() == node->yId()+1) {
-            
+            if (dir == Direction::Up) {
+                turn = true;
+            }
         } else {
             assert(node->parent()->yId() == node->yId()-1);
-            
+            if (dir == Direction::Down) {
+                turn = true;
+            }
+        }
+        if (turned) {
+            if (buffer <= threshold) {
+
+            }
         }
         node = node->parent();
     }
+
+    // buffer ++;
+    //             if (!turned && buffer > threshold) {
+    //                 pathLength += buffer;
+    //                 buffer = 0;
+    //             }
+    //         } else {
+    //             if (!turned) {
+    //                 turned = true;
+    //             }
     for (size_t pGridId = 0; pGridId < _path.size(); ++pGridId) {
         Grid* grid = _path[pGridId];
     }

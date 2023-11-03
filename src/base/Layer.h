@@ -13,6 +13,7 @@ class Layer {
         virtual double permittivity() const { return _permittivity; }
         virtual size_t layId()        const { return _layId; }
         virtual string layName()      const { return _layName; }
+        virtual void setLayId(size_t layId) { _layId = layId; }
         
     protected:
         double _thickness;
