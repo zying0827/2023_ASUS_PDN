@@ -238,6 +238,70 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     } 
 }
 
+void AStarRouter::backTraceNoPad() {
+    auto encloseNode = [&] (int centerX, int centerY, int radius, int enclosedX, int enclosedY) -> bool {
+        assert(legal(centerX, centerY));
+        assert(legal(enclosedX, enclosedY));
+        if (enclosedX >= centerX-radius && enclosedX <= centerX+radius &&
+            enclosedY >= centerY-radius && enclosedY <= centerY+radius) {
+                return true;
+            } 
+        return false;
+    };
+    GNode* node = _vGNode[_tPos.first][_tPos.second];
+    // GNode* node = _vGNode[tXId][tYId];
+    while(node->parent() != node) {
+        _path.push_back(_vGrid[node->xId()][node->yId()]);
+        node = node->parent();
+    }
+    assert(node->xId() == _sPos.first && node->yId() == _sPos.second);
+    _path.push_back(_vGrid[node->xId()][node->yId()]);
+
+    _exactLength = _path.size()-1;
+    // double length = _exactLength * _gridWidth;
+    // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
+    _exactWidth = ceil(_lbWidth/_gridWidth);
+    int halfWidth = floor(0.5 * _lbWidth / _gridWidth);
+    // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
+    size_t sPathId = _path.size();
+    size_t tPathId = 0;
+    bool TEncloseS = false;
+    bool SEncloseT = false;
+    while(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second)) {
+        if (sPathId == 0) {
+            TEncloseS == true;
+            break;
+        }
+        sPathId --;
+    }
+    sPathId ++;
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second));
+    while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second)) {
+        if (tPathId == _path.size()) {
+            SEncloseT = true;
+            break;
+        }
+        tPathId ++;
+    }
+    tPathId --;
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second));
+    assert(TEncloseS == SEncloseT);
+
+    if (TEncloseS) {
+        size_t cPathId = _path.size() / 2;
+    }
+    // around the ending grid
+    for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
+        if (xId >= 0 && xId < numXId()) {
+            for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
+                if (yId >= 0 && yId < numYId()) {
+                    _vPGrid.push_back(_vGrid[xId][yId]);
+                }
+            }
+        }
+    }
+}
+
 double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
     auto prob = [&](int w) -> double{
         return pow(1-_widthRatio, w-ceil(_lbWidth/_gridWidth)) * _widthRatio;

@@ -27,6 +27,7 @@ class AStarRouter {
 
         bool route();
         void backTrace(int tXId, int tYId);
+        void backTraceNoPad();
         double marginCongestCost(int xId, int yId, Direction dir);
         double estDistCost(int xId, int yId) {
             // return abs(_tPos.first - xId) + abs(_tPos.second - yId);
