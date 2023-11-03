@@ -993,7 +993,7 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 0; //3
+    size_t numIVIter = 3; //3
     size_t numIIter = 6; //6
     size_t numVIter = 10; //10
 
@@ -1871,6 +1871,14 @@ void GlobalMgr::currentDistribution() {
                             // get the edge coordinates
                             S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
@@ -2485,13 +2493,11 @@ void GlobalMgr::genCapConstrs() {
                 pair<bool, bool> right;
                 double width;
                 
-                //compare other net edge
-                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
-                    //make sure to compare different net
+                //compare to other net edge
+                for(size_t T_netId = S_netId; T_netId < _rGraph.numNets(); ++ T_netId){
                     for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
                         OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
     
-                    //    BuildCapacityConstraint(e1,e2,solver);
                         if (e1 != e2) {
                             // bool isSameNet = (T_netId == S_netId);
                             // if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
@@ -2525,6 +2531,17 @@ void GlobalMgr::genCapConstrs() {
                             // get the edge coordinates
                             S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+
+                            
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
+                            
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
