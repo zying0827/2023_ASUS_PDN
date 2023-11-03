@@ -193,4 +193,3 @@ bool addConstraintSameNet(pair<double, double> S1, pair<double, double> T1, pair
     width = min_dist;
     return ratio.first >= 0;
 }
-*/

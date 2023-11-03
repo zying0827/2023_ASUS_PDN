@@ -40,13 +40,24 @@ int main(int argc, char* argv[]){
     // double boardWidth = 50*gridWidth;
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
+    double gridWidth = 1;
+    double boardWidth = 75*gridWidth;
+    double boardHeight = 40*gridWidth;
+    size_t numLayers = 4;
+    double offsetX = 40;
+    double offsetY = 40;
 
     SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 5.0);
     DB db(plot);
-    Parser parser(fin, db, plot);
-    // parser.parse();
+    db.setBoundary(boardWidth, boardHeight);
+    Parser parser(finST, fin, db, offsetX, offsetY, plot);
+    parser.parse();
     // NetworkMgr mgr(db, plot);
+    PreMgr preMgr(db, plot);
+    preMgr.nodeClustering();
+    preMgr.assignPortPolygon();
+    preMgr.plotBoundBox();
     
     // replace this line with a real parser function
     parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -59,30 +70,30 @@ int main(int argc, char* argv[]){
     // replace this line with a real OASG building function
     globalMgr.buildTestOASG();
     // globalMgr.buildOASG();
+    globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
-    globalMgr.layerDistribution();
-    // // globalMgr.plotRGraph();
-    globalMgr.buildTestNCOASG();
-    // globalMgr.plotNCOASG();
-    // globalMgr.voltageAssignment();
+    // globalMgr.layerDistribution();
+    // // // globalMgr.plotRGraph();
+    // globalMgr.buildTestNCOASG();
+    // // globalMgr.plotNCOASG();
+    // // globalMgr.voltageAssignment();
+    globalMgr.genCapConstrs();
     try {
+        globalMgr.voltageAssignment();
         // globalMgr.currentDistribution();
-        globalMgr.voltCurrOpt();
+        // globalMgr.voltCurrOpt();
     } catch (GRBException e) {
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
 
-    DetailedMgr detailedMgr(db, plot, 2);
-    detailedMgr.initGridMap();
+    // DetailedMgr detailedMgr(db, plot, 0.5);
+    // detailedMgr.initGridMap();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.naiveAStar();
     // detailedMgr.plotGridMap();
-    detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
-
-/*
-    printf("\n==================== print ===================\n");
-    detailedMgr.print();
+    // detailedMgr.addViaGrid();
 
     printf("\n==================== buildMtx ===================\n");
     detailedMgr.buildMtx();

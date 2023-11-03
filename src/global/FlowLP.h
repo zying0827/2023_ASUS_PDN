@@ -4,16 +4,21 @@
 #include <gurobi_c++.h>
 #include "../base/Include.h"
 #include "RGraph.h"
+#include "../base/DB.h"
 using namespace std;
 
 class FlowLP {
     public:
-        FlowLP(RGraph& rGraph, vector<double> vMediumLayerThickness, vector<double> vMetalLayerThickness, vector<double> vConductivity, double currentNorm);
+        // FlowLP(RGraph& rGraph, vector<double> vMediumLayerThickness, vector<double> vMetalLayerThickness, vector<double> vConductivity, double currentNorm);
+        FlowLP(DB& db, RGraph& rGraph);
         ~FlowLP() {}
 
         void setObjective(double areaWeight, double viaWeight);
-        void setConserveConstraints();
+        void setConserveConstraints(bool useDemandCurrent);
         // width unit = meter
+        // void addSViaAreaConstraints(size_t netId, double area);
+        // void addTViaAreaConstraints(size_t netId, size_t tPortId, double area);
+        void addViaAreaConstraints(size_t netId, size_t vEdgeId, double area);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width);
         // void relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
@@ -32,6 +37,7 @@ class FlowLP {
         double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
 
     private:
+        DB& _db;
         RGraph& _rGraph;
         GRBEnv _env;
         GRBModel _model;
@@ -44,10 +50,10 @@ class FlowLP {
         int _numCapConstrs;          // number of capacity constraints
 
         // input constants
-        vector<double> _vMediumLayerThickness;
-        vector<double> _vMetalLayerThickness;
-        vector<double> _vConductivity;
-        double _currentNorm;      // the current value range (to avoid Gurobi error)
+        // vector<double> _vMediumLayerThickness;
+        // vector<double> _vMetalLayerThickness;
+        // vector<double> _vConductivity;
+        // double _currentNorm;      // the current value range (to avoid Gurobi error)
         double _area;       // the resulting area, assigned in collectRelaxedResult
         double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
         vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
