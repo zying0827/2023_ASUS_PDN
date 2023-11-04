@@ -11,10 +11,12 @@ void DetailedMgr::initGridMap() {
     auto occupiedBySegments = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
         for (size_t segId = 0; segId < _db.vNet(netId)->numSegments(layId); ++ segId) {
             Trace* trace = _db.vNet(netId)->vSegment(layId, segId)->trace();
-            if (trace->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
-            if (trace->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
-            if (trace->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
-            if (trace->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+            if (trace->width() > 0) {
+                if (trace->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+                if (trace->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+                if (trace->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+                if (trace->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+            }
         }
         return false;
     };
@@ -304,22 +306,29 @@ void DetailedMgr::naiveAStar() {
             clearNet(layId, netId);
             for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
                 Segment* segment = net->vSegment(layId, segId);
-                int sXId = floor(segment->sX() / _gridWidth);
-                int sYId = floor(segment->sY() / _gridWidth);
-                int tXId = floor(segment->tX() / _gridWidth);
-                int tYId = floor(segment->tY() / _gridWidth);
-                AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2);
-                router.route();
-                segment->setWidth(router.exactWidth() * _gridWidth);
-                segment->setLength(router.exactLength() * _gridWidth);
-                for (size_t pGridId = 0; pGridId < router.numPGrids(); ++ pGridId) {
-                    Grid* grid = router.vPGrid(pGridId);
-                    if (!grid->hasNet(netId)) {
-                        _vNetGrid[netId][layId].push_back(grid);
-                        grid->addNet(netId);
+                if (segment->width() > 0) {
+                    int sXId = floor(segment->trace()->sNode()->ctrX() / _gridWidth);
+                    int sYId = floor(segment->trace()->sNode()->ctrY() / _gridWidth);
+                    int tXId = floor(segment->trace()->tNode()->ctrX() / _gridWidth);
+                    int tYId = floor(segment->trace()->tNode()->ctrY() / _gridWidth);
+                    int sRealXId = floor(segment->sX() / _gridWidth);
+                    int sRealYId = floor(segment->sY() / _gridWidth);
+                    int tRealXId = floor(segment->tX() / _gridWidth);
+                    int tRealYId = floor(segment->tY() / _gridWidth);
+                    AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), make_pair(sRealXId, sRealYId), make_pair(tRealXId, tRealYId), 
+                                       _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2);
+                    router.route();
+                    segment->setWidth(router.exactWidth() * _gridWidth);
+                    segment->setLength(router.exactLength() * _gridWidth);
+                    for (size_t pGridId = 0; pGridId < router.numPGrids(); ++ pGridId) {
+                        Grid* grid = router.vPGrid(pGridId);
+                        if (!grid->hasNet(netId)) {
+                            _vNetGrid[netId][layId].push_back(grid);
+                            grid->addNet(netId);
+                        }
                     }
+                    // _vNetGrid[netId][layId].insert(_vNetGrid[netId][layId].end(), router.path().begin(), router.path().end());
                 }
-                // _vNetGrid[netId][layId].insert(_vNetGrid[netId][layId].end(), router.path().begin(), router.path().end());
             }
             // for (size_t gridId = 0; gridId < _vNetPortGrid[netId].size(); ++ gridId) {
             //     if (! _vNetPortGrid[netId][gridId]->hasNet(netId)) {

@@ -12,8 +12,8 @@ enum Direction {
 
 class AStarRouter {
     public:
-        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight)
-        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight) {
+        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, pair<int, int> sRealPos, pair<int, int> tRealPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight)
+        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _sRealPos(sRealPos), _tRealPos(tRealPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight) {
             for (size_t xId = 0; xId < numXId(); ++ xId) {
                 vector<GNode*> temp;
                 for (size_t yId = 0; yId < numYId(); ++ yId) {
@@ -54,11 +54,15 @@ class AStarRouter {
         double pathLength(int threshold);
         // input
         vector< vector< Grid* > > _vGrid;   // index = [xId] [yId]
-        pair<int, int> _sPos;     // (source xId, source yId)
-        pair<int, int> _tPos;     // (target xId, target yId)
+        pair<int, int> _sPos;     // (source xId, source yId) of the trace (of segment)
+        pair<int, int> _tPos;     // (target xId, target yId) of the trace (of segment)
+        pair<int, int> _sRealPos;     // (source xId, source yId) of the segment (not trace)
+        pair<int, int> _tRealPos;     // (target xId, target yId) of the segment (not trace)
         double _gridWidth;
         double _lbLength;   // the shortest wirelength form the last iteration
         double _lbWidth;    // the width lower bound calculated from the shortest wirelength
+        // double _lbWidthLeft;
+        // double _lbWidthRight;
         double _widthRatio;     // the probability of straight routing (without detour on a step)
         double _distWeight;     // the weight of distance cost w.r.t. congestion cost
         // output

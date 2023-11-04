@@ -1137,11 +1137,11 @@ void GlobalMgr::voltCurrOpt() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
                     // segment->plot(netId, layId);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
@@ -1982,10 +1982,10 @@ void GlobalMgr::currentDistribution() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
@@ -2461,8 +2461,12 @@ Segment* GlobalMgr::edge2Segment(OASGEdge* edge) {
     double yOffset = offset * (edge->sNode()->x() - edge->tNode()->x()) / edge->length(); // offset * -cos(theta)
     Node* sNode = new Node(edge->sNode()->x()+xOffset, edge->sNode()->y()+yOffset, _plot);
     Node* tNode = new Node(edge->tNode()->x()+xOffset, edge->tNode()->y()+yOffset, _plot);
+    assert(edge->widthRight() >= 0);
+    assert(edge->widthLeft() >= 0);
     Trace* trace = new Trace(sNode, tNode, edge->widthRight() + edge->widthLeft(), _plot);
-    Segment* segment = new Segment(trace, edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
+    pair<double, double> sPos = make_pair(edge->sNode()->x(), edge->sNode()->y());
+    pair<double, double> tPos = make_pair(edge->tNode()->x(), edge->tNode()->y());
+    Segment* segment = new Segment(trace, sPos, tPos, edge->widthLeft(), edge->widthRight(), edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
     return segment;
 }
 

@@ -268,8 +268,8 @@ void AStarRouter::backTraceNoPad() {
     size_t tPathId = 0;
     bool TEncloseS = false;
     bool SEncloseT = false;
-    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second));
-    while(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second)) {
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second));
+    while(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second)) {
         if (sPathId == 0) {
             TEncloseS == true;
             break;
@@ -277,9 +277,9 @@ void AStarRouter::backTraceNoPad() {
         sPathId --;
     }
     sPathId ++;
-    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sPos.first, _sPos.second));
-    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second));
-    while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second)) {
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second));
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
+    while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second)) {
         if (tPathId == _path.size()) {
             SEncloseT = true;
             break;
@@ -287,7 +287,7 @@ void AStarRouter::backTraceNoPad() {
         tPathId ++;
     }
     tPathId --;
-    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tPos.first, _tPos.second));
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
     assert(TEncloseS == SEncloseT);
 
     if (TEncloseS) {

@@ -104,8 +104,8 @@ int main(int argc, char* argv[]){
     // // detailedMgr.plotGridMap();
     detailedMgr.naiveAStar();
     detailedMgr.plotGridMap();
-    detailedMgr.addPortVia();
-    detailedMgr.plotVia();
+    // detailedMgr.addPortVia();
+    // detailedMgr.plotVia();
     // detailedMgr.addViaGrid();
 
     // printf("\n==================== print ===================\n");
