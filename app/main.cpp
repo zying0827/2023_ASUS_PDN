@@ -11,7 +11,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
-    ifstream finST, fin;
+    ifstream finST, fin, finOb;
     ofstream fout;
     finST.open(argv[1], ifstream::in);
     if (finST.is_open()) {
@@ -25,7 +25,13 @@ int main(int argc, char* argv[]){
     } else {
         cerr << "Error opening input file" << endl;
     }
-    fout.open(argv[3], ofstream::out);
+    finOb.open(argv[3], ifstream::in);
+    if (finOb.is_open()) {
+        cout << "input file (obstacle) is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file" << endl;
+    }
+    fout.open(argv[4], ofstream::out);
     if (fout.is_open()) {
         cout << "output file is opened successfully" << endl;
     } else {
@@ -59,7 +65,7 @@ int main(int argc, char* argv[]){
     DB db(plot);
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
-    Parser parser(finST, fin, db, offsetX, offsetY, plot);
+    Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
     parser.parse();
     // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
@@ -81,7 +87,7 @@ int main(int argc, char* argv[]){
     globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
     // globalMgr.layerDistribution();
-    // // // globalMgr.plotRGraph();
+    // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
@@ -114,7 +120,7 @@ int main(int argc, char* argv[]){
     // // detailedMgr.plotGridMapVoltage();
     // detailedMgr.plotGridMapCurrent();
 
-    // globalMgr.plotDB();
+    globalMgr.plotDB();
 
 
     // mgr.genRGraph();

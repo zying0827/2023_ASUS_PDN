@@ -188,6 +188,7 @@ void Parser::parse() {
     // getline(_fin, data);
     // cerr << "before parseConnect: " << data << endl;
     parseConnect();
+    parseObstacle();
 
 }
 
@@ -800,4 +801,30 @@ double Parser::extractDouble(stringstream& ss, int eraseLength) {
         word.pop_back();
     }
     return stod(word);
+}
+
+void Parser::parseObstacle(){
+    int numObstacle;
+    int Layer = 0;
+    _finOb >> numObstacle;
+    for(int i = 0 ; i < numObstacle; i ++){
+        _finOb >> Layer;
+        int numEdge;
+        _finOb >> numEdge;
+
+        vector<Shape*> obs1;
+        obs1.resize(1);
+        vector< pair<double, double>> obs1Coordinates;
+
+        for(int j = 0; j < numEdge ; j++){
+            double x = 0;
+            double y = 0;
+            _finOb >> x;
+            _finOb >> y;
+            obs1Coordinates.push_back(std::make_pair(x , y));
+            
+        }
+        obs1[0] = new Polygon(obs1Coordinates, _plot);
+        _db.addObstacle(Layer,  obs1);
+    }
 }
