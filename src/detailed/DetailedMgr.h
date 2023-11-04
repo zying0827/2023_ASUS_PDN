@@ -33,6 +33,14 @@ class DetailedMgr {
                 }
                 _vNetGrid.push_back(vNetGrid);
             }
+            for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+                vector< vector< pair<int, int> > > temp;
+                for (size_t portId = 0; portId <_db.vNet(netId)->numTPorts()+1; ++ portId) {
+                    vector< pair<int, int> > tempPort;
+                    temp.push_back(tempPort);
+                }
+                _vNetPortGrid.push_back(temp);
+            }
             // _vTPortCurr.reserve(_db.numNets());
             for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
                 // _vTPortCurr[netId].reserve(_db.vNet(netId)->numTPorts());
@@ -53,6 +61,8 @@ class DetailedMgr {
         void plotGridMapVoltage();
         void plotGridMapCurrent();
         void naiveAStar();
+        void addPortVia();
+        void plotVia();
         void addViaGrid();
 
         void print() {
@@ -87,6 +97,7 @@ class DetailedMgr {
         void buildMtx();
         double getResistance(Grid*, Grid*);
     private:
+        vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
         void clearNet(size_t layId, size_t netId);
         bool legal(int xId, int yId) { return (xId>=0 && xId<_vGrid[0].size() && yId>=0 && yId<_vGrid[0][0].size()); }
         DB& _db;
@@ -94,6 +105,7 @@ class DetailedMgr {
         double _gridWidth;
         vector< vector< vector< Grid* > > > _vGrid;     // index = [layId] [xId] [yId]; from left xId = 0, from bottom yId = 0
         vector< vector< vector< Grid* > > > _vNetGrid;  // index = [netId] [layId] [gridId]
+        vector< vector< vector< pair<int, int> > > > _vNetPortGrid;        // index = [netId] [portId] [gridId]
         size_t _numXs;
         size_t _numYs;
         vector< vector< double > > _vTPortVolt;     // index = [netId] [netTportId], record the target port voltage during simulation

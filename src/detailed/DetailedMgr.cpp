@@ -18,7 +18,7 @@ void DetailedMgr::initGridMap() {
         }
         return false;
     };
-    auto occupiedByPorts = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
+    auto occupiedByPorts = [&] (size_t xId, size_t yId, size_t netId) -> bool {
         Polygon* sBPolygon = _db.vNet(netId)->sourcePort()->boundPolygon();
         if (sBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
         if (sBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
@@ -34,16 +34,76 @@ void DetailedMgr::initGridMap() {
         return false;
     };
 
+    auto occupiedBySPort = [&] (size_t xId, size_t yId, size_t netId) -> bool {
+        Polygon* sBPolygon = _db.vNet(netId)->sourcePort()->boundPolygon();
+        if (sBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+        if (sBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+        if (sBPolygon->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+        if (sBPolygon->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+        return false;
+    };
+
+    auto occupiedByTPort = [&] (size_t xId, size_t yId, size_t netId, size_t tPortId) -> bool {
+        Polygon* tBPolygon = _db.vNet(netId)->targetPort(tPortId)->boundPolygon();
+        if (tBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+        if (tBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+        if (tBPolygon->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+        if (tBPolygon->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+        return false;
+    };
+
     // init grids occupied by segments and ports
-    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
-        for (size_t xId = 0; xId < _numXs; ++ xId) {
-            for (size_t yId = 0; yId < _numYs; ++ yId) {
+    for (size_t xId = 0; xId < _numXs; ++ xId) {
+        for (size_t yId = 0; yId < _numYs; ++ yId) {
+            // segments
+            for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                 Grid* grid = _vGrid[layId][xId][yId];
                 for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
-                    if (occupiedBySegments(layId, xId, yId, netId) || occupiedByPorts(layId, xId, yId, netId)) {
+                    // if (occupiedByPorts(xId, yId, netId)) {
+                    //     assert(!grid->hasNet(netId));
+                    //     grid->addNet(netId);
+                    //     grid->incCongestCur();
+                    //     _vNetGrid[netId][layId].push_back(grid);
+                    //     _vNetPortGrid[netId].push_back(grid);
+                    // }
+                    // if (occupiedBySegments(layId, xId, yId, netId) && !grid->hasNet(netId)) {
+                    //     // assert(!grid->hasNet(netId));
+                    //     grid->addNet(netId);
+                    //     grid->incCongestCur();
+                    //     _vNetGrid[netId][layId].push_back(grid);
+                    // }
+                    if (occupiedBySegments(layId, xId, yId, netId)) {
+                        assert(!grid->hasNet(netId));
                         grid->addNet(netId);
                         grid->incCongestCur();
                         _vNetGrid[netId][layId].push_back(grid);
+                    }
+                }
+            }
+            // ports
+            for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+                if (occupiedBySPort(xId, yId, netId)) {
+                    _vNetPortGrid[netId][0].push_back(make_pair(xId, yId));
+                    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+                        Grid* grid = _vGrid[layId][xId][yId];
+                        if (! grid->hasNet(netId)) {
+                            grid->addNet(netId);
+                            grid->incCongestCur();
+                            _vNetGrid[netId][layId].push_back(grid);
+                        }
+                    }
+                }
+                for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+                    if (occupiedByTPort(xId, yId, netId, tPortId)) {
+                        _vNetPortGrid[netId][tPortId+1].push_back(make_pair(xId, yId));
+                        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+                            Grid* grid = _vGrid[layId][xId][yId];
+                            if (! grid->hasNet(netId)) {
+                                grid->addNet(netId);
+                                grid->incCongestCur();
+                                _vNetGrid[netId][layId].push_back(grid);
+                            }
+                        }
                     }
                 }
             }
@@ -261,6 +321,21 @@ void DetailedMgr::naiveAStar() {
                 }
                 // _vNetGrid[netId][layId].insert(_vNetGrid[netId][layId].end(), router.path().begin(), router.path().end());
             }
+            // for (size_t gridId = 0; gridId < _vNetPortGrid[netId].size(); ++ gridId) {
+            //     if (! _vNetPortGrid[netId][gridId]->hasNet(netId)) {
+            //         _vNetGrid[netId][layId].push_back(_vNetPortGrid[netId][gridId]);
+            //         _vNetPortGrid[netId][gridId]->addNet(netId);
+            //     }
+            // }
+            for (size_t portId = 0; portId < _db.vNet(netId)->numTPorts()+1; ++ portId) {
+                for (size_t gridId = 0; gridId < _vNetPortGrid[netId][portId].size(); ++ gridId) {
+                    Grid* grid = _vGrid[layId][_vNetPortGrid[netId][portId][gridId].first][_vNetPortGrid[netId][portId][gridId].second];
+                    if (! grid->hasNet(netId)) {
+                        _vNetGrid[netId][layId].push_back(grid);
+                        grid->addNet(netId);
+                    }
+                }
+            }
             for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); ++ gridId) {
                 _vNetGrid[netId][layId][gridId]->incCongestCur();
             }
@@ -288,6 +363,170 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
         _vNetGrid[netId][layId][gridId]->decCongestCur();
     }
     _vNetGrid[netId][layId].clear();
+}
+
+void DetailedMgr::addPortVia() {
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        Port* sPort = _db.vNet(netId)->sourcePort();
+        int numSVias = ceil(sPort->viaArea() / _db.VIA16D8A24()->metalArea());
+        vector< pair<double, double> > centPos = kMeansClustering(_vNetPortGrid[netId][0], numSVias, 100);
+        assert(centPos.size() == numSVias);
+        vector<size_t> vViaId(centPos.size(), 0);
+        for (size_t viaId = 0; viaId < centPos.size(); ++ viaId) {
+            vViaId[viaId] = _db.addVia(centPos[viaId].first, centPos[viaId].second, netId, ViaType::Source);
+        }
+        sPort->setViaCluster(_db.clusterVia(vViaId));
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            Port* tPort = _db.vNet(netId)->targetPort(tPortId);
+            int numTVias = ceil(tPort->viaArea() / _db.VIA16D8A24()->metalArea());
+            vector< pair<double, double> > centPosT = kMeansClustering(_vNetPortGrid[netId][tPortId+1], numTVias, 100);
+            assert(centPosT.size() == numTVias);
+            vector<size_t> vViaIdT(centPosT.size(), 0);
+            for (size_t viaIdT = 0; viaIdT < centPosT.size(); ++ viaIdT) {
+                vViaIdT[viaIdT] = _db.addVia(centPosT[viaIdT].first, centPosT[viaIdT].second, netId, ViaType::Target);
+            }
+            tPort->setViaCluster(_db.clusterVia(vViaIdT));
+        }
+    }
+
+}
+
+vector< pair<double, double> > DetailedMgr::kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs) {
+    assert(numClusters <= vGrid.size());
+    // if (numClusters == vGrid.size()) {
+    //     return vGrid;
+    // }
+    struct Point {
+        double x, y;     // coordinates
+        int cluster;     // no default cluster
+        double minDist;  // default infinite dist to nearest cluster
+    };
+    auto distance = [] (Point p1, Point p2) -> double {
+        return pow((p1.x-p2.x), 2) + pow((p1.y-p2.y), 2);
+    }; 
+
+    vector<Point> points;
+    for (size_t gridId = 0; gridId < vGrid.size(); ++ gridId) {
+        Point p = {(vGrid[gridId].first+0.5)*_gridWidth, (vGrid[gridId].second+0.5)*_gridWidth, -1, numeric_limits<double>::max()};
+        points.push_back(p);
+    }
+
+    vector<bool> isCentroid(points.size(), false);
+    vector<Point> centroids;
+    srand(time(0));  // need to set the random seed
+    for (int i = 0; i < numClusters; ++i) {
+        int pointId = rand() % points.size();
+        while(isCentroid[pointId]) {
+            pointId = rand() % points.size();
+        }
+        centroids.push_back(points.at(pointId));
+        isCentroid[pointId] = true;
+        // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
+    }
+
+    // vector<int> nPoints(k,0);
+    // vector<double> sumX(k,0.0);
+    // vector<double> sumY(k,0.0);
+    int* nPoints = new int[numClusters];
+    double* sumX = new double[numClusters];
+    double* sumY = new double[numClusters];
+    for (size_t epoch = 0; epoch < numEpochs; ++ epoch) {
+        for (size_t centId = 0; centId < centroids.size(); ++centId) {
+            // quick hack to get cluster index
+            // Point c = centroids[centId];
+            int clusterId = centId;
+
+            for (size_t pointId = 0; pointId < points.size(); ++ pointId) {
+                // Point p = points[pointId];
+                double dist = distance(centroids[centId],points[pointId]);
+                if (dist < points[pointId].minDist) {
+                    points[pointId].minDist = dist;
+                    points[pointId].cluster = clusterId;
+                    // cerr << "p.cluster = " << points[pointId].cluster << endl;
+                }
+                // *it = p;
+            }
+        }
+
+        
+        // sumX.clear();
+        
+        // sumY.clear();
+        // // Initialise with zeroes
+        // for (int j = 0; j < k; ++j) {
+        //     nPoints.push_back(0);
+        //     sumX.push_back(0.0);
+        //     sumY.push_back(0.0);
+        // }
+        for (size_t centId=0; centId<centroids.size(); ++centId) {
+            nPoints[centId] = 0;
+            sumX[centId] = 0.0;
+            sumY[centId] = 0.0;
+        }
+        // Iterate over points to append data to centroids
+        // for (vector<Point>::iterator it = points.begin(); it != points.end(); ++it) {
+            // int clusterId = it->cluster;
+        for (size_t pointId = 0; pointId < points.size(); ++ pointId) {
+            int clusterId = points[pointId].cluster;
+            nPoints[clusterId] += 1;
+            sumX[clusterId] += points[pointId].x;
+            sumY[clusterId] += points[pointId].y;
+            // cerr << "sumX" << clusterId << ": " << sumX[clusterId] << endl;
+            // cerr << "sumY" << clusterId << ": " << sumY[clusterId] << endl;
+            // cerr << "nPoints" << clusterId << ": " << nPoints[clusterId] << endl;
+            points[pointId].minDist = numeric_limits<double>::max();  // reset distance
+        }
+
+        // Compute the new centroids
+        // cerr << "Compute the new centroids" << endl;
+        for (size_t centId = 0; centId < centroids.size(); ++ centId) {
+            int clusterId = centId;
+            centroids[centId].x = sumX[clusterId] / nPoints[clusterId];
+            centroids[centId].y = sumY[clusterId] / nPoints[clusterId];
+            // cerr << "sumX" << clusterId << ": " << sumX[clusterId] << endl;
+            // cerr << "sumY" << clusterId << ": " << sumY[clusterId] << endl;
+            // cerr << "nPoints" << clusterId << ": " << nPoints[clusterId] << endl;
+            // cerr << "centroid: (" << centroids[centId].x << ", " << centroids[centId].y << ")" << endl;
+        }
+    }
+
+    // for (size_t centId = 0; centId < centroids.size(); ++ centId) {
+    //     int centX = floor(centroids[centId].x);
+    //     int centY = floor(centroids[centId].y);
+    //     _db.addVia(centroids[centId].x, centroids[centId].y, )
+    // }
+
+    // for (size_t pointId = 0; pointId < points.size(); ++ pointId) {
+    //     Point p = points[pointId];
+    //     for (size_t tPortId = 0; tPortId < k; ++ tPortId) {
+    //         if (p.cluster == tPortId) {
+    //             // cerr << "tPortId = " << tPortId << endl;
+    //             // cerr << "   node = " << p.node->name() << endl;
+    //             _vTClusteredNode[netId][tPortId].push_back(p.node);
+    //         }
+    //     }
+    // }
+
+    vector< pair<double, double> > centPos;
+    for (size_t centId = 0; centId < centroids.size(); ++ centId) {
+        centPos.push_back(make_pair(centroids[centId].x, centroids[centId].y));
+    }
+    return centPos;
+}
+
+void DetailedMgr::plotVia() {
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        ViaCluster* sViaCstr = _db.vNet(netId)->sourcePort()->viaCluster();    
+        for (size_t viaId = 0; viaId < sViaCstr->numVias(); ++ viaId) {
+            sViaCstr->vVia(viaId)->shape()->plot(netId, 0);
+        }
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            ViaCluster* tViaCstr = _db.vNet(netId)->targetPort(tPortId)->viaCluster();    
+            for (size_t viaId = 0; viaId < tViaCstr->numVias(); ++ viaId) {
+                tViaCstr->vVia(viaId)->shape()->plot(netId, 0);
+            }
+        }
+    }
 }
 
 void DetailedMgr::addViaGrid() {

@@ -54,7 +54,7 @@ class Via{
     public:
         // Via(unsigned int rowId, unsigned int colId, unsigned int netId, ViaType type, Shape* shape): _rowId(rowId), _colId(colId), _netId(netId), _viaType(type), _shape(shape) {}
         Via(unsigned int netId, ViaType type, Shape* shape): _netId(netId), _viaType(type), _shape(shape) {}
-        Via(double x, double y, PadStack* padStack, size_t netId, SVGPlot& plot): _x(x), _y(y), _padStack(padStack), _netId(netId) {
+        Via(double x, double y, PadStack* padStack, size_t netId, ViaType type, SVGPlot& plot): _x(x), _y(y), _padStack(padStack), _netId(netId), _viaType(type) {
             _shape = new Circle(x, y, padStack->_drillRadius, plot);
         }
         ~Via() {}

@@ -127,6 +127,13 @@ class DB {
             _vVia.push_back(via);
         }
 
+        size_t addVia(double x, double y, size_t netId, ViaType type) {
+            Via* via = new Via(x, y, _VIA16D8A24, netId, type, _plot);
+            size_t viaId = _vVia.size();
+            _vVia.push_back(via);
+            return viaId;
+        }
+
         ViaCluster* clusterVia(vector<size_t> vViaId) {
             ViaCluster* viaCluster = new ViaCluster;
             for (size_t i = 0; i < vViaId.size(); ++i) {

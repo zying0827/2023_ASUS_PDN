@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    preMgr.plotBoundBox();
+    // preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -99,11 +99,13 @@ int main(int argc, char* argv[]){
     }
     // globalMgr.plotCurrentPaths();
 
-    DetailedMgr detailedMgr(db, plot, 0.5);
+    DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     detailedMgr.initGridMap();
     // // detailedMgr.plotGridMap();
     detailedMgr.naiveAStar();
     detailedMgr.plotGridMap();
+    detailedMgr.addPortVia();
+    detailedMgr.plotVia();
     // detailedMgr.addViaGrid();
 
     // printf("\n==================== print ===================\n");
