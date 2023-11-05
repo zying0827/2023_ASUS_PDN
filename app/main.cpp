@@ -101,19 +101,23 @@ int main(int argc, char* argv[]){
 
     DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     detailedMgr.initGridMap();
+    detailedMgr.check();
     // // detailedMgr.plotGridMap();
     detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
-    // detailedMgr.addPortVia();
+    detailedMgr.check();
+    // detailedMgr.plotGridMap();
+    detailedMgr.addPortVia();
+    detailedMgr.check();
     // detailedMgr.plotVia();
-    // detailedMgr.addViaGrid();
+    detailedMgr.addViaGrid();
+    detailedMgr.check();
 
     // printf("\n==================== print ===================\n");
     // detailedMgr.print();
 
     // printf("\n==================== buildMtx ===================\n");
-    // detailedMgr.buildMtx();
-    // // detailedMgr.plotGridMapVoltage();
+    detailedMgr.buildMtx();
+    detailedMgr.plotGridMapVoltage();
     // detailedMgr.plotGridMapCurrent();
 
     // globalMgr.plotDB();

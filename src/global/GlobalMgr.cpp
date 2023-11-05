@@ -1791,6 +1791,16 @@ void GlobalMgr::voltageDemandAssignment() {
         }
         // assert(false);
     }
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+            cerr << "net" << netId << " source layer" << layId << " voltage = " << _rGraph.sourceOASGNode(netId, layId)->voltage() << endl;
+        }
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+                cerr << "net" << netId << " target" << tPortId << " layer" << layId << " voltage = " << _rGraph.targetOASGNode(netId, tPortId, layId)->voltage() << endl;
+            }
+        }
+    }
 }
 
 void GlobalMgr::currentDistribution() {
