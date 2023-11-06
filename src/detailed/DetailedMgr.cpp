@@ -627,6 +627,10 @@ void DetailedMgr::buildMtx() {
         Eigen::VectorXd V(numNode);
         vector< Eigen::Triplet<double> > vTplY;
         vTplY.reserve(6 * numNode);
+        for (size_t i = 0; i < numNode; ++ i) {
+            I[i] = 0;
+            V[i] = 0;
+        }
 
         // // initialize
         // vector< vector<double > > mtx;
@@ -777,8 +781,8 @@ void DetailedMgr::buildMtx() {
             // }
         }
 
-        // if (netId == 0) {
-        //     cerr << "net0, I = " << endl;
+        // if (netId == 1) {
+        //     cerr << "net1, I = " << endl;
         //     for (size_t i = 0; i < I.size(); ++ i) {
         //         if (I[i] > 0) {
         //             cerr << "I[" << i << "] = " << I[i] << endl;
@@ -787,7 +791,6 @@ void DetailedMgr::buildMtx() {
         // }
 
         Y.setFromTriplets(vTplY.begin(), vTplY.end());
-        // assert(false);
         // Eigen::BiCGSTAB<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::IdentityPreconditioner> solver;
         Eigen::ConjugateGradient<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::Upper> solver;
         // solver.setMaxIterations(1000000);
@@ -803,7 +806,7 @@ void DetailedMgr::buildMtx() {
                 Grid* grid_i = _vNetGrid[netId][layId][gridId];
                 size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
                 grid_i->setVoltage(netId, V[node_id]);
-                // assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
+                assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
             }
         }
 
