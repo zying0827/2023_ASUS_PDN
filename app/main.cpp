@@ -77,8 +77,8 @@ int main(int argc, char* argv[]){
 
     // // replace this line with a real OASG building function
     // globalMgr.buildTestOASG();
-    // globalMgr.buildOASG();
-    globalMgr.buildOASGXObs();
+    globalMgr.buildOASG();
+    // globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
     // globalMgr.layerDistribution();
     // // // globalMgr.plotRGraph();
