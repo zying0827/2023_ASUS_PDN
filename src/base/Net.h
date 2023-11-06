@@ -33,8 +33,11 @@ class Port {
     public:
         Port(size_t portId, double voltage, double current, ViaCluster* viaCstr)
         : _portId(portId), _voltage(voltage), _current(current), _viaCluster(viaCstr) {}
+        Port(size_t portId, int netTPortId, double voltage, double current)
+        : _portId(portId), _netTPortId(netTPortId), _voltage(voltage), _current(current) {}
         ~Port() {}
         size_t portId() const { return _portId; }
+        int netTPortId() const { return _netTPortId; }
         double voltage() const { return _voltage; }
         double current() const { return _current; }
         ViaCluster* viaCluster() { return _viaCluster; }
@@ -42,17 +45,22 @@ class Port {
         double viaArea() const { return _viaArea; }
         void setBoundPolygon(Polygon* polygon) { _boundPolygon = polygon; }
         void setViaArea(double viaArea) { _viaArea = viaArea; }
+        void setViaCluster(ViaCluster* viaCluster) { _viaCluster = viaCluster; }
         void print() {
             cerr << "Port {portId=" << _portId << ", voltage=" << _voltage << ", current=" << _current << endl;
-            cerr << ", viaCluster=";
-            _viaCluster->print();
+            cerr << ", netPortId=" << _netTPortId << ", boundPolygon=";
+            _boundPolygon->print();
+            // cerr << ", viaCluster=";
+            // _viaCluster->print();
             cerr << "}" << endl;
         }
     private:
         size_t _portId;
+        int _netTPortId;
         double _voltage;
         double _current;
         ViaCluster* _viaCluster;
+        Polygon* _boundPolygon;
         double _viaArea;    // assigned in GlobalMgr::currVoltOpt()
 };
 
@@ -70,18 +78,23 @@ class Port {
 
 class Segment {
     public:
-        Segment(Trace* trace, double sVoltage, double tVoltage, double current)
-         : _trace(trace), _sVoltage(sVoltage), _tVoltage(tVoltage), _current(current) {
+        Segment(Trace* trace, pair<double, double> sPos, pair<double, double> tPos, double widthLeft, double widthRight, double sVoltage, double tVoltage, double current)
+         : _trace(trace), _sPos(sPos), _tPos(tPos), _widthLeft(widthLeft), _widthRight(widthRight), _sVoltage(sVoltage), _tVoltage(tVoltage), _current(current) {
             _length = sqrt(pow(sX()-tX(), 2) + pow(sY()-tY(), 2));
             _width = _trace->width();
+            assert(_width == _widthLeft + _widthRight);
         }
         ~Segment() {}
 
         Trace* trace() { return _trace; }
-        double sX() const { return _trace->sNode()->ctrX(); }
-        double sY() const { return _trace->sNode()->ctrY(); }
-        double tX() const { return _trace->tNode()->ctrX(); }
-        double tY() const { return _trace->tNode()->ctrY(); }
+        // double sX() const { return _trace->sNode()->ctrX(); }
+        // double sY() const { return _trace->sNode()->ctrY(); }
+        // double tX() const { return _trace->tNode()->ctrX(); }
+        // double tY() const { return _trace->tNode()->ctrY(); }
+        double sX() const { return _sPos.first; }
+        double sY() const { return _sPos.second; }
+        double tX() const { return _tPos.first; }
+        double tY() const { return _tPos.second; }
         double sVoltage() const { return _sVoltage; }
         double tVoltage() const { return _tVoltage; }
         double current() const { return _current; }
@@ -93,6 +106,10 @@ class Segment {
         void setCurrent(double current) { _current = current; }
         void setLength(double length) { _length = length; }
         void setWidth(double width) { _width = width; }
+        void setSPos(double sX, double sY) { _sPos = make_pair(sX, sY); }
+        void setTPos(double tX, double tY) { _tPos = make_pair(tX, tY); }
+        void setWidthLeft(double widthLeft) { _widthLeft = widthLeft; }
+        void setWidthRight(double widthRight) { _widthRight = widthRight; }
         void plot(size_t netId, size_t layId) { _trace->plot(netId, layId); }
 
     private:
@@ -103,6 +120,10 @@ class Segment {
         double _current;
         double _length;     // length of the (detoured) segment
         double _width;      // width of the (detoured) segment
+        double _widthLeft;      // left width of the (detoured) segment
+        double _widthRight;     // right width of the (detoured) segment
+        pair<double, double> _sPos;     // the source position of the spine (not center)
+        pair<double, double> _tPos;     // the target position of the spine (not center)
 };
 
 class Net {

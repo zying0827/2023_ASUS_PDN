@@ -55,6 +55,7 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
         // cerr << "add cost for horizontal flows" << endl;
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                // cerr << "planeEdge(net" << netId << " layer" << layId << " pEdge" << pEdgeId;
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
                 // assert (e->sNode()->voltage() != e->tNode()->voltage());
                 if (e->sNode()->voltage() == e->tNode()->voltage()) {
@@ -70,7 +71,8 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
                     }
                     // cost > 0 if flow & edge have same direction; cost < 0 if opposite
                     double cost = (areaWeight * pow(1E-3 * e->length(), 2)) / (_db.vMetalLayer(layId)->conductivity() * (e->sNode()->voltage()-e->tNode()->voltage()) * _db.vMetalLayer(layId)->thickness() * 1E-3);
-                    // cerr << "cost = " << cost << endl;
+                    // cerr << " sVolt = " << e->sNode()->voltage() << ", tVolt = " << e->tNode()->voltage() << ", thickness = " << _db.vMetalLayer(layId)->thickness();
+                    // cerr << ", cost = " << cost << endl;
                     obj += cost * (_vPlaneLeftFlow[netId][layId][pEdgeId] + _vPlaneRightFlow[netId][layId][pEdgeId]);
                 }
             }

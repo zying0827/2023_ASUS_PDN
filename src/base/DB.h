@@ -46,6 +46,8 @@ class DB {
         Obstacle*    vObstacle(size_t layId, size_t layObsId) { return _vMetalLayer[layId]->vObstacle(layObsId); }
         // Node*        vNode(string nodeName)                   { return _vNode[_nodeName2Id[nodeName]]; }
         DBNode*      vDBNode(string nodeName)                 { return _vDBNode[_nodeName2Id[nodeName]]; }
+        DBNode*      vSNode(size_t netId, size_t sNodeId)     { return vDBNode(_vSNode[netId][sNodeId]); }
+        DBNode*      vTNode(size_t netId, size_t tNodeId)     { return vDBNode(_vTNode[netId][tNodeId]); }
 
         size_t numNets()                  const { return _vNet.size(); }
         size_t numLayers()                const { return _vMetalLayer.size(); } // number of metal layers
@@ -57,10 +59,13 @@ class DB {
         // size_t numViaClusters(size_t netId) const { return _vViaCluster[netId].size(); }
         size_t numObstacles()             const { return _vObstacle.size(); }
         size_t numObstacles(size_t layId) const { return _vMetalLayer[layId]->numObstacles(); }
+        size_t numSNodes(size_t netId)    const { return _vSNode[netId].size(); }
+        size_t numTNodes(size_t netId)    const { return _vTNode[netId].size(); }
         double boardWidth()               const { return _boardWidth; }
         double boardHeight()              const { return _boardHeight; }
         double areaWeight()               const { return _areaWeight; }
         double viaWeight()                const { return _viaWeight; }
+        PadStack* VIA16D8A24()                  { return _VIA16D8A24; }
 
         // size_t addVia(unsigned int rowId, unsigned int colId, unsigned int netId, ViaType type) {
         //     for (size_t layId = 0; layId < _numLayers; ++layId) {
@@ -77,6 +82,9 @@ class DB {
             for (size_t netId = 0; netId < numNets; ++ netId) {
                 Net* net = new Net(numLayers());
                 _vNet.push_back(net);
+                vector<string> temp;
+                _vSNode.push_back(temp);
+                _vTNode.push_back(temp);
             }
         }
 
@@ -119,6 +127,13 @@ class DB {
             _vVia.push_back(via);
         }
 
+        size_t addVia(double x, double y, size_t netId, ViaType type) {
+            Via* via = new Via(x, y, _VIA16D8A24, netId, type, _plot);
+            size_t viaId = _vVia.size();
+            _vVia.push_back(via);
+            return viaId;
+        }
+
         ViaCluster* clusterVia(vector<size_t> vViaId) {
             ViaCluster* viaCluster = new ViaCluster;
             for (size_t i = 0; i < vViaId.size(); ++i) {
@@ -144,6 +159,18 @@ class DB {
             }
         }
 
+        void addSPort(size_t netId, double voltage, double current) {
+            Port* port = new Port(_vPort.size(), -1, voltage, current);
+            _vPort.push_back(port);
+            _vNet[netId]->addSPort(port);
+        }
+
+        void addTPort(size_t netId, double voltage, double current) {
+            Port* port = new Port(_vPort.size(), _vNet[netId]->numTPorts(), voltage, current);
+            _vPort.push_back(port);
+            _vNet[netId]->addTPort(port);
+        }
+
         void addNode(string nodeName, double x, double y, size_t layId) {
             Node* node = new Node(x, y, _plot);
             // node->setLayId(layId);
@@ -157,6 +184,14 @@ class DB {
             _vViaEdge.push_back(viaEdge);
             _vDBNode[_nodeName2Id[upNodeName]]->setLowViaEdge(viaEdge);
             _vDBNode[_nodeName2Id[lowNodeName]]->setUpViaEdge(viaEdge);
+        }
+
+        void addSNode(size_t netId, string sNodeName) {
+            _vSNode[netId].push_back(sNodeName);
+        }
+
+        void addTNode(size_t netId, string tNodeName) {
+            _vTNode[netId].push_back(tNodeName);
         }
 
         void addObstacle (size_t layId, vector<Shape*> vShape) {
@@ -189,6 +224,12 @@ class DB {
 
         // void addSVGPlot(SVGPlot& plot) { _plot = SVGPlot&(plot); }
 
+        void setVIA16D8A24() {
+            vector<double> vRegular(numLayers(), 8*0.0254);
+            vector<double> vAnti(numLayers(), 12*0.0254);
+            _VIA16D8A24 = new PadStack("VIA16D8A24", "Circle", 4*0.0254, vRegular, vAnti);
+        }
+        
         void print() {
             cerr << "DB {boardWidth=" << _boardWidth << ", boardHeight=" << _boardHeight << endl;
             cerr << "vObstacle=" << endl;
@@ -246,6 +287,9 @@ class DB {
         // size_t _numCols;
         map<string, int>    _nodeName2Id;
         // map<string, int>    _layName2Id;
+        vector< vector< string > > _vSNode; // index = [netId] [sNodeId]
+        vector< vector< string > > _vTNode; // index = [netId] [tNodeId]
+        PadStack* _VIA16D8A24;
 };
 
 #endif

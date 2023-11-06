@@ -171,11 +171,10 @@ bool GlobalMgr::doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* 
             }
         }
     }
+    //We avoid situations that 2 lines start at same pts but not the same lines 
     if(samePt == 1){
         return false;
     }
-
-
 
     int o1 = orientation(p1, q1, p2); 
     int o2 = orientation(p1, q1, q2); 
@@ -208,13 +207,21 @@ bool GlobalMgr::isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vec
         int numVertices = obstacle[0].size();
         for (int j = 0; j< numVertices-1;++j){
             if(doIntersect(a, b, obstacle[i][j], obstacle[i][j+1])){
+                addObsRoundEdges[i] = true;
                 return true;
             }
         }
-        if(doIntersect(a, b, obstacle[i][0], obstacle[i][numVertices-1])) return true;
+        if(doIntersect(a, b, obstacle[i][0], obstacle[i][numVertices-1])){
+            addObsRoundEdges[i] = true;
+            return true;
+        } 
     }
     return false;
 }
+
+//Bug!
+//現在改掉Obstacle加上Round Edge的Bug
+//但是Via的Edges也會用這個function，所以之後假如有Edge撞到其他Obs就會破
 
 void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle){
     
@@ -270,10 +277,12 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
         
         if(inTouchWithThisObs ==true){
             alreadyDealWtihAObs = true;
-            for(int nodeId = 0; nodeId < (obstacle[i].size()-1); ++nodeId){
-                _rGraph.addOASGEdge(netId, layerId, obstacle[i][nodeId], obstacle[i][nodeId+1], false);
-            }
-            _rGraph.addOASGEdge(netId, layerId, obstacle[i][0], obstacle[i][(obstacle[i].size()-1)], false);
+
+            // for(int nodeId = 0; nodeId < (obstacle[i].size()-1); ++nodeId){
+            //     _rGraph.addOASGEdge(netId, layerId, obstacle[i][nodeId], obstacle[i][nodeId+1], false);
+            // }
+            // _rGraph.addOASGEdge(netId, layerId, obstacle[i][0], obstacle[i][(obstacle[i].size()-1)], false);
+
             double scanX = a->x();
             double scanY = a->y(); 
             double dis1Aa = sqrt(pow(obs1A->x() - scanX, 2) + pow(obs1A->y() - scanY, 2));
@@ -283,25 +292,25 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
             double minDis = std::min({dis1Aa , dis2Aa, dis1Ba, dis2Ba}); 
             if (minDis == dis1Aa || minDis == dis1Ba){
                 if (isSegmentIntersectingWithObstacles( a, obs1A, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs1A, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs1A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs1A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs1B, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs1B, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs1B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs1B, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs2A, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs2A, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs2A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs2A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs2B, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs2B, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs2B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs2B, false);
@@ -309,25 +318,25 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
             }
             else{
                 if (isSegmentIntersectingWithObstacles( b, obs1A, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs1A, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs1A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs1A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs1B, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs1B, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs1B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs1B, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs2A, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs2A, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs2A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs2A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs2B, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs2B, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs2B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs2B, false);
@@ -480,6 +489,8 @@ void GlobalMgr::buildOASG() {
         //Obs Node的順序是1左下、2右下、3右上、4左上
         for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId){
             vector<vector<OASGNode*>> obsNodes;
+            //如果這個Obs已經有要加Round Edges，就變成True 
+            addObsRoundEdges.resize(_db.numObstacles(layerId), false);
 
             bool thisLayerHaveObs = false;
             bool thisNetTouchObsThisLayer = false;
@@ -523,14 +534,14 @@ void GlobalMgr::buildOASG() {
                         double curY = traverseNodes[i]-> y();
 
                             if (isSegmentIntersectingWithObstacles(_rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes)){
-                                //先把Obs 的每邊都加上ObsEdge
-                                for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                    int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                    for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                    }
-                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                }
+                                //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
+                                // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                                //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                                //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                                //     }
+                                //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                                // }
                                 connectWithObstacle(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes);
                                 thisNetTouchObsThisLayer = true;
                             }
@@ -557,13 +568,13 @@ void GlobalMgr::buildOASG() {
                         if(curX >= scanX && curY >= scanY){
                             if (isSegmentIntersectingWithObstacles(traverseNodes[i], traverseNodes[i+1], obsNodes)){
                                 //Bug: 這邊應該要把跟只有跟這條Net有撞到的Obstacle 加上OASG Edges，但只要這條Net在這層撞到一個Obs，就會全部都加
-                                for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                    int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                    for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                    }
-                                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                }
+                                // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                                //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                                //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                                //     }
+                                //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                                // }
                                 connectWithObstacle(netId, layerId, traverseNodes[i], traverseNodes[i+1], obsNodes);
                                 thisNetTouchObsThisLayer = true;
                             }
@@ -578,14 +589,14 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
-                                    //先把Obs 的四邊都加上ObsEdge
-                                    for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                        int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                        for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                            _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                        }
-                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                    }
+                                    //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
+                                    // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                    //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                                    //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                                    //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                                    //     }
+                                    //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                                    // }
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
@@ -619,14 +630,14 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
-                                    //先把Obs 的四邊都加上ObsEdge
-                                    for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                        int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                        for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                            _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                        }
-                                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                    }
+                                    //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
+                                    // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                                    //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                                    //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                                    //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                                    //     }
+                                    //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                                    // }
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
@@ -640,6 +651,8 @@ void GlobalMgr::buildOASG() {
                     }
                 }
             }
+            // AddObstacleRoundEdges
+
         }
 
     }
@@ -993,7 +1006,7 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 0; //3
+    size_t numIVIter = 3; //3
     size_t numIIter = 6; //6
     size_t numVIter = 10; //10
 
@@ -1137,11 +1150,11 @@ void GlobalMgr::voltCurrOpt() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
                     // segment->plot(netId, layId);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
@@ -1151,11 +1164,13 @@ void GlobalMgr::voltCurrOpt() {
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         assert(_rGraph.vViaOASGEdge(netId, 0, 0)->sNode()->port() == _db.vNet(netId)->sourcePort());
         double sViaArea = _rGraph.vViaOASGEdge(netId, 0, 0)->viaArea();
+        assert(sViaArea > 0);
         _db.vNet(netId)->sourcePort()->setViaArea(sViaArea);
         cerr << "net" << netId << " s: viaArea = " << sViaArea << ", upperbound = " << _vUBViaArea[netId][0] << endl;
         for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
             assert(_rGraph.vViaOASGEdge(netId, 0, tPortId+1)->tNode()->port() == _db.vNet(netId)->targetPort(tPortId));
             double tViaArea = _rGraph.vViaOASGEdge(netId, 0, tPortId+1)->viaArea();
+            assert(tViaArea > 0);
             _db.vNet(netId)->targetPort(tPortId)->setViaArea(tViaArea);
             cerr << "net" << netId << " t" << tPortId << ": viaArea = " << tViaArea << ", upperbound = " << _vUBViaArea[netId][tPortId+1] << endl;
         }
@@ -1791,6 +1806,16 @@ void GlobalMgr::voltageDemandAssignment() {
         }
         // assert(false);
     }
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+            cerr << "net" << netId << " source layer" << layId << " voltage = " << _rGraph.sourceOASGNode(netId, layId)->voltage() << endl;
+        }
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+                cerr << "net" << netId << " target" << tPortId << " layer" << layId << " voltage = " << _rGraph.targetOASGNode(netId, tPortId, layId)->voltage() << endl;
+            }
+        }
+    }
 }
 
 void GlobalMgr::currentDistribution() {
@@ -1871,6 +1896,14 @@ void GlobalMgr::currentDistribution() {
                             // get the edge coordinates
                             S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
@@ -1974,10 +2007,10 @@ void GlobalMgr::currentDistribution() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
@@ -2453,8 +2486,12 @@ Segment* GlobalMgr::edge2Segment(OASGEdge* edge) {
     double yOffset = offset * (edge->sNode()->x() - edge->tNode()->x()) / edge->length(); // offset * -cos(theta)
     Node* sNode = new Node(edge->sNode()->x()+xOffset, edge->sNode()->y()+yOffset, _plot);
     Node* tNode = new Node(edge->tNode()->x()+xOffset, edge->tNode()->y()+yOffset, _plot);
+    assert(edge->widthRight() >= 0);
+    assert(edge->widthLeft() >= 0);
     Trace* trace = new Trace(sNode, tNode, edge->widthRight() + edge->widthLeft(), _plot);
-    Segment* segment = new Segment(trace, edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
+    pair<double, double> sPos = make_pair(edge->sNode()->x(), edge->sNode()->y());
+    pair<double, double> tPos = make_pair(edge->tNode()->x(), edge->tNode()->y());
+    Segment* segment = new Segment(trace, sPos, tPos, edge->widthLeft(), edge->widthRight(), edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
     return segment;
 }
 
@@ -2485,13 +2522,11 @@ void GlobalMgr::genCapConstrs() {
                 pair<bool, bool> right;
                 double width;
                 
-                //compare other net edge
-                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
-                    //make sure to compare different net
+                //compare to other net edge
+                for(size_t T_netId = S_netId; T_netId < _rGraph.numNets(); ++ T_netId){
                     for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
                         OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
     
-                    //    BuildCapacityConstraint(e1,e2,solver);
                         if (e1 != e2) {
                             // bool isSameNet = (T_netId == S_netId);
                             // if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
@@ -2525,12 +2560,53 @@ void GlobalMgr::genCapConstrs() {
                             // get the edge coordinates
                             S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+
+                            
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
+                            
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
                                              S2, T2, ratio, right, width))
                                 addSglCapConstr(e1, right.first, ratio.first, width);
 
+                        }
+                    }
+                }
+
+                // port bounding polygon constraints from other nets
+                // Bug: if the port is not connected on the layer, its bounding polygon should be ignored
+                for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId) {
+                    if (T_netId != S_netId) {
+                        Polygon* bPolygon = _db.vNet(T_netId)->sourcePort()->boundPolygon();
+                        pair<double, double> S2, T2;
+                        for (size_t vtxId = 0; vtxId < bPolygon->numVtcs(); ++ vtxId) {
+                            // get the edge coordinates
+                            S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
+                            T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                addSglCapConstr(e1, right.first, ratio.first, width);
+                        }
+                        for (size_t tPortId = 0; tPortId < _db.vNet(T_netId)->numTPorts(); ++ tPortId) {
+                            bPolygon = _db.vNet(T_netId)->targetPort(tPortId)->boundPolygon();
+                            for (size_t vtxId = 0; vtxId < bPolygon->numVtcs(); ++ vtxId) {
+                                // get the edge coordinates
+                                S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
+                                T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+                                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                                make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                                S2, T2, ratio, right, width))
+                                    addSglCapConstr(e1, right.first, ratio.first, width);
+                            }
                         }
                     }
                 }

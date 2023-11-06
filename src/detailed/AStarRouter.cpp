@@ -25,7 +25,8 @@ bool AStarRouter::route() {
         //     (dir == Direction::Right && xId + floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second) ||
         //     (dir == Direction::Left && xId - floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second)) {
             stepNode->setParent(orgNode);
-            backTrace(xId, yId);
+            backTraceNoPad();
+            // backTrace(xId, yId);
             // cerr << _vGNode[-1][-1] << endl;
             return true;
         } else if (stepNode->status() != GNodeStatus::InPath) {
@@ -238,6 +239,173 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     } 
 }
 
+void AStarRouter::backTraceNoPad() {
+    auto encloseNode = [&] (int centerX, int centerY, int radius, int enclosedX, int enclosedY) -> bool {
+        assert(legal(centerX, centerY));
+        assert(legal(enclosedX, enclosedY));
+        if (enclosedX >= centerX-radius && enclosedX <= centerX+radius &&
+            enclosedY >= centerY-radius && enclosedY <= centerY+radius) {
+                return true;
+            } 
+        return false;
+    };
+    GNode* node = _vGNode[_tPos.first][_tPos.second];
+    // GNode* node = _vGNode[tXId][tYId];
+    while(node->parent() != node) {
+        _path.push_back(_vGrid[node->xId()][node->yId()]);
+        node = node->parent();
+    }
+    assert(node->xId() == _sPos.first && node->yId() == _sPos.second);
+    _path.push_back(_vGrid[node->xId()][node->yId()]);
+
+    _exactLength = _path.size()-1;
+    // double length = _exactLength * _gridWidth;
+    // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
+    _exactWidth = ceil(_lbWidth/_gridWidth);
+    int halfWidth = floor(0.5 * _lbWidth / _gridWidth);
+    // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
+    size_t sPathId = _path.size()-1;
+    size_t tPathId = 0;
+    bool TEncloseS = false;
+    bool SEncloseT = false;
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second));
+    while(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second)) {
+        if (sPathId == 0) {
+            TEncloseS == true;
+            break;
+        }
+        sPathId --;
+    }
+    sPathId ++;
+    assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second));
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
+    while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second)) {
+        if (tPathId == _path.size()) {
+            SEncloseT = true;
+            break;
+        }
+        tPathId ++;
+    }
+    tPathId --;
+    assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
+    assert(TEncloseS == SEncloseT);
+
+    if (TEncloseS) {
+        size_t cPathId = _path.size() / 2;
+        for (int xId = _path[cPathId]->xId() - halfWidth; xId <= _path[cPathId]->xId() + halfWidth; ++ xId) {
+            if (xId >= 0 && xId < numXId()) {
+                for (int yId = _path[cPathId]->yId() - halfWidth; yId <= _path[cPathId]->yId() + halfWidth; ++ yId) {
+                    if (yId >= 0 && yId < numYId()) {
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+                    }
+                }
+            }
+        }
+    } else {
+        // around the ending grid
+        for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
+            if (xId >= 0 && xId < numXId()) {
+                for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
+                    if (yId >= 0 && yId < numYId()) {
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+                    }
+                }
+            }
+        }
+        // around the path
+        // node = _vGNode[_tPos.first][_tPos.second];
+        // while(node->parent() != node) {
+        for (size_t pathId = tPathId; pathId < sPathId; ++ pathId) {
+            // cerr << "node->parent() = (" << node->parent()->xId() << ", " << node->parent()->yId() << ")" << endl;
+            // vector<Grid*> gg;
+            // if (node->parent()->xId() == 21 && node->parent()->yId() ==  58) cerr << gg[2] << endl;
+            if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()) {   // Right
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+                // if (node->parent()->xId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()-1  && _path[pathId+1]->yId() == _path[pathId]->yId()) {   // Left
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+                // if (node->parent()->xId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.first && node->parent()->yId() == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId() && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {    // Up
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                // if (node->parent()->xId() == _sPos.first && node->parent()->yId() + floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId() && _path[pathId+1]->yId() == _path[pathId]->yId()-1) {    // Down
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                // if (node->parent()->xId() == _sPos.first && node->parent()->yId() - floor(ceil(_lbWidth/_gridWidth)/2.0) == _sPos.second) {
+                //     break;
+                // }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {  // UpRight
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth-1; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()-1 && _path[pathId+1]->yId() == _path[pathId]->yId()+1) {  // UpLeft
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() + halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() + halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth; y <= _path[pathId+1]->yId()+halfWidth-1; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+            } else if (_path[pathId+1]->xId() == _path[pathId]->xId()+1 && _path[pathId+1]->yId() == _path[pathId]->yId()-1) {  // DownRight
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth+1; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() + halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() + halfWidth][y]);
+                    }
+                }
+            } else {  // DownLeft
+                assert(_path[pathId+1]->xId() == _path[pathId]->xId()-1 && _path[pathId+1]->yId() == _path[pathId]->yId()-1);
+                for (int x = _path[pathId+1]->xId()-halfWidth; x <= _path[pathId+1]->xId()+halfWidth; ++ x) {
+                    if (legal(x, _path[pathId+1]->yId() - halfWidth)) {
+                        _vPGrid.push_back(_vGrid[x][_path[pathId+1]->yId() - halfWidth]);
+                    }
+                }
+                for (int y = _path[pathId+1]->yId()-halfWidth+1; y <= _path[pathId+1]->yId()+halfWidth; ++ y) {
+                    if (legal(_path[pathId+1]->xId() - halfWidth, y)) {
+                        _vPGrid.push_back(_vGrid[_path[pathId+1]->xId() - halfWidth][y]);
+                    }
+                }
+            }
+            // node = node->parent();
+        } 
+    }
+}
+
 double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
     auto prob = [&](int w) -> double{
         return pow(1-_widthRatio, w-ceil(_lbWidth/_gridWidth)) * _widthRatio;
@@ -363,65 +531,128 @@ double AStarRouter::marginCongestCost(int xId, int yId, Direction dir) {
     return congestion;
 }
 
-double AStarRouter::pathLength(int threshold) {
-    int gridCount = 0;
-    double pathLength = 0;
-    int buffer = 0;
-    bool turned = false;
-    bool turn = false;
-    GNode* node = _vGNode[_tPos.first][_tPos.second];
+Direction AStarRouter::giveDirection (GNode* curNode){
+
+    // Up, Down, Right, Left,
+    // UpRight, UpLeft, DownRight, DownLeft
+    assert( curNode->parent() != curNode);
+
     Direction dir;
-    if (node->parent()->xId() == node->xId()+1) {
+    if (curNode->parent()->xId() == curNode->xId()+1 && curNode->parent()->yId() == curNode->yId()+1) {
+        dir = Direction::UpRight;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1 && curNode->parent()->yId() == curNode->yId()+1 ) {
+        dir = Direction::UpLeft;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1 && curNode->parent()->yId() == curNode->yId()-1) {
+        dir = Direction::DownLeft;
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()+1 && curNode->parent()->yId() == curNode->yId()-1){
+        dir = Direction::DownRight;
+    }
+    else if (curNode->parent()->xId() == curNode->xId()+1) {
         dir = Direction::Right;
-    } else if (node->parent()->xId() == node->xId()-1) {
+    } 
+    else if (curNode->parent()->xId() == curNode->xId()-1) {
         dir = Direction::Left;
-    } else if (node->parent()->yId() == node->yId()+1) {
+    } 
+    else if (curNode->parent()->yId() == curNode->yId()+1) {
         dir = Direction::Up;
-    } else {
-        assert(node->parent()->yId() == node->yId()-1);
+    } 
+    else {
+        assert(curNode->parent()->yId() == curNode->yId()-1);
         dir = Direction::Down;
     }
-    buffer ++;
-    node = node->parent();
+    return dir;
+}
 
-    while(node->parent() != node) {
-        turn = false;
-        if (node->parent()->xId() == node->xId()+1) {
-            if (dir == Direction::Right) {
-                turn = true;
+double AStarRouter::pathLength(int threshold, int method) {
+    
+    // 0 for heuristic
+    if(method == 0){
+        /////////////////////////
+        //1st method: Heuristic//
+        /////////////////////////
+
+        //Situation 1: If walk diogonally(1 step), then move and pathLength += 2^(1/2)
+        //Situation 2: If walk strqight and then walk diogonally(2 step), then move to 2nd step and pathLength += 1+2^(1/2)
+        //Situation 3: If walk strqight and then turn right or left(2 step), then move to 2nd step and pathLength += 2^(1/2)
+        //Situation 4: If walk strqight and then walk straight again(2 step), then move to 1st step and pathLength += 1
+
+        int gridCount = 0;
+        double pathLength = 0;
+        int buffer = 0;
+        bool turned = false;
+        bool turn = false;
+        GNode* node = _vGNode[_tPos.first][_tPos.second];
+        //一開始的Node就是從Target開始找，所以直接用_tPos，也就是target Pos。
+        cout << "Coordinate of this pt -> X =" <<   _tPos.first << "Y = " << _tPos.second << endl;
+        
+        bool firstStepStraight = false;
+        Direction dir, prevDir;
+
+        while(node -> parent() != node) {
+            dir = giveDirection(node);
+            if( !firstStepStraight && (dir == UpRight || dir == UpLeft || dir == DownLeft || dir == DownRight) ){
+                pathLength += pow(2, 0.5);
+                node = node->parent();
+                //不知道這樣合不合法
+                ++ gridCount;
+                ++ gridCount;
+                prevDir = dir;
             }
-        } else if (node->parent()->xId() == node->xId()-1) {
-            if (dir == Direction::Left) {
-                turn = true;
+            else if(!firstStepStraight && (dir == Up || dir == Right || dir == Down || dir == Left) ){
+                firstStepStraight = true;
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
             }
-        } else if (node->parent()->yId() == node->yId()+1) {
-            if (dir == Direction::Up) {
-                turn = true;
+            else if ( firstStepStraight && (dir == UpRight || dir == UpLeft || dir == DownLeft || dir == DownRight)) {
+                firstStepStraight = false;
+                pathLength += (1+pow(2, 0.5));
+                node = node->parent();
+                ++gridCount;
+                ++gridCount;
+                prevDir = dir;
             }
-        } else {
-            assert(node->parent()->yId() == node->yId()-1);
-            if (dir == Direction::Down) {
-                turn = true;
+            else if (firstStepStraight && (prevDir != dir)){
+                firstStepStraight = false;
+                pathLength += (pow(2, 0.5));
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
             }
+            else if (firstStepStraight && (prevDir == dir)){
+                pathLength += 1;
+                node = node->parent();
+                ++gridCount;
+                prevDir = dir;
+            }
+
         }
-        if (turned) {
-            if (buffer <= threshold) {
 
-            }
+        // buffer ++;
+        //             if (!turned && buffer > threshold) {
+        //                 pathLength += buffer;
+        //                 buffer = 0;
+        //             }
+        //         } else {
+        //             if (!turned) {
+        //                 turned = true;
+        //             }
+        for (size_t pGridId = 0; pGridId < _path.size(); ++pGridId) {
+            Grid* grid = _path[pGridId];
         }
-        node = node->parent();
-    }
+        cout << endl;
+        cout << "Grid Count is  " << gridCount << endl;
+        cout << "Path Length is  " << pathLength << endl;
 
-    // buffer ++;
-    //             if (!turned && buffer > threshold) {
-    //                 pathLength += buffer;
-    //                 buffer = 0;
-    //             }
-    //         } else {
-    //             if (!turned) {
-    //                 turned = true;
-    //             }
-    for (size_t pGridId = 0; pGridId < _path.size(); ++pGridId) {
-        Grid* grid = _path[pGridId];
+        // return gridCount;
+        return pathLength;
     }
+    // i for pattern matching 
+
+    //這裡沒有return 東西
+        
+
 }

@@ -6,19 +6,32 @@
 #include "global/GlobalMgr.h"
 #include "base/SVGPlot.h"
 #include "detailed/DetailedMgr.h"
+#include "global/PreMgr.h"
 
 using namespace std;
 
 int main(int argc, char* argv[]){
-    ifstream fin;
+    ifstream finST, fin, finOb;
     ofstream fout;
-    fin.open(argv[1], ifstream::in);
+    finST.open(argv[1], ifstream::in);
+    if (finST.is_open()) {
+        cout << "input file (st components) is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file (st components)" << endl;
+    }
+    fin.open(argv[2], ifstream::in);
     if (fin.is_open()) {
         cout << "input file is opened successfully" << endl;
     } else {
         cerr << "Error opening input file" << endl;
     }
-    fout.open(argv[2], ofstream::out);
+    finOb.open(argv[3], ifstream::in);
+    if (finOb.is_open()) {
+        cout << "input file (obstacle) is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file" << endl;
+    }
+    fout.open(argv[4], ofstream::out);
     if (fout.is_open()) {
         cout << "output file is opened successfully" << endl;
     } else {
@@ -32,86 +45,104 @@ int main(int argc, char* argv[]){
     //     cerr << "Error opening output file" << endl;
     // }
 
-    double gridWidth = 4;
-    double boardWidth = 15*gridWidth;
-    double boardHeight = 19*gridWidth;
-    size_t numLayers = 4;
+    // double gridWidth = 4;
+    // double boardWidth = 15*gridWidth;
+    // double boardHeight = 19*gridWidth;
+    // size_t numLayers = 4;
     // double gridWidth = 8;
     // double boardWidth = 50*gridWidth;
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
     double gridWidth = 1;
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
+    double boardWidth = 5*gridWidth;
+    double boardHeight = 4*gridWidth;
     size_t numLayers = 4;
     double offsetX = 40;
     double offsetY = 40;
 
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
-    // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 5.0);
+    // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
+    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
     DB db(plot);
     db.setBoundary(boardWidth, boardHeight);
-    Parser parser(finST, fin, db, offsetX, offsetY, plot);
+    db.setFlowWeight(0.5, 0.5);
+    Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
     parser.parse();
     // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    preMgr.plotBoundBox();
+    // preMgr.plotBoundBox();
     
-    // replace this line with a real parser function
-    parser.testInitialize(boardWidth, boardHeight, gridWidth);
+    // // replace this line with a real parser function
+    // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
     // db.print();
     
     GlobalMgr globalMgr(db, plot);
     
 
-    // replace this line with a real OASG building function
-    globalMgr.buildTestOASG();
-    // globalMgr.buildOASG();
-    globalMgr.buildOASGXObs();
+    // // replace this line with a real OASG building function
+    // globalMgr.buildTestOASG();
+
+    globalMgr.buildOASG();
+    // globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
     // globalMgr.layerDistribution();
-    // // // globalMgr.plotRGraph();
+    // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
-    globalMgr.genCapConstrs();
+//    globalMgr.genCapConstrs();
     try {
-        globalMgr.voltageAssignment();
+        // globalMgr.voltageDemandAssignment();
+        // globalMgr.voltageAssignment();
         // globalMgr.currentDistribution();
-        // globalMgr.voltCurrOpt();
+//        globalMgr.voltCurrOpt();
+        // globalMgr.checkFeasible();
+        // globalMgr.checkVoltDemandFeasible();
     } catch (GRBException e) {
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    globalMgr.plotCurrentPaths();
-
-    // DetailedMgr detailedMgr(db, plot, 0.5);
-    // detailedMgr.initGridMap();
+    // globalMgr.plotCurrentPaths();
+    
+    DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    printf("--- wirte color map ---\n");
+    detailedMgr.writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
+    detailedMgr.writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
+    detailedMgr.initGridMap();
+    detailedMgr.check();
     // // detailedMgr.plotGridMap();
-    // detailedMgr.naiveAStar();
+    detailedMgr.naiveAStar();
+    detailedMgr.check();
     // detailedMgr.plotGridMap();
-    // detailedMgr.addViaGrid();
+    detailedMgr.addPortVia();
+    detailedMgr.check();
+    // detailedMgr.plotVia();
+    detailedMgr.addViaGrid();
+    detailedMgr.check();
 
-    printf("\n==================== buildMtx ===================\n");
+    // printf("\n==================== print ===================\n");
+    // detailedMgr.print();
+
+    // printf("\n==================== buildMtx ===================\n");
     detailedMgr.buildMtx();
-*/
+    // detailedMgr.plotGridMapVoltage();
+    detailedMgr.plotGridMapCurrent();
+
     detailedMgr.writeColorMap("../exp/output/voltageColorMap.txt", 1);
     detailedMgr.writeColorMap("../exp/output/currentColorMap.txt", 0);
-    
-    
-    globalMgr.plotDB();
+
+    // // globalMgr.plotDB();
 
 
-    // mgr.genRGraph();
-    // // mgr.drawRGraph();
-    // mgr.distrNet();
+    // // mgr.genRGraph();
+    // // // mgr.drawRGraph();
+    // // mgr.distrNet();
 
-    // // draw routing graph
-    // // mgr.drawRGraph(true);
-    // mgr.drawDB();
-    // fout.close();
+    // // // draw routing graph
+    // // // mgr.drawRGraph(true);
+    // // mgr.drawDB();
+    // // fout.close();
     return 0;
 }
