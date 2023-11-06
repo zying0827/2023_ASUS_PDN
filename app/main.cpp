@@ -77,9 +77,10 @@ int main(int argc, char* argv[]){
     detailedMgr.initGridMap();
     // detailedMgr.plotGridMap();
     detailedMgr.naiveAStar();
-    detailedMgr.plotGridMap();
+    //在這裡測試
+    // detailedMgr.plotGridMap();
 
-    globalMgr.plotDB();
+    // globalMgr.plotDB();
 
 
     // mgr.genRGraph();
