@@ -48,10 +48,13 @@ class AStarRouter {
         size_t numPGrids() const { return _vPGrid.size(); }
         size_t exactWidth() const { return _exactWidth; }
         size_t exactLength() const { return _exactLength; }
+        // Temporarily set pathLength as public
+        double pathLength(int threshold, int method);
+        Direction giveDirection (GNode* curNode);
 
     private:
         bool legal(int xId, int yId) { return (xId>=0 && xId<numXId() && yId>=0 && yId<numYId()); }
-        double pathLength(int threshold);
+        
         // input
         vector< vector< Grid* > > _vGrid;   // index = [xId] [yId]
         pair<int, int> _sPos;     // (source xId, source yId) of the trace (of segment)

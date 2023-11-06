@@ -45,6 +45,8 @@ class GlobalMgr {
         bool doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* q2);
         void connectWithObstacle(int netId, int layerId,OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle);
         bool checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<vector<OASGNode*>>> viaOASGNodes);
+        //用來存每一層有哪一個Obstacle要繞Rounding Edges
+        vector<bool> addObsRoundEdges;
 
         void plotOASG();
         void plotRGraph();

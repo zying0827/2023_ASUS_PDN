@@ -83,6 +83,7 @@ int main(int argc, char* argv[]){
 
     // // replace this line with a real OASG building function
     // globalMgr.buildTestOASG();
+
     globalMgr.buildOASG();
     // globalMgr.buildOASGXObs();
     globalMgr.plotOASG();
@@ -103,8 +104,8 @@ int main(int argc, char* argv[]){
     //     cerr << "Error = " << e.getErrorCode() << endl;
     //     cerr << e.getMessage() << endl;
     // }
-    // globalMgr.plotCurrentPaths();
-
+    // // globalMgr.plotCurrentPaths();
+    
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     // detailedMgr.initGridMap();
     // detailedMgr.check();
@@ -126,16 +127,16 @@ int main(int argc, char* argv[]){
     // detailedMgr.plotGridMapVoltage();
     // // detailedMgr.plotGridMapCurrent();
 
-    globalMgr.plotDB();
+    // // globalMgr.plotDB();
 
 
-    // mgr.genRGraph();
-    // // mgr.drawRGraph();
-    // mgr.distrNet();
+    // // mgr.genRGraph();
+    // // // mgr.drawRGraph();
+    // // mgr.distrNet();
 
-    // // draw routing graph
-    // // mgr.drawRGraph(true);
-    // mgr.drawDB();
-    // fout.close();
+    // // // draw routing graph
+    // // // mgr.drawRGraph(true);
+    // // mgr.drawDB();
+    // // fout.close();
     return 0;
 }
