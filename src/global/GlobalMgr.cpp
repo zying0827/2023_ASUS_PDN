@@ -171,11 +171,10 @@ bool GlobalMgr::doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* 
             }
         }
     }
+    //We avoid situations that 2 lines start at same pts but not the same lines 
     if(samePt == 1){
         return false;
     }
-
-
 
     int o1 = orientation(p1, q1, p2); 
     int o2 = orientation(p1, q1, q2); 
@@ -283,25 +282,25 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
             double minDis = std::min({dis1Aa , dis2Aa, dis1Ba, dis2Ba}); 
             if (minDis == dis1Aa || minDis == dis1Ba){
                 if (isSegmentIntersectingWithObstacles( a, obs1A, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs1A, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs1A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs1A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs1B, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs1B, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs1B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs1B, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs2A, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs2A, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs2A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs2A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs2B, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs2B, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs2B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs2B, false);
@@ -309,25 +308,25 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
             }
             else{
                 if (isSegmentIntersectingWithObstacles( b, obs1A, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs1A, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs1A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs1A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( b, obs1B, obstacle)){
-                    connectWithObstacle(netId, layerId, b, obs1B, obstacle);
+                    // connectWithObstacle(netId, layerId, b, obs1B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, b, obs1B, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs2A, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs2A, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs2A, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs2A, false);
                 }
                 if (isSegmentIntersectingWithObstacles( a, obs2B, obstacle)){
-                    connectWithObstacle(netId, layerId, a, obs2B, obstacle);
+                    // connectWithObstacle(netId, layerId, a, obs2B, obstacle);
                 }
                 else {
                     _rGraph.addOASGEdge(netId, layerId, a, obs2B, false);
@@ -371,80 +370,108 @@ void GlobalMgr::buildOASG() {
     //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
     vector<vector<vector<OASGNode*> > > viaOASGNodes;
     viaOASGNodes.resize(_rGraph.numNets());
-    for(int i = 0; i < _rGraph.numNets(); ++i){
-
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         int viaNodeId = 0;
-        int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
         vector<vector<OASGNode*>> tempViaOASGNodes;
-        tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
-
+        tempViaOASGNodes.resize((1+_db.vNet(netId)->numTPorts()), vector<OASGNode*>(4, nullptr));
         // Step1: Create Source Via        
-        double minX = 1000000000;
-        double minY = 1000000000;
-        double maxX = -1;
-        double maxY = -1;
-        double tempMinX, tempMinY, tempMaxX, tempMaxY;
-
-        for (int j = 0; j < numSourceVias; ++j ){
-            tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
-            tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
-            tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
-            tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
-            if(tempMinX<minX){
-                minX = tempMinX;
-            }
-            if(tempMinY<minY){
-                minY = tempMinY;
-            }
-            if(tempMaxX>maxX){
-                maxX = tempMaxX;
-            }
-            if(tempMaxY>maxY){
-                maxY = tempMaxY;
-            }
-        }
-
-        tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-        tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+        double minX = _db.vNet(netId)->sourcePort()->boundPolygon()->minX();
+        double minY = _db.vNet(netId)->sourcePort()->boundPolygon()->minY();
+        double maxX = _db.vNet(netId)->sourcePort()->boundPolygon()->maxX();
+        double maxY = _db.vNet(netId)->sourcePort()->boundPolygon()->maxY();
+        tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(netId, minX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(netId, maxX, minY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(netId, maxX, maxY, OASGNodeType::MIDDLE);
+        tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(netId, minX, maxY, OASGNodeType::MIDDLE);
         ++viaNodeId ;
-
         //Secondly, check with the target viaclusters
-        for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
-            minX = 1000000000;
-            minY = 1000000000;
-            maxX = -1;
-            maxY = -1;
-            for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
-                tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
-                tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
-                tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
-                tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
-                if(tempMinX<minX){
-                    minX = tempMinX;
-                }
-                if(tempMinY<minY){
-                    minY = tempMinY;
-                }
-                if(tempMaxX>maxX){
-                    maxX = tempMaxX;
-                }
-                if(tempMaxY>maxY){
-                    maxY = tempMaxY;
-                }
-            }
-
-
-            tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-            tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+        for(size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            double minX = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->minX();
+            double minY = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->minY();
+            double maxX = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->maxX();
+            double maxY = _db.vNet(netId)->targetPort(tPortId)->boundPolygon()->maxY();
+            tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(netId, minX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(netId, maxX, minY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(netId, maxX, maxY, OASGNodeType::MIDDLE);
+            tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(netId, minX, maxY, OASGNodeType::MIDDLE);
             ++viaNodeId;
         }
+        viaOASGNodes[netId] = tempViaOASGNodes;
+    }
+    // for(int i = 0; i < _rGraph.numNets(); ++i){
 
-        viaOASGNodes[i] = tempViaOASGNodes;
-    }    
+    //     int viaNodeId = 0;
+    //     int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
+    //     vector<vector<OASGNode*>> tempViaOASGNodes;
+    //     tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
+
+    //     // Step1: Create Source Via        
+    //     double minX = 1000000000;
+    //     double minY = 1000000000;
+    //     double maxX = -1;
+    //     double maxY = -1;
+    //     double tempMinX, tempMinY, tempMaxX, tempMaxY;
+
+    //     for (int j = 0; j < numSourceVias; ++j ){
+    //         tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
+    //         tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
+    //         tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
+    //         tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
+    //         if(tempMinX<minX){
+    //             minX = tempMinX;
+    //         }
+    //         if(tempMinY<minY){
+    //             minY = tempMinY;
+    //         }
+    //         if(tempMaxX>maxX){
+    //             maxX = tempMaxX;
+    //         }
+    //         if(tempMaxY>maxY){
+    //             maxY = tempMaxY;
+    //         }
+    //     }
+
+    //     tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+    //     tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+    //     tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+    //     tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+    //     ++viaNodeId ;
+
+    //     //Secondly, check with the target viaclusters
+    //     for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
+    //         minX = 1000000000;
+    //         minY = 1000000000;
+    //         maxX = -1;
+    //         maxY = -1;
+    //         for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
+    //             tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
+    //             tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
+    //             tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
+    //             tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
+    //             if(tempMinX<minX){
+    //                 minX = tempMinX;
+    //             }
+    //             if(tempMinY<minY){
+    //                 minY = tempMinY;
+    //             }
+    //             if(tempMaxX>maxX){
+    //                 maxX = tempMaxX;
+    //             }
+    //             if(tempMaxY>maxY){
+    //                 maxY = tempMaxY;
+    //             }
+    //         }
+
+
+    //         tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
+    //         tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
+    //         tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
+    //         tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
+    //         ++viaNodeId;
+    //     }
+
+    //     viaOASGNodes[i] = tempViaOASGNodes;
+    // }    
 
 
     for (size_t layerId = 0; layerId < _rGraph.numLayers(); ++ layerId){
@@ -620,6 +647,23 @@ void GlobalMgr::buildOASG() {
     cout << "########################################\n";
     cout << "Finishing Building OASG \n";
     cout << "########################################\n";
+}
+
+void GlobalMgr::buildOASGXObs() {
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            OASGNode* sNode = _rGraph.sourceOASGNode(netId, layId);
+            for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+                OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, layId);
+                _rGraph.addOASGEdge(netId, layId, sNode, tNode, false);
+                for (size_t tPortId1 = tPortId+1; tPortId1 < _rGraph.numTPorts(netId); ++ tPortId1) {
+                    OASGNode* tNode1 = _rGraph.targetOASGNode(netId, tPortId1, layId);
+                    _rGraph.addOASGEdge(netId, layId, tNode, tNode1, false);
+                }
+            }
+        }
+        
+    }
 }
 
 void GlobalMgr::plotOASG() {
@@ -802,120 +846,121 @@ void GlobalMgr::plotNCOASG() {
 
 void GlobalMgr::voltCurrOpt() {
     // store capacity constraints
-    struct CapConstr {
-        OASGEdge* e1;
-        bool right1;
-        double ratio1;
-        OASGEdge* e2;
-        bool right2;
-        double ratio2;
-        double width;
-    };
-    struct SingleCapConstr {
-        OASGEdge* e1;
-        bool right1;
-        double ratio1;
-        double width;
-    };
-    vector<CapConstr> vCapConstr;
-    vector<SingleCapConstr> vSglCapConstr;
-    auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
-        CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
-        vCapConstr.push_back(capConstr);
-    };
-    auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
-        SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
-        vSglCapConstr.push_back(sglCapConstr);
-    };
-    // set capacity constraints
-    // TODO for Tsai and Huang:
-    // for each layer, for each neighboring OASGEdges,
+    // struct CapConstr {
+    //     OASGEdge* e1;
+    //     bool right1;
+    //     double ratio1;
+    //     OASGEdge* e2;
+    //     bool right2;
+    //     double ratio2;
+    //     double width;
+    // };
+    // struct SingleCapConstr {
+    //     OASGEdge* e1;
+    //     bool right1;
+    //     double ratio1;
+    //     double width;
+    // };
+    // vector<CapConstr> vCapConstr;
+    // vector<SingleCapConstr> vSglCapConstr;
+    // auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+    //     CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
+    //     vCapConstr.push_back(capConstr);
+    // };
+    // auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
+    //     SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
+    //     vSglCapConstr.push_back(sglCapConstr);
+    // };
+    // // set capacity constraints
+    // // TODO for Tsai and Huang:
+    // // for each layer, for each neighboring OASGEdges,
     
     
-    //search each layer                                                                           
-    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
-        cout << "LAYER :" << layId << endl << endl;
-        //search each net
-        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
-            //search each edge
-            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
-                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+    // //search each layer                                                                           
+    // for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+    //     cout << "LAYER :" << layId << endl << endl;
+    //     //search each net
+    //     for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
+    //         //search each edge
+    //         for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+    //             OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
                 
-                pair<double, double> ratio;
-                pair<bool, bool> right;
-                double width;
+    //             pair<double, double> ratio;
+    //             pair<bool, bool> right;
+    //             double width;
                 
-                //compare other net edge
-                for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
-                    //make sure to compare different net
-                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
-                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+    //             //compare other net edge
+    //             for(size_t T_netId = S_netId+1; T_netId < _rGraph.numNets(); ++ T_netId){
+    //                 //make sure to compare different net
+    //                 for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+    //                     OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
     
-                    //    BuildCapacityConstraint(e1,e2,solver);
-                        if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                         make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                         make_pair(e2->sNode()->x(), e2->sNode()->y()),
-                                         make_pair(e2->tNode()->x(), e2->tNode()->y()),
-                                         ratio, right, width))
-                            addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+    //                 //    BuildCapacityConstraint(e1,e2,solver);
+    //                     if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                                      make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                                      make_pair(e2->sNode()->x(), e2->sNode()->y()),
+    //                                      make_pair(e2->tNode()->x(), e2->tNode()->y()),
+    //                                      ratio, right, width))
+    //                         addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                         
-                    }   
-                } 
+    //                 }   
+    //             } 
 
-                // obstacle constraint
-                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+    //             // obstacle constraint
+    //             for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
                    
-                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
-                    pair<double, double> S2, T2;
-                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
-                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
-                            // get the edge coordinates
-                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
-                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+    //                 Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+    //                 pair<double, double> S2, T2;
+    //                 for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+    //                     for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
+    //                         // get the edge coordinates
+    //                         S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
+    //                         T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
                         
-                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                             S2, T2, ratio, right, width))
-                                addSglCapConstr(e1, right.first, ratio.first, width);
+    //                         if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                                          make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                                          S2, T2, ratio, right, width))
+    //                             addSglCapConstr(e1, right.first, ratio.first, width);
 
-                        }
-                    }
-                }
+    //                     }
+    //                 }
+    //             }
 
-                // board cnstraint
-                // bottom
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, 0),
-                                 make_pair(_db.boardWidth(), 0),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // left
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, 0),
-                                 make_pair(0, _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // top
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(0, _db.boardHeight()),
-                                 make_pair(_db.boardWidth(), _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-                // right
-                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                 make_pair(_db.boardWidth(), 0),
-                                 make_pair(_db.boardWidth(), _db.boardHeight()),
-                                 ratio, right, width))
-                    addSglCapConstr(e1, right.first, ratio.first, width);
-            }
-        }  
-    }
+    //             // board cnstraint
+    //             // bottom
+    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                              make_pair(0, 0),
+    //                              make_pair(_db.boardWidth(), 0),
+    //                              ratio, right, width))
+    //                 addSglCapConstr(e1, right.first, ratio.first, width);
+    //             // left
+    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                              make_pair(0, 0),
+    //                              make_pair(0, _db.boardHeight()),
+    //                              ratio, right, width))
+    //                 addSglCapConstr(e1, right.first, ratio.first, width);
+    //             // top
+    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                              make_pair(0, _db.boardHeight()),
+    //                              make_pair(_db.boardWidth(), _db.boardHeight()),
+    //                              ratio, right, width))
+    //                 addSglCapConstr(e1, right.first, ratio.first, width);
+    //             // right
+    //             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+    //                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+    //                              make_pair(_db.boardWidth(), 0),
+    //                              make_pair(_db.boardWidth(), _db.boardHeight()),
+    //                              ratio, right, width))
+    //                 addSglCapConstr(e1, right.first, ratio.first, width);
+    //         }
+    //     }  
+    // }
 
-    voltageAssignment();
+    // voltageAssignment(true);
+    voltageDemandAssignment();
 
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
@@ -942,30 +987,49 @@ void GlobalMgr::voltCurrOpt() {
     FlowLP* currentSolver;
     // VoltCP* voltageSolver;
     VoltSLP* voltageSolver;
-    vector<double> vLambda(vCapConstr.size(), 2.0);
-    vector<double> vLastOverlap(vCapConstr.size(), 0.0);
+    vector<double> vLambda(_vCapConstr.size(), 2.0);
+    vector<double> vLastOverlap(_vCapConstr.size(), 0.0);
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 3;
-    size_t numIIter = 6;
-    size_t numVIter = 10;
+    size_t numIVIter = 3; //3
+    size_t numIIter = 6; //6
+    size_t numVIter = 10; //10
+
+    // cerr << "Check vEdgeId..." << endl;
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     assert(_rGraph.vViaOASGEdge(netId, 0, 0)->sNode()->port() == _db.vNet(netId)->sourcePort());
+    //     for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+    //         assert(_rGraph.vViaOASGEdge(netId, 0, tPortId+1)->tNode()->port() == _db.vNet(netId)->targetPort(tPortId));
+    //     }
+    // }
+    // assert(false);
 
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
-        for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+        for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
                 vLambda[capId] = 2;
             }
+
+        
         // current optimization
-        currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
+        // currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
+        currentSolver = new FlowLP(_db, _rGraph);
         currentSolver->setObjective(_db.areaWeight(), _db.viaWeight());
-        currentSolver->setConserveConstraints();
-        for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
-            CapConstr cap = vCapConstr[capId];
+        currentSolver->setConserveConstraints(true);
+        // currentSolver->addViaAreaConstraints
+        for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+            for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+                cerr << "_vUBViaArea[" << netId << "][" << vEdgeId << "] = " << _vUBViaArea[netId][vEdgeId] << endl;
+                currentSolver->addViaAreaConstraints(netId, vEdgeId, _vUBViaArea[netId][vEdgeId]);
+            }
+        }
+        for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+            CapConstr cap = _vCapConstr[capId];
             currentSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
         }
-        for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
-            SingleCapConstr sglCap = vSglCapConstr[sglCapId];
+        for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
+            SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
             currentSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
         }
         for (size_t iIter = 0; iIter < numIIter; ++iIter) {
@@ -973,11 +1037,12 @@ void GlobalMgr::voltCurrOpt() {
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
             _vArea.push_back(currentSolver->area());
+            _vViaArea.push_back(currentSolver->viaArea());
             _vOverlap.push_back(currentSolver->overlap());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
             // lagrange multiplier scheduling
-            for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
                 // schedule1: exp(exp(.))
                 // vLambda[capId] *= vLambda[capId];
 
@@ -1011,20 +1076,26 @@ void GlobalMgr::voltCurrOpt() {
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             voltageSolver = new VoltSLP(_db, _rGraph, vOldVoltage);
             voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
-            voltageSolver->setVoltConstraints(1E-10);
+            // voltageSolver->setVoltConstraints(1E-15);
             voltageSolver->setLimitConstraint(0.9);
-            for (size_t capId = 0; capId < vCapConstr.size(); ++ capId) {
-                CapConstr cap = vCapConstr[capId];
+            for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+                for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+                    voltageSolver->addViaAreaConstraints(netId, vEdgeId, _vUBViaArea[netId][vEdgeId]);
+                }
+            }
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                CapConstr cap = _vCapConstr[capId];
                 voltageSolver->addCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
             }
-            for (size_t sglCapId = 0; sglCapId < vSglCapConstr.size(); ++ sglCapId) {
-                SingleCapConstr sglCap = vSglCapConstr[sglCapId];
+            for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
+                SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
                 voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
             }
             voltageSolver->relaxCapacityConstraints(vLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
             _vArea.push_back(voltageSolver->area());
+            _vViaArea.push_back(voltageSolver->viaArea());
             _vOverlap.push_back(voltageSolver->overlap());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
@@ -1034,7 +1105,6 @@ void GlobalMgr::voltCurrOpt() {
         // voltageSolver->collectRelaxedResult();
         // // cerr << "vIter = " << vIter << endl;
         // voltageSolver->printRelaxedResult();
-        
 
         // voltage optimization
         // voltageSolver = new VoltCP(_db, _rGraph);
@@ -1066,15 +1136,29 @@ void GlobalMgr::voltCurrOpt() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
+                    // segment->plot(netId, layId);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
 
-    // add vias of each net
+    // add viaArea of each port
+    // vias will be added in detailed routing
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        assert(_rGraph.vViaOASGEdge(netId, 0, 0)->sNode()->port() == _db.vNet(netId)->sourcePort());
+        double sViaArea = _rGraph.vViaOASGEdge(netId, 0, 0)->viaArea();
+        _db.vNet(netId)->sourcePort()->setViaArea(sViaArea);
+        cerr << "net" << netId << " s: viaArea = " << sViaArea << ", upperbound = " << _vUBViaArea[netId][0] << endl;
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            assert(_rGraph.vViaOASGEdge(netId, 0, tPortId+1)->tNode()->port() == _db.vNet(netId)->targetPort(tPortId));
+            double tViaArea = _rGraph.vViaOASGEdge(netId, 0, tPortId+1)->viaArea();
+            _db.vNet(netId)->targetPort(tPortId)->setViaArea(tViaArea);
+            cerr << "net" << netId << " t" << tPortId << ": viaArea = " << tViaArea << ", upperbound = " << _vUBViaArea[netId][tPortId+1] << endl;
+        }
+    }
 
     // print the recorded area and overlapped width
     cerr << "////////////////" << endl;
@@ -1092,6 +1176,25 @@ void GlobalMgr::voltCurrOpt() {
         cerr << "V opt: ";
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             cerr << _vArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "///////////////////" << endl;
+    cerr << "//    viaArea    //" << endl;
+    cerr << "///////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << _vViaArea[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << _vViaArea[i] << " -> ";
             i++;
         }
         cerr << endl;
@@ -1115,39 +1218,100 @@ void GlobalMgr::voltCurrOpt() {
         }
         cerr << endl;
     }
-
+    // assert(false);
 }
 
-void GlobalMgr::voltageAssignment() {
+void GlobalMgr::voltageAssignment(bool currentBased) {
+    auto viaEdgeArea = [&] (OASGEdge* e) -> double {
+        assert(e->viaEdge());
+        double polygonArea = e->boundPolygon()->area();
+        double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+        double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+        double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+        return polygonArea * ratio;
+    };
+
+    for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
+        OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
+        double sglWidth = _vSglCapConstr[sCapId].width / _vSglCapConstr[sCapId].ratio1;
+        bool sglRight = _vSglCapConstr[sCapId].right1;
+        if (sglRight) {
+            if (sglWidth < sglEdge->widthRight()) {
+                sglEdge->setWidthRight(sglWidth);
+            }
+        } else {
+            if (sglWidth < sglEdge->widthLeft()) {
+                sglEdge->setWidthLeft(sglWidth);
+            }
+        }
+    }
+    for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+        OASGEdge* e1 = _vCapConstr[capId].e1;
+        OASGEdge* e2 = _vCapConstr[capId].e2;
+        double width1 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio1;
+        double width2 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio2;
+        bool right1 = _vCapConstr[capId].right1;
+        bool right2 = _vCapConstr[capId].right2;
+        if (right1) {
+            if (width1 < e1->widthRight()) {
+                e1->setWidthRight(width1);
+            }
+        } else {
+            if (width1 < e1->widthLeft()) {
+                e1->setWidthLeft(width1);
+            }
+        }
+        if (right2) {
+            if (width2 < e2->widthRight()) {
+                e2->setWidthRight(width2);
+            }
+        } else {
+            if (width2 < e2->widthLeft()) {
+                e2->setWidthLeft(width2);
+            }
+        }
+    }
+
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-        VoltEigen solver(_rGraph.numNPortOASGNodes(netId));
+        VoltEigen solver(_rGraph.numNPortOASGNodes(netId) + _db.vNet(netId)->numTPorts());
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
             OASGNode* nPortNode = _rGraph.vNPortOASGNode(netId, nPortNodeId);
             // set matrix and input vector for outNodes
             for (size_t outEdgeId = 0; outEdgeId < nPortNode->numOutEdges(); ++ outEdgeId) {
                 OASGEdge* outEdge = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId));
                 OASGNode* outNode = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId))->tNode();
-                double resistance;
+                double conductance;
                 double l;
+                double A;
                 if (outEdge->viaEdge()) {
-                    // cerr << "viaEdge "; 
+                    cerr << "viaEdge "; 
                     l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
                         + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
                     // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
+                    A = viaEdgeArea(outEdge);
+                    outEdge->setViaArea(A);
+                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
                 } else {
-                    // cerr << "planeEdge ";
+                    cerr << "planeEdge ";
                     l = outEdge->length();
-                    resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
                 }
-                // cerr << "resistance = " << resistance << endl;
+                cerr << "conductance = " << conductance << endl;
 
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
                 if (outNode->nPort()) {
-                    solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                    solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
                 } else {
-                    solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), resistance);
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
                     // cerr << "voltage = " << outNode->port()->voltage() << endl;
                 }
             }
@@ -1156,27 +1320,122 @@ void GlobalMgr::voltageAssignment() {
             for (size_t inEdgeId = 0; inEdgeId < nPortNode->numInEdges(); ++ inEdgeId) {
                 OASGEdge* inEdge = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId));
                 OASGNode* inNode = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId))->sNode();
-                double resistance;
+                double conductance;
                 double l;
+                double A;
                 if (inEdge->viaEdge()) {
-                    // cerr << "viaEdge ";
+                    cerr << "viaEdge ";
                     l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    resistance = _db.vMetalLayer(0)->conductivity() * l / 32;
+                    A = viaEdgeArea(inEdge);
+                    inEdge->setViaArea(A);
+                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
                 } else {
-                    // cerr << "planeEdge ";
+                    cerr << "planeEdge ";
                     l = inEdge->length();
-                    resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                    cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
                 }
-                // cerr << "resistance = " << resistance << endl;
+                cerr << "conductance = " << conductance << endl;
 
                 if (inNode->nPort()) {
-                    solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), resistance);
+                    solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
                 } else {
-                    solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), resistance);
-                    // cerr << "voltage = " << inNode->port()->voltage() << endl;
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                }
+            }
+        }
+
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            if (currentBased) {
+                solver.setInputVector(_rGraph.numNPortOASGNodes(netId) + tPortId, - tNode->port()->current());
+            } else {
+                double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+                solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, tPortConductance);
+            }
+            // set matrix and input vector for outNodes
+            for (size_t outEdgeId = 0; outEdgeId < tNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                assert(!outEdge->viaEdge());
+                if (outEdge->viaEdge()) {
+                    cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = viaEdgeArea(outEdge);
+                    outEdge->setViaArea(A);
+                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = outEdge->length();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                }
+                cerr << "conductance = " << conductance << endl;
+                if (outNode->nPort()) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, outNode->nPortNodeId(), conductance);
+                } else {
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + outNode->port()->netTPortId(), conductance);
+                }
+                
+            }
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < tNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = viaEdgeArea(inEdge);
+                    inEdge->setViaArea(A);
+                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = inEdge->length();
+                    cerr << "length = " << l << " ";
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                if (inNode->nPort()) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->nPortNodeId(), conductance);
+                } else if (inNode->port()->netTPortId() >= 0) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + inNode->port()->netTPortId(), conductance);
+                } else {
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
                 }
             }
         }
@@ -1209,10 +1468,18 @@ void GlobalMgr::voltageAssignment() {
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
             _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(solver.V(nPortNodeId));
         }
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+            cerr << "net" << netId << " tPort" << tPortId << ": voltage = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId);
+            cerr << ", current = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId) * tPortConductance << endl;
+        }
         _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
         for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
             _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
         }
+        // assert(false);
     }
 
     // for (size_t nodeId = 0; nodeId < _rGraph.numOASGNodes(); ++ nodeId) {
@@ -1286,6 +1553,255 @@ void GlobalMgr::voltageAssignment() {
     
 }
 
+void GlobalMgr::voltageDemandAssignment() {
+    auto viaEdgeArea = [&] (OASGEdge* e) -> double {
+        assert(e->viaEdge());
+        double polygonArea = e->boundPolygon()->area();
+        double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+        double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+        double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+        return polygonArea * ratio;
+    };
+
+    for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
+        OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
+        double sglWidth = _vSglCapConstr[sCapId].width / _vSglCapConstr[sCapId].ratio1;
+        bool sglRight = _vSglCapConstr[sCapId].right1;
+        if (sglRight) {
+            if (sglWidth < sglEdge->widthRight()) {
+                sglEdge->setWidthRight(sglWidth);
+            }
+        } else {
+            if (sglWidth < sglEdge->widthLeft()) {
+                sglEdge->setWidthLeft(sglWidth);
+            }
+        }
+    }
+    for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+        OASGEdge* e1 = _vCapConstr[capId].e1;
+        OASGEdge* e2 = _vCapConstr[capId].e2;
+        double width1 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio1;
+        double width2 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio2;
+        bool right1 = _vCapConstr[capId].right1;
+        bool right2 = _vCapConstr[capId].right2;
+        if (right1) {
+            if (width1 < e1->widthRight()) {
+                e1->setWidthRight(width1);
+            }
+        } else {
+            if (width1 < e1->widthLeft()) {
+                e1->setWidthLeft(width1);
+            }
+        }
+        if (right2) {
+            if (width2 < e2->widthRight()) {
+                e2->setWidthRight(width2);
+            }
+        } else {
+            if (width2 < e2->widthLeft()) {
+                e2->setWidthLeft(width2);
+            }
+        }
+    }
+
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        VoltEigen solver(_rGraph.numNPortOASGNodes(netId));
+        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+            OASGNode* nPortNode = _rGraph.vNPortOASGNode(netId, nPortNodeId);
+            // set matrix and input vector for outNodes
+            for (size_t outEdgeId = 0; outEdgeId < nPortNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                if (outEdge->viaEdge()) {
+                    cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = viaEdgeArea(outEdge);
+                    outEdge->setViaArea(A);
+                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = outEdge->length();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                if (outNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
+                } else {
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), conductance);
+                    // solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
+                    // cerr << "voltage = " << outNode->port()->voltage() << endl;
+                }
+            }
+
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < nPortNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = viaEdgeArea(inEdge);
+                    inEdge->setViaArea(A);
+                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = inEdge->length();
+                    cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                if (inNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
+                } else {
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                }
+            }
+        }
+
+        // cerr << "G = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     for (size_t colId = 0; colId < solver.numNodes(); ++ colId) {
+        //         cerr << setprecision(15) << solver.G(rowId, colId);
+        //         if (colId < solver.numNodes()-1) {
+        //             cerr << ", ";
+        //         }
+        //     }
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+        // cerr << "I = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     cerr << setprecision(15) << solver.I(rowId);
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+
+        // cerr << "V = ";
+        solver.solve();
+        // cerr << endl;
+
+        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+            _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(solver.V(nPortNodeId));
+        }
+        _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
+        }
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            double tCurrent = 0;
+            for (size_t outEdgeId = 0; outEdgeId < tNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                if (outEdge->viaEdge()) {
+                    // cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = outEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
+                } else {
+                    // cerr << "planeEdge ";
+                    l = outEdge->length();
+                    // cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    // cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
+                }
+                // cerr << "conductance = " << conductance << endl;
+
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                tCurrent += abs(tNode->voltage() - outNode->voltage()) * conductance;
+            }
+
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < tNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    // cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = inEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
+                } else {
+                    // cerr << "planeEdge ";
+                    l = inEdge->length();
+                    // cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    // cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                tCurrent += abs(inNode->voltage() - tNode->voltage()) * conductance;
+            }
+            // tCurrent = tCurrent * 0.5;
+            double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+            cerr << "net" << netId << " tPort" << tPortId << ": voltage = " << tNode->voltage();
+            cerr << ", current = " << tCurrent << endl;
+        }
+        // assert(false);
+    }
+    for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+            cerr << "net" << netId << " source layer" << layId << " voltage = " << _rGraph.sourceOASGNode(netId, layId)->voltage() << endl;
+        }
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+                cerr << "net" << netId << " target" << tPortId << " layer" << layId << " voltage = " << _rGraph.targetOASGNode(netId, tPortId, layId)->voltage() << endl;
+            }
+        }
+    }
+}
+
 void GlobalMgr::currentDistribution() {
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
@@ -1309,7 +1825,8 @@ void GlobalMgr::currentDistribution() {
         }
     }
 
-    FlowLP solver(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
+    // FlowLP solver(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
+    FlowLP solver(_db, _rGraph);
     
     // set objective
     // cerr << "setObjective..." << endl;
@@ -1317,7 +1834,7 @@ void GlobalMgr::currentDistribution() {
 
     // set flow conservation constraints
     // cerr << "setConserveConstraints..." << endl;
-    solver.setConserveConstraints();
+    solver.setConserveConstraints(true);
     // set capacity constraints
     // TODO for Tsai and Huang:
     // for each layer, for each neighboring OASGEdges,
@@ -1363,6 +1880,14 @@ void GlobalMgr::currentDistribution() {
                             // get the edge coordinates
                             S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
@@ -1466,10 +1991,10 @@ void GlobalMgr::currentDistribution() {
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
-                if (e->current() > 0) {
+                // if (e->current() > 0) {
                     Segment* segment = edge2Segment(e);
                     _db.vNet(netId)->addSegment(segment, layId);
-                }
+                // }
             }
         }
     }
@@ -1496,6 +2021,437 @@ void GlobalMgr::plotCurrentPaths() {
     }
 }
 
+void GlobalMgr::checkFeasible(bool currentBased) {
+    // auto viaEdgeArea = [&] (OASGEdge* e) -> double {
+    //     assert(e->viaEdge());
+    //     double polygonArea = e->boundPolygon()->area();
+    //     double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+    //     double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+    //     double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+    //     return polygonArea * ratio;
+    // };
+
+    // for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
+    //     OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
+    //     double sglWidth = _vSglCapConstr[sCapId].width / _vSglCapConstr[sCapId].ratio1;
+    //     bool sglRight = _vSglCapConstr[sCapId].right1;
+    //     if (sglRight) {
+    //         if (sglWidth < sglEdge->widthRight()) {
+    //             sglEdge->setWidthRight(sglWidth);
+    //         }
+    //     } else {
+    //         if (sglWidth < sglEdge->widthLeft()) {
+    //             sglEdge->setWidthLeft(sglWidth);
+    //         }
+    //     }
+    // }
+    // for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+    //     OASGEdge* e1 = _vCapConstr[capId].e1;
+    //     OASGEdge* e2 = _vCapConstr[capId].e2;
+    //     double width1 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio1;
+    //     double width2 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio2;
+    //     bool right1 = _vCapConstr[capId].right1;
+    //     bool right2 = _vCapConstr[capId].right2;
+    //     if (right1) {
+    //         if (width1 < e1->widthRight()) {
+    //             e1->setWidthRight(width1);
+    //         }
+    //     } else {
+    //         if (width1 < e1->widthLeft()) {
+    //             e1->setWidthLeft(width1);
+    //         }
+    //     }
+    //     if (right2) {
+    //         if (width2 < e2->widthRight()) {
+    //             e2->setWidthRight(width2);
+    //         }
+    //     } else {
+    //         if (width2 < e2->widthLeft()) {
+    //             e2->setWidthLeft(width2);
+    //         }
+    //     }
+    // }
+
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        VoltEigen solver(_rGraph.numNPortOASGNodes(netId) + _db.vNet(netId)->numTPorts());
+        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+            OASGNode* nPortNode = _rGraph.vNPortOASGNode(netId, nPortNodeId);
+            // set matrix and input vector for outNodes
+            for (size_t outEdgeId = 0; outEdgeId < nPortNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                if (outEdge->viaEdge()) {
+                    cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = outEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = outEdge->length();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                if (outNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
+                } else {
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
+                    // cerr << "voltage = " << outNode->port()->voltage() << endl;
+                }
+            }
+
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < nPortNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = inEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = inEdge->length();
+                    cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                if (inNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
+                } else {
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                }
+            }
+        }
+
+        for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            if (currentBased) {
+                solver.setInputVector(_rGraph.numNPortOASGNodes(netId) + tPortId, - tNode->port()->current());
+            } else {
+                double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+                solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, tPortConductance);
+            }
+            // set matrix and input vector for outNodes
+            for (size_t outEdgeId = 0; outEdgeId < tNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                assert(!outEdge->viaEdge());
+                if (outEdge->viaEdge()) {
+                    cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = outEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = outEdge->length();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                }
+                cerr << "conductance = " << conductance << endl;
+                if (outNode->nPort()) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, outNode->nPortNodeId(), conductance);
+                } else {
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + outNode->port()->netTPortId(), conductance);
+                }
+                
+            }
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < tNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = inEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = inEdge->length();
+                    cerr << "length = " << l << " ";
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                if (inNode->nPort()) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->nPortNodeId(), conductance);
+                } else if (inNode->port()->netTPortId() >= 0) {
+                    solver.setMatrix(_rGraph.numNPortOASGNodes(netId) + tPortId, _rGraph.numNPortOASGNodes(netId) + inNode->port()->netTPortId(), conductance);
+                } else {
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(_rGraph.numNPortOASGNodes(netId) + tPortId, inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                }
+            }
+        }
+        // cerr << "G = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     for (size_t colId = 0; colId < solver.numNodes(); ++ colId) {
+        //         cerr << setprecision(15) << solver.G(rowId, colId);
+        //         if (colId < solver.numNodes()-1) {
+        //             cerr << ", ";
+        //         }
+        //     }
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+        // cerr << "I = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     cerr << setprecision(15) << solver.I(rowId);
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+
+        // cerr << "V = ";
+        solver.solve();
+        // cerr << endl;
+
+        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+            _rGraph.vNPortOASGNode(netId, nPortNodeId) -> setVoltage(solver.V(nPortNodeId));
+        }
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+            cerr << "net" << netId << " tPort" << tPortId << ": voltage = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId);
+            cerr << ", current = " << solver.V(_rGraph.numNPortOASGNodes(netId) + tPortId) * tPortConductance << endl;
+        }
+        _rGraph.sourceOASGNode(netId, 0) -> setVoltage(_rGraph.sourceOASGNode(netId, 0)->port()->voltage());
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            _rGraph.targetOASGNode(netId, tPortId, 0) -> setVoltage(_rGraph.targetOASGNode(netId, tPortId, 0)->port()->voltage());
+        }
+        // assert(false);
+    }
+}
+
+void GlobalMgr::checkVoltDemandFeasible() {
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        VoltEigen solver(_rGraph.numNPortOASGNodes(netId));
+        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+            OASGNode* nPortNode = _rGraph.vNPortOASGNode(netId, nPortNodeId);
+            // set matrix and input vector for outNodes
+            for (size_t outEdgeId = 0; outEdgeId < nPortNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(nPortNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                if (outEdge->viaEdge()) {
+                    cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = outEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = outEdge->length();
+                    cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                if (outNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
+                } else {
+                    assert(outNode->port() != _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), conductance);
+                    // solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
+                    // cerr << "voltage = " << outNode->port()->voltage() << endl;
+                }
+            }
+
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < nPortNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(nPortNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = inEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
+                } else {
+                    cerr << "planeEdge ";
+                    l = inEdge->length();
+                    cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                if (inNode->nPort()) {
+                    solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
+                } else {
+                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
+                    cerr << "voltage = " << inNode->port()->voltage() << endl;
+                }
+            }
+        }
+
+        // cerr << "G = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     for (size_t colId = 0; colId < solver.numNodes(); ++ colId) {
+        //         cerr << setprecision(15) << solver.G(rowId, colId);
+        //         if (colId < solver.numNodes()-1) {
+        //             cerr << ", ";
+        //         }
+        //     }
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+        // cerr << "I = " << endl;
+        // for (size_t rowId = 0; rowId < solver.numNodes(); ++ rowId) {
+        //     cerr << setprecision(15) << solver.I(rowId);
+        //     if (rowId < solver.numNodes()-1) {
+        //         cerr << ";" << endl;
+        //     }
+        // }
+        // cerr << endl;
+
+        // cerr << "V = ";
+        solver.solve();
+        // cerr << endl;
+
+        for (size_t tPortId = 0; tPortId < _rGraph.numTPorts(netId); ++ tPortId) {
+            OASGNode* tNode = _rGraph.targetOASGNode(netId, tPortId, 0);
+            assert(!tNode->nPort() && tNode->port() == _db.vNet(netId)->targetPort(tPortId));
+            double tCurrent = 0;
+            for (size_t outEdgeId = 0; outEdgeId < tNode->numOutEdges(); ++ outEdgeId) {
+                OASGEdge* outEdge = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId));
+                OASGNode* outNode = _rGraph.vOASGEdge(tNode->outEdgeId(outEdgeId))->tNode();
+                double conductance;
+                double l;
+                double A;
+                if (outEdge->viaEdge()) {
+                    // cerr << "viaEdge "; 
+                    l = 0.5* _db.vMetalLayer(outEdge->layId())->thickness() 
+                        + _db.vMediumLayer(outEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
+                    // cerr << "l=" << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = outEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
+                } else {
+                    // cerr << "planeEdge ";
+                    l = outEdge->length();
+                    // cerr << "length = " << l << " ";
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(outEdge->layId())->thickness();
+                    double width = outEdge->widthLeft() + outEdge->widthRight();
+                    // cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(outEdge->layId())->thickness()*1E-3 * width*1E-3) / (l * 1E-3);
+                }
+                // cerr << "conductance = " << conductance << endl;
+
+                // assert(outNode->nPort() || (!outNode->nPort() && outNode->port() == _db.vNet(netId)->targetPort(tPortId)));
+                // solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), resistance);
+                tCurrent += abs(tNode->voltage() - outNode->voltage()) * conductance;
+            }
+
+            // set matrix and input vector for inNodes
+            for (size_t inEdgeId = 0; inEdgeId < tNode->numInEdges(); ++ inEdgeId) {
+                OASGEdge* inEdge = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId));
+                OASGNode* inNode = _rGraph.vOASGEdge(tNode->inEdgeId(inEdgeId))->sNode();
+                double conductance;
+                double l;
+                double A;
+                if (inEdge->viaEdge()) {
+                    // cerr << "viaEdge ";
+                    l = 0.5* _db.vMetalLayer(inEdge->layId())->thickness() 
+                        + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
+                        + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
+                    A = inEdge->viaArea();
+                    conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
+                } else {
+                    // cerr << "planeEdge ";
+                    l = inEdge->length();
+                    // cerr << "length = " << l << " " ;
+                    double width = inEdge->widthLeft() + inEdge->widthRight();
+                    // cerr << "width = " << width << " ";
+                    conductance = (_db.vMetalLayer(0)->conductivity() * _db.vMetalLayer(inEdge->layId())->thickness()*1E-3 * width*1E-3) / (l*1E-3);
+                    // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vMetalLayer(inEdge->layId())->thickness();
+                }
+                cerr << "conductance = " << conductance << endl;
+
+                tCurrent += abs(inNode->voltage() - tNode->voltage()) * conductance;
+            }
+            double tPortConductance = tNode->port()->current() / tNode->port()->voltage();
+            cerr << "net" << netId << " tPort" << tPortId << ": voltage = " << tNode->voltage();
+            cerr << ", current = " << tCurrent << endl;
+        }
+        // assert(false);
+    }
+}
+
 Trace* GlobalMgr::edge2Trace(OASGEdge* edge) {
     assert (!edge->viaEdge());
     double offset = 0.5 * ( edge->widthRight() - edge->widthLeft() );
@@ -1514,9 +2470,161 @@ Segment* GlobalMgr::edge2Segment(OASGEdge* edge) {
     double yOffset = offset * (edge->sNode()->x() - edge->tNode()->x()) / edge->length(); // offset * -cos(theta)
     Node* sNode = new Node(edge->sNode()->x()+xOffset, edge->sNode()->y()+yOffset, _plot);
     Node* tNode = new Node(edge->tNode()->x()+xOffset, edge->tNode()->y()+yOffset, _plot);
+    assert(edge->widthRight() >= 0);
+    assert(edge->widthLeft() >= 0);
     Trace* trace = new Trace(sNode, tNode, edge->widthRight() + edge->widthLeft(), _plot);
-    Segment* segment = new Segment(trace, edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
+    pair<double, double> sPos = make_pair(edge->sNode()->x(), edge->sNode()->y());
+    pair<double, double> tPos = make_pair(edge->tNode()->x(), edge->tNode()->y());
+    Segment* segment = new Segment(trace, sPos, tPos, edge->widthLeft(), edge->widthRight(), edge->sNode()->voltage(), edge->tNode()->voltage(), edge->current());
     return segment;
 }
 
+void GlobalMgr::genCapConstrs() {
+    auto addCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+        CapConstr capConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
+        _vCapConstr.push_back(capConstr);
+    };
+    auto addSglCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, double width) {
+        SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
+        _vSglCapConstr.push_back(sglCapConstr);
+    };
+    // set capacity constraints
+    // TODO for Tsai and Huang:
+    // for each layer, for each neighboring OASGEdges,
+    
+    
+    //search each layer                                                                           
+    for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId){
+        // cout << "LAYER :" << layId << endl << endl;
+        //search each net
+        for(size_t S_netId = 0; S_netId < _rGraph.numNets(); ++ S_netId){
+            //search each edge
+            for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
+                OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
+                
+                pair<double, double> ratio;
+                pair<bool, bool> right;
+                double width;
+                
+                //compare to other net edge
+                for(size_t T_netId = S_netId; T_netId < _rGraph.numNets(); ++ T_netId){
+                    for (size_t T_EdgeId = 0; T_EdgeId < _rGraph.numPlaneOASGEdges(T_netId, layId); ++ T_EdgeId){
+                        OASGEdge* e2 = _rGraph.vPlaneOASGEdge(T_netId, layId, T_EdgeId);
+    
+                        if (e1 != e2) {
+                            // bool isSameNet = (T_netId == S_netId);
+                            // if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                            //              make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                            //              make_pair(e2->sNode()->x(), e2->sNode()->y()),
+                            //              make_pair(e2->tNode()->x(), e2->tNode()->y()),
+                            //              ratio, right, width, isSameNet))
+                            //     addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                            double vtxX = e2->tNode()->x() - e2->sNode()->x();
+                            double vtxY = e2->tNode()->y() - e2->sNode()->y();
+                            pair<double, double> S2, T2;
 
+                            S2 = make_pair((e2->sNode()->x() + pow(10,-5)*vtxX), ( e2->sNode()->y() + pow(10,-5)*vtxY));
+                            T2 = make_pair((e2->tNode()->x() - pow(10,-5)*vtxX), ( e2->tNode()->y() - pow(10,-5)*vtxY));
+
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2,ratio, right, width))
+                                addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                        }
+                    }   
+                } 
+
+                // obstacle constraint
+                for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
+                   
+                    Obstacle* obs = _db.vMetalLayer(layId)->vObstacle(obsId);
+                    pair<double, double> S2, T2;
+                    for (size_t shapeId = 0; shapeId < obs->numShapes(); ++ shapeId) {
+                        for(size_t vtxId = 0; vtxId < obs->vShape(shapeId)->numBPolyVtcs(); ++ vtxId){
+                            // get the edge coordinates
+                            S2 = make_pair(obs->vShape(shapeId)->bPolygonX(vtxId), obs->vShape(shapeId)->bPolygonY(vtxId));
+                            T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
+
+                            
+                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
+                            
+                        
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                addSglCapConstr(e1, right.first, ratio.first, width);
+
+                        }
+                    }
+                }
+
+                // port bounding polygon constraints from other nets
+                // Bug: if the port is not connected on the layer, its bounding polygon should be ignored
+                for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId) {
+                    if (T_netId != S_netId) {
+                        Polygon* bPolygon = _db.vNet(T_netId)->sourcePort()->boundPolygon();
+                        pair<double, double> S2, T2;
+                        for (size_t vtxId = 0; vtxId < bPolygon->numVtcs(); ++ vtxId) {
+                            // get the edge coordinates
+                            S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
+                            T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                             S2, T2, ratio, right, width))
+                                addSglCapConstr(e1, right.first, ratio.first, width);
+                        }
+                        for (size_t tPortId = 0; tPortId < _db.vNet(T_netId)->numTPorts(); ++ tPortId) {
+                            bPolygon = _db.vNet(T_netId)->targetPort(tPortId)->boundPolygon();
+                            for (size_t vtxId = 0; vtxId < bPolygon->numVtcs(); ++ vtxId) {
+                                // get the edge coordinates
+                                S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
+                                T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+                                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                                make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                                S2, T2, ratio, right, width))
+                                    addSglCapConstr(e1, right.first, ratio.first, width);
+                            }
+                        }
+                    }
+                }
+
+                // board cnstraint
+                // bottom
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(_db.boardWidth(), 0),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // left
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, 0),
+                                 make_pair(0, _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // top
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(0, _db.boardHeight()),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+                // right
+                if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
+                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
+                                 make_pair(_db.boardWidth(), 0),
+                                 make_pair(_db.boardWidth(), _db.boardHeight()),
+                                 ratio, right, width))
+                    addSglCapConstr(e1, right.first, ratio.first, width);
+            }
+        }  
+    }
+}

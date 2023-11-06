@@ -20,8 +20,10 @@ class VoltEigen {
             }
         }
         ~VoltEigen() {}
-        void setMatrix(size_t rowNodeId, size_t colNodeId, double resistance);
-        void setInputVector(size_t rowNodeId, double inputVolt, double resistance);
+        void setMatrix(size_t rowNodeId, double conductance);
+        void setMatrix(size_t rowNodeId, size_t colNodeId, double conductance);
+        void setInputVector(size_t rowNodeId, double inputVolt, double conductance);
+        void setInputVector(size_t rowNodeId, double inputCurrent);
         void solve();
         vector< vector< double > > G() { return _G; }
         vector<double> I() { return _I; }

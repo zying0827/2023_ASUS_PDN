@@ -51,13 +51,6 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
-        
-        // handle the case if shortest dist = 0
-        // https://i.imgur.com/Z6qzYwS.png
-        if(dist == 0) {
-            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
-            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
-        }
     }
     // project T1 to e2
     P = T1;
@@ -66,11 +59,7 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
-        
-        if(dist == 0) {
-            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
-            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
-        }
+    
     }
     // project S2 to e1
     P = S2;
@@ -80,11 +69,6 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
 
-        
-        if(dist == 0) {
-            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
-            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
-        }
     }
     // project T2 to e1
     P = T2;
@@ -94,10 +78,6 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
         
-        if(dist == 0) {
-            pair<double, double> n = make_pair(T2.second-S2.second, S2.first-T2.first); // normal to out
-            right.first = isRight(S1, T1, make_pair(P.first-n.first, P.second-n.second));
-        }
     }
     width = min_dist;
     return ratio.first >= 0;
