@@ -11,7 +11,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
-    ifstream finST, fin;
+    ifstream finST, fin, finOb;
     ofstream fout;
     finST.open(argv[1], ifstream::in);
     if (finST.is_open()) {
@@ -25,7 +25,13 @@ int main(int argc, char* argv[]){
     } else {
         cerr << "Error opening input file" << endl;
     }
-    fout.open(argv[3], ofstream::out);
+    finOb.open(argv[3], ifstream::in);
+    if (finOb.is_open()) {
+        cout << "input file (obstacle) is opened successfully" << endl;
+    } else {
+        cerr << "Error opening input file" << endl;
+    }
+    fout.open(argv[4], ofstream::out);
     if (fout.is_open()) {
         cout << "output file is opened successfully" << endl;
     } else {
@@ -59,13 +65,13 @@ int main(int argc, char* argv[]){
     DB db(plot);
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
-    Parser parser(finST, fin, db, offsetX, offsetY, plot);
+    Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
     parser.parse();
     // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    // preMgr.plotBoundBox();
+    preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -80,8 +86,11 @@ int main(int argc, char* argv[]){
     globalMgr.buildOASG();
     // globalMgr.buildOASGXObs();
     globalMgr.plotOASG();
+    globalMgr.buildOASG();
+    // globalMgr.buildOASGXObs();
+    globalMgr.plotOASG();
     // globalMgr.layerDistribution();
-    // // // globalMgr.plotRGraph();
+    // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
@@ -98,6 +107,19 @@ int main(int argc, char* argv[]){
     //     cerr << e.getMessage() << endl;
     // }
     // // globalMgr.plotCurrentPaths();
+    // globalMgr.genCapConstrs();
+    // try {
+    //     // globalMgr.voltageDemandAssignment();
+    //     // globalMgr.voltageAssignment();
+    //     // globalMgr.currentDistribution();
+    //     globalMgr.voltCurrOpt();
+    //     // globalMgr.checkFeasible();
+    //     // globalMgr.checkVoltDemandFeasible();
+    // } catch (GRBException e) {
+    //     cerr << "Error = " << e.getErrorCode() << endl;
+    //     cerr << e.getMessage() << endl;
+    // }
+    // globalMgr.plotCurrentPaths();
 
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     // detailedMgr.initGridMap();

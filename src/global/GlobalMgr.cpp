@@ -992,9 +992,9 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 3; //3
+    size_t numIVIter = 0; //3
     size_t numIIter = 6; //6
-    size_t numVIter = 10; //10
+    size_t numVIter = 0; //10
 
     // cerr << "Check vEdgeId..." << endl;
     // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
