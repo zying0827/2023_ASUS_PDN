@@ -490,7 +490,10 @@ void GlobalMgr::buildOASG() {
         for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId){
             vector<vector<OASGNode*>> obsNodes;
             //如果這個Obs已經有要加Round Edges，就變成True 
-            addObsRoundEdges.resize(_db.numObstacles(layerId), false);
+            addObsRoundEdges.resize(_db.numObstacles(layerId));
+            for (int i = 0; i < _db.numObstacles(layerId); ++i){
+                addObsRoundEdges[i] = false;
+            }
 
             bool thisLayerHaveObs = false;
             bool thisNetTouchObsThisLayer = false;
@@ -651,8 +654,16 @@ void GlobalMgr::buildOASG() {
                     }
                 }
             }
-            // AddObstacleRoundEdges
-
+            for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                if(addObsRoundEdges[obsId] == true){
+                    cout << "In Layer " << layerId << "  Net " << netId << "  Touched with the Xth obstacle" << obsId << endl;
+                    int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                    for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                    }
+                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                }
+            }
         }
 
     }

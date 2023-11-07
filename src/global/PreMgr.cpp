@@ -105,15 +105,15 @@ void PreMgr::assignPortPolygon() {
         Polygon* p = new Polygon(vVtx, _plot);
         _db.vNet(netId)->sourcePort()->setBoundPolygon(p);
         for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
-            vector< pair<double, double> > vVtx;
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
-            vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
-            Polygon* p = new Polygon(vVtx, _plot);
-            _db.vNet(netId)->targetPort(tPortId)->setBoundPolygon(p);
-            // Polygon* p = convexHull(_vTClusteredNode[netId][tPortId]);
+            // vector< pair<double, double> > vVtx;
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].minY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].minY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].maxX, _vTBoundBox[netId][tPortId].maxY));
+            // vVtx.push_back(make_pair(_vTBoundBox[netId][tPortId].minX, _vTBoundBox[netId][tPortId].maxY));
+            // Polygon* p = new Polygon(vVtx, _plot);
             // _db.vNet(netId)->targetPort(tPortId)->setBoundPolygon(p);
+            Polygon* p = convexHull(_vTClusteredNode[netId][tPortId]);
+            _db.vNet(netId)->targetPort(tPortId)->setBoundPolygon(p);
         }
     }
 }
