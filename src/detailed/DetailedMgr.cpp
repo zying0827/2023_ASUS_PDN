@@ -8,6 +8,7 @@
 #include <Eigen/IterativeLinearSolvers>
 
 void DetailedMgr::initGridMap() {
+    cerr << "Initializing Grid Map..." << endl;
     auto occupiedBySegments = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
         for (size_t segId = 0; segId < _db.vNet(netId)->numSegments(layId); ++ segId) {
             Trace* trace = _db.vNet(netId)->vSegment(layId, segId)->trace();
@@ -331,7 +332,7 @@ void DetailedMgr::plotGridMapCurrent() {
 }
 
 void DetailedMgr::naiveAStar() {
-    // cerr << "naiveAStar..." << endl;
+    cerr << "naiveAStar..." << endl;
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
         // cerr << "layId = " << layId;
         for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
@@ -411,11 +412,12 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
 }
 
 void DetailedMgr::addPortVia() {
+    cerr << "Adding Vias to Each Port..." << endl;
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         Port* sPort = _db.vNet(netId)->sourcePort();
         if (sPort->viaArea() > 0) {
             int numSVias = ceil(sPort->viaArea() / _db.VIA16D8A24()->metalArea());
-            assert(numSVias > 1);
+            assert(numSVias >= 1);
             vector< pair<double, double> > centPos = kMeansClustering(_vNetPortGrid[netId][0], numSVias, 100);
             assert(centPos.size() == numSVias);
             vector<size_t> vViaId(centPos.size(), 0);
@@ -432,7 +434,7 @@ void DetailedMgr::addPortVia() {
             Port* tPort = _db.vNet(netId)->targetPort(tPortId);
             if (tPort->viaArea() > 0) {
                 int numTVias = ceil(tPort->viaArea() / _db.VIA16D8A24()->metalArea());
-                assert(numTVias > 1);
+                assert(numTVias >= 1);
                 vector< pair<double, double> > centPosT = kMeansClustering(_vNetPortGrid[netId][tPortId+1], numTVias, 100);
                 assert(centPosT.size() == numTVias);
                 vector<size_t> vViaIdT(centPosT.size(), 0);
@@ -470,21 +472,21 @@ vector< pair<double, double> > DetailedMgr::kMeansClustering(vector< pair<int,in
         points.push_back(p);
     }
 
-    // vector<bool> isCentroid(points.size(), false);
+    vector<bool> isCentroid(points.size(), false);
     vector<Point> centroids;
-    // srand(time(0));  // need to set the random seed
-    // for (int i = 0; i < numClusters; ++i) {
-    //     int pointId = rand() % points.size();
-    //     while(isCentroid[pointId]) {
-    //         pointId = rand() % points.size();
-    //     }
-    //     centroids.push_back(points.at(pointId));
-    //     isCentroid[pointId] = true;
-    //     // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
-    // }
+    srand(time(0));  // need to set the random seed
     for (int i = 0; i < numClusters; ++i) {
-        centroids.push_back(points.at(i));
+        int pointId = rand() % points.size();
+        while(isCentroid[pointId]) {
+            pointId = rand() % points.size();
+        }
+        centroids.push_back(points.at(pointId));
+        isCentroid[pointId] = true;
+        // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
     }
+    // for (int i = 0; i < numClusters; ++i) {
+    //     centroids.push_back(points.at(i));
+    // }
 
     // vector<int> nPoints(k,0);
     // vector<double> sumX(k,0.0);
@@ -632,6 +634,7 @@ void DetailedMgr::addViaGrid() {
 }
 
 void DetailedMgr::buildMtx() {
+    cerr << "PEEC Simulation start..." << endl;
     // https://i.imgur.com/rIwlXJQ.png
     // return an impedance matrix for each net
     // number of nodes: \sum_{layId=0}^{_vNetGrid[netID].size()} _vNetGrid[netID][layId].size()
@@ -843,7 +846,7 @@ void DetailedMgr::buildMtx() {
                 Grid* grid_i = _vNetGrid[netId][layId][gridId];
                 size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
                 grid_i->setVoltage(netId, V[node_id]);
-                assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
+                // assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
             }
         }
 

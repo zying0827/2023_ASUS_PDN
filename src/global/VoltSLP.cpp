@@ -153,6 +153,7 @@ void VoltSLP::setObjective(double areaWeight, double viaWeight){
                     // cerr << "cost = " << cost << endl;
                     _model.addConstr(linApprox(cost, e) <= _vMaxViaCost[netId][vEdgeId], 
                                     "max_via_cost_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId));
+                    _model.addConstr(linApprox(cost, e) * 1E6 >= _db.VIA16D8A24()->metalArea());
                 }
             }
             obj += viaWeight * _vMaxViaCost[netId][vEdgeId];
@@ -497,6 +498,7 @@ void VoltSLP::collectRelaxedResult() {
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
             double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X);
             _viaArea += viaArea * 1E6;
+            assert(viaArea * 1E6 > 0);
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
