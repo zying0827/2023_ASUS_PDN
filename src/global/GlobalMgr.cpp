@@ -1066,7 +1066,7 @@ void GlobalMgr::voltCurrOpt() {
         // current optimization
         // currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
         currentSolver = new FlowLP(_db, _rGraph);
-        currentSolver->setObjective(_db.areaWeight(), _db.viaWeight());
+        currentSolver->setObjective(_db.areaWeight(), _db.viaWeight(), 0.1);
         currentSolver->setConserveConstraints(true);
         // currentSolver->addViaAreaConstraints
         for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
@@ -1921,7 +1921,7 @@ void GlobalMgr::currentDistribution() {
     
     // set objective
     // cerr << "setObjective..." << endl;
-    solver.setObjective(_db.areaWeight(), _db.viaWeight());
+    solver.setObjective(_db.areaWeight(), _db.viaWeight(), 0.5);
 
     // set flow conservation constraints
     // cerr << "setConserveConstraints..." << endl;

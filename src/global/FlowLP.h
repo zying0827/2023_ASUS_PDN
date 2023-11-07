@@ -13,7 +13,7 @@ class FlowLP {
         FlowLP(DB& db, RGraph& rGraph);
         ~FlowLP() {}
 
-        void setObjective(double areaWeight, double viaWeight);
+        void setObjective(double areaWeight, double viaWeight, double diffWeight);
         void setConserveConstraints(bool useDemandCurrent);
         // width unit = meter
         // void addSViaAreaConstraints(size_t netId, double area);
@@ -49,6 +49,7 @@ class FlowLP {
         // gurobi variables
         GRBVar*** _vPlaneLeftFlow;   // flows on the left of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
         GRBVar*** _vPlaneRightFlow;  // flows on the right of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
+        GRBVar*** _vPlaneDiffFlow;   // auxiliary variables representing abs(leftFlow - rightFlow), index = [netId] [layId] [pEdgeId]
         GRBVar*** _vViaFlow;         // flows on vertical OASGEdges, index = [netId] [layPairId] [vEdgeId]
         GRBVar**  _vMaxViaCost;      // the maximum flow on an OASGEdge, index = [netId] [vEdgeId]
         int _numCapConstrs;          // number of capacity constraints

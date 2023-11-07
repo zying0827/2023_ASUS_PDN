@@ -15,21 +15,26 @@ FlowLP::FlowLP(DB& db, RGraph& rGraph)
     _numNetCapConstrs = 0;
     _vPlaneLeftFlow = new GRBVar** [_rGraph.numNets()];
     _vPlaneRightFlow = new GRBVar** [_rGraph.numNets()];
+    _vPlaneDiffFlow = new GRBVar** [_rGraph.numNets()];
     _vViaFlow = new GRBVar** [_rGraph.numNets()];
     _vMaxViaCost = new GRBVar* [_rGraph.numNets()];
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         _vPlaneLeftFlow[netId] = new GRBVar* [_rGraph.numLayers()];
         _vPlaneRightFlow[netId] = new GRBVar* [_rGraph.numLayers()];
+        _vPlaneDiffFlow[netId] = new GRBVar* [_rGraph.numLayers()];
         _vViaFlow[netId] = new GRBVar* [_rGraph.numLayerPairs()];
         _vMaxViaCost[netId] = new GRBVar [_rGraph.numViaOASGEdges(netId)];
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
             _vPlaneLeftFlow[netId][layId] = new GRBVar [_rGraph.numPlaneOASGEdges(netId, layId)];
             _vPlaneRightFlow[netId][layId] = new GRBVar [_rGraph.numPlaneOASGEdges(netId, layId)];
+            _vPlaneDiffFlow[netId][layId] = new GRBVar [_rGraph.numPlaneOASGEdges(netId, layId)];
             for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
                 _vPlaneLeftFlow[netId][layId][pEdgeId] = _model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS, 
                                                         "Fl_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId));
                 _vPlaneRightFlow[netId][layId][pEdgeId] = _model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS, 
-                                                        "Fr_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId));                                        
+                                                        "Fr_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId));
+                _vPlaneDiffFlow[netId][layId][pEdgeId] = _model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, 
+                                                        "Fd_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId));                                        
             }
         }
         for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
@@ -50,7 +55,7 @@ FlowLP::FlowLP(DB& db, RGraph& rGraph)
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
-void FlowLP::setObjective(double areaWeight, double viaWeight){
+void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight){
     GRBLinExpr obj;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // add cost for horizontal flows
@@ -63,6 +68,7 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
                 if (e->sNode()->voltage() == e->tNode()->voltage()) {
                     _model.addConstr(_vPlaneLeftFlow[netId][layId][pEdgeId] == 0);
                     _model.addConstr(_vPlaneRightFlow[netId][layId][pEdgeId] == 0);
+                    _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] == 0);
                 } else {
                     if (e->sNode()->voltage() > e->tNode()->voltage()) {
                         _model.addConstr(_vPlaneLeftFlow[netId][layId][pEdgeId] >= 0);
@@ -76,6 +82,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight){
                     // cerr << " sVolt = " << e->sNode()->voltage() << ", tVolt = " << e->tNode()->voltage() << ", thickness = " << _db.vMetalLayer(layId)->thickness();
                     // cerr << ", cost = " << cost << endl;
                     obj += cost * (_vPlaneLeftFlow[netId][layId][pEdgeId] + _vPlaneRightFlow[netId][layId][pEdgeId]);
+
+                    // set diff flow
+                    _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneLeftFlow[netId][layId][pEdgeId] - _vPlaneRightFlow[netId][layId][pEdgeId]);
+                    _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneRightFlow[netId][layId][pEdgeId] - _vPlaneLeftFlow[netId][layId][pEdgeId]);
+                    obj += diffWeight * cost * _vPlaneDiffFlow[netId][layId][pEdgeId];
                 }
             }
         }
