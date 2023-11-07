@@ -291,54 +291,54 @@ void GlobalMgr::connectWithObstacle(int netId, int layerId, OASGNode* a, OASGNod
             double dis2Ba = sqrt(pow(obs2B->x() - scanX, 2) + pow(obs2B->y() - scanY, 2));
             double minDis = std::min({dis1Aa , dis2Aa, dis1Ba, dis2Ba}); 
             if (minDis == dis1Aa || minDis == dis1Ba){
-                if (isSegmentIntersectingWithObstacles( a, obs1A, obstacle)){
+                if (isSegmentIntersectingWithObstacles( a, obs1A, obstacle) && !edgeExist(netId, layerId, a, obs1A)){
                     // connectWithObstacle(netId, layerId, a, obs1A, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, a, obs1A)){
                     _rGraph.addOASGEdge(netId, layerId, a, obs1A, false);
                 }
-                if (isSegmentIntersectingWithObstacles( a, obs1B, obstacle)){
+                if (isSegmentIntersectingWithObstacles( a, obs1B, obstacle) && !edgeExist(netId, layerId, a, obs1B) ){
                     // connectWithObstacle(netId, layerId, a, obs1B, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, a, obs1B)){
                     _rGraph.addOASGEdge(netId, layerId, a, obs1B, false);
                 }
-                if (isSegmentIntersectingWithObstacles( b, obs2A, obstacle)){
+                if (isSegmentIntersectingWithObstacles( b, obs2A, obstacle) && !edgeExist(netId, layerId, b, obs2A) ){
                     // connectWithObstacle(netId, layerId, b, obs2A, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, b, obs2A)){
                     _rGraph.addOASGEdge(netId, layerId, b, obs2A, false);
                 }
-                if (isSegmentIntersectingWithObstacles( b, obs2B, obstacle)){
+                if (isSegmentIntersectingWithObstacles( b, obs2B, obstacle)&& !edgeExist(netId, layerId, b, obs2B)){
                     // connectWithObstacle(netId, layerId, b, obs2B, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, b, obs2B)){
                     _rGraph.addOASGEdge(netId, layerId, b, obs2B, false);
                 }
             }
             else{
-                if (isSegmentIntersectingWithObstacles( b, obs1A, obstacle)){
+                if (isSegmentIntersectingWithObstacles( b, obs1A, obstacle) && !edgeExist(netId, layerId, b, obs1A)){
                     // connectWithObstacle(netId, layerId, b, obs1A, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, b, obs1A)){
                     _rGraph.addOASGEdge(netId, layerId, b, obs1A, false);
                 }
-                if (isSegmentIntersectingWithObstacles( b, obs1B, obstacle)){
+                if (isSegmentIntersectingWithObstacles( b, obs1B, obstacle) && !edgeExist(netId, layerId, b, obs1B)){
                     // connectWithObstacle(netId, layerId, b, obs1B, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, b, obs1B)){
                     _rGraph.addOASGEdge(netId, layerId, b, obs1B, false);
                 }
-                if (isSegmentIntersectingWithObstacles( a, obs2A, obstacle)){
+                if (isSegmentIntersectingWithObstacles( a, obs2A, obstacle) && !edgeExist(netId, layerId, a, obs2A)){
                     // connectWithObstacle(netId, layerId, a, obs2A, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, a, obs2A)){
                     _rGraph.addOASGEdge(netId, layerId, a, obs2A, false);
                 }
-                if (isSegmentIntersectingWithObstacles( a, obs2B, obstacle)){
+                if (isSegmentIntersectingWithObstacles( a, obs2B, obstacle) && !edgeExist(netId, layerId, a, obs2B)){
                     // connectWithObstacle(netId, layerId, a, obs2B, obstacle);
                 }
-                else {
+                else if(!edgeExist(netId, layerId, a, obs2B)){
                     _rGraph.addOASGEdge(netId, layerId, a, obs2B, false);
                 }
             }
@@ -360,6 +360,34 @@ bool GlobalMgr::checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, 
         }
     }    
     return edgeTouchVia;
+}
+
+bool GlobalMgr::edgeExist(int netId, int layerId, OASGNode* a, OASGNode* b){
+
+    //If true，則不新增new Edges
+    int minX = min(a->x(), b->x());
+    int maxX = max(a->x(), b->x());
+    int minY = min(a->y(), b->y());
+    int maxY = max(a->y(), b->y());
+    std::array<int, 4> newElement = {minX, maxX, minY, maxY};
+
+    bool elementExists = false;
+    for (const auto& element : alreadyAddedEdges) {
+        if (element == newElement) {
+            elementExists = true;
+            break;
+        }
+    }
+    if (elementExists) {
+        std::cout << "新元素已存在，不添加。" << std::endl;
+    } else {
+        // 添加新元素
+        alreadyAddedEdges.push_back(newElement);
+        std::cout << "新元素已添加。" << std::endl;
+    }
+    
+    return elementExists;
+
 }
 
 
@@ -495,6 +523,17 @@ void GlobalMgr::buildOASG() {
                 addObsRoundEdges[i] = false;
             }
 
+            //這裡要判斷OASG Edges有沒有重複加入
+            //要確認這裡有沒有resize成功
+            alreadyAddedEdges.clear();
+            int numOfObsNodes = 0;
+            for (int i = 0; i < _db.numObstacles(layerId);++i){
+                numOfObsNodes += _db.vObstacle(layerId, i)->vShape(0)->numBPolyVtcs();
+            }
+            int size_alreadyAddEdges = 1 + _db.vNet(netId)->numTPorts() + numOfObsNodes;
+            alreadyAddedEdges.resize(size_alreadyAddEdges * (size_alreadyAddEdges-1));
+
+
             bool thisLayerHaveObs = false;
             bool thisNetTouchObsThisLayer = false;
 
@@ -536,23 +575,18 @@ void GlobalMgr::buildOASG() {
                         double curX = traverseNodes[i]-> x();
                         double curY = traverseNodes[i]-> y();
 
-                            if (isSegmentIntersectingWithObstacles(_rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes)){
-                                //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
-                                // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                //     }
-                                //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                // }
-                                connectWithObstacle(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes);
-                                thisNetTouchObsThisLayer = true;
-                            }
-                            else {
-                                if(!checkWithVias(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i],viaOASGNodes)){
+                        if (isSegmentIntersectingWithObstacles(_rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes)){
+
+                            connectWithObstacle(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], obsNodes);
+                            thisNetTouchObsThisLayer = true;
+                        }
+                        else {
+                            if(!checkWithVias(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i],viaOASGNodes)){
+                                if(!edgeExist(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i])){
                                     _rGraph.addOASGEdge(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), traverseNodes[i], false);
-                                }
+                                }   
                             }
+                        }
                     }
 
                 }
@@ -570,20 +604,15 @@ void GlobalMgr::buildOASG() {
                         double curY = traverseNodes[i]-> y();
                         if(curX >= scanX && curY >= scanY){
                             if (isSegmentIntersectingWithObstacles(traverseNodes[i], traverseNodes[i+1], obsNodes)){
-                                //Bug: 這邊應該要把跟只有跟這條Net有撞到的Obstacle 加上OASG Edges，但只要這條Net在這層撞到一個Obs，就會全部都加
-                                // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                //     }
-                                //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                // }
+
                                 connectWithObstacle(netId, layerId, traverseNodes[i], traverseNodes[i+1], obsNodes);
                                 thisNetTouchObsThisLayer = true;
                             }
                             else {
                                 if(!checkWithVias(netId, layerId, traverseNodes[i], traverseNodes[i+1],viaOASGNodes)){
-                                    _rGraph.addOASGEdge(netId, layerId, traverseNodes[i], traverseNodes[i+1], false);
+                                    if(!edgeExist(netId, layerId, traverseNodes[i], traverseNodes[i+1])){
+                                        _rGraph.addOASGEdge(netId, layerId, traverseNodes[i], traverseNodes[i+1], false);
+                                    }
                                 }
                             }
                         }
@@ -592,20 +621,15 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
-                                    //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
-                                    // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                    //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                    //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                    //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                    //     }
-                                    //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                    // }
+
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
                                 else {
                                     if(!checkWithVias(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1],viaOASGNodes)){
-                                        _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                        if(!edgeExist(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1])){
+                                            _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                        }
                                     }
                                 }
                             }
@@ -624,7 +648,9 @@ void GlobalMgr::buildOASG() {
                             }
                             else {
                                 if(!checkWithVias(netId, layerId,  traverseNodes[i], traverseNodes[i+1],viaOASGNodes)){
-                                    _rGraph.addOASGEdge(netId, layerId,  traverseNodes[i], traverseNodes[i+1], false);
+                                    if(!edgeExist(netId, layerId,  traverseNodes[i], traverseNodes[i+1])){
+                                        _rGraph.addOASGEdge(netId, layerId,  traverseNodes[i], traverseNodes[i+1], false);
+                                    }
                                 }
                             }
                         }
@@ -633,20 +659,15 @@ void GlobalMgr::buildOASG() {
                             curY = traverseNodes[numScanNode-1]-> y();
                             if(curX >= scanX && curY >= scanY){
                                 if (isSegmentIntersectingWithObstacles(traverseNodes[1], traverseNodes[numScanNode-1], obsNodes)){
-                                    //Bug : Obs 的round Edges 已經在connectWithObstacles 裡面加過了
-                                    // for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
-                                    //     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
-                                    //     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
-                                    //         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
-                                    //     }
-                                    //     _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
-                                    // }
+
                                     connectWithObstacle(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], obsNodes);
                                     thisNetTouchObsThisLayer = true;
                                 }
                                 else {
                                     if(!checkWithVias(netId, layerId,  traverseNodes[1], traverseNodes[numScanNode-1],viaOASGNodes)){
-                                        _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                        if(!edgeExist(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1])){
+                                            _rGraph.addOASGEdge(netId, layerId, traverseNodes[1], traverseNodes[numScanNode-1], false);
+                                        }
                                     }
                                 }
                             }
@@ -654,9 +675,10 @@ void GlobalMgr::buildOASG() {
                     }
                 }
             }
+            //這裡不用判斷Edge有沒有重複，因為是第一次加入
             for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
                 if(addObsRoundEdges[obsId] == true){
-                    cout << "In Layer " << layerId << "  Net " << netId << "  Touched with the Xth obstacle" << obsId << endl;
+                    cout << "In Layer " << layerId << " Net " << netId << " Touched with the Xth obstacle " << obsId << endl;
                     int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
                     for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
                         _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
