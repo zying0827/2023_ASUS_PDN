@@ -8,9 +8,6 @@ else
     fp = fopen('currentColorMap.txt');
 end
 
-fig = figure(1);
-h = axes(fig, 'visible', 'off');
-
 colormap (jet (256));
 numNet = fscanf(fp, '%d', [1 1]);
 numLayer = fscanf(fp, '%d', [1 1]);
