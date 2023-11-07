@@ -65,6 +65,17 @@ void DetailedMgr::initGridMap() {
         return false;
     };
 
+    auto occupiedByObstacle = [&] (size_t xId, size_t yId, size_t layId) -> bool {
+        for (size_t obsId = 0; obsId < _db.numObstacles(layId); ++ obsId) {
+            Shape* shape = _db.vObstacle(layId, obsId)->vShape(0);
+            if (shape->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
+            if (shape->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
+            if (shape->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
+            if (shape->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
+        }
+        return false;
+    };
+
     // init grids occupied by segments and ports
     for (size_t xId = 0; xId < _numXs; ++ xId) {
         for (size_t yId = 0; yId < _numYs; ++ yId) {
@@ -118,6 +129,17 @@ void DetailedMgr::initGridMap() {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+        for (size_t xId = 0; xId < _numXs; ++ xId) {
+            for (size_t yId = 0; yId < _numYs; ++ yId) {
+                Grid* grid = _vGrid[layId][xId][yId];
+                if (occupiedByObstacle(xId, yId, layId)) {
+                    grid->incCongestCur();
                 }
             }
         }
@@ -388,26 +410,38 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
 void DetailedMgr::addPortVia() {
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         Port* sPort = _db.vNet(netId)->sourcePort();
-        int numSVias = ceil(sPort->viaArea() / _db.VIA16D8A24()->metalArea());
-        assert(numSVias > 1);
-        vector< pair<double, double> > centPos = kMeansClustering(_vNetPortGrid[netId][0], numSVias, 100);
-        assert(centPos.size() == numSVias);
-        vector<size_t> vViaId(centPos.size(), 0);
-        for (size_t viaId = 0; viaId < centPos.size(); ++ viaId) {
-            vViaId[viaId] = _db.addVia(centPos[viaId].first, centPos[viaId].second, netId, ViaType::Source);
+        if (sPort->viaArea() > 0) {
+            int numSVias = ceil(sPort->viaArea() / _db.VIA16D8A24()->metalArea());
+            assert(numSVias > 1);
+            vector< pair<double, double> > centPos = kMeansClustering(_vNetPortGrid[netId][0], numSVias, 100);
+            assert(centPos.size() == numSVias);
+            vector<size_t> vViaId(centPos.size(), 0);
+            for (size_t viaId = 0; viaId < centPos.size(); ++ viaId) {
+                vViaId[viaId] = _db.addVia(centPos[viaId].first, centPos[viaId].second, netId, ViaType::Source);
+            }
+            sPort->setViaCluster(_db.clusterVia(vViaId));
+        } else {
+            cerr << "WARNNING: net" << netId << " sPort has no via!" << endl;
+            ViaCluster* viaCluster = new ViaCluster();
+            sPort->setViaCluster(viaCluster);
         }
-        sPort->setViaCluster(_db.clusterVia(vViaId));
         for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
             Port* tPort = _db.vNet(netId)->targetPort(tPortId);
-            int numTVias = ceil(tPort->viaArea() / _db.VIA16D8A24()->metalArea());
-            assert(numTVias > 1);
-            vector< pair<double, double> > centPosT = kMeansClustering(_vNetPortGrid[netId][tPortId+1], numTVias, 100);
-            assert(centPosT.size() == numTVias);
-            vector<size_t> vViaIdT(centPosT.size(), 0);
-            for (size_t viaIdT = 0; viaIdT < centPosT.size(); ++ viaIdT) {
-                vViaIdT[viaIdT] = _db.addVia(centPosT[viaIdT].first, centPosT[viaIdT].second, netId, ViaType::Target);
+            if (tPort->viaArea() > 0) {
+                int numTVias = ceil(tPort->viaArea() / _db.VIA16D8A24()->metalArea());
+                assert(numTVias > 1);
+                vector< pair<double, double> > centPosT = kMeansClustering(_vNetPortGrid[netId][tPortId+1], numTVias, 100);
+                assert(centPosT.size() == numTVias);
+                vector<size_t> vViaIdT(centPosT.size(), 0);
+                for (size_t viaIdT = 0; viaIdT < centPosT.size(); ++ viaIdT) {
+                    vViaIdT[viaIdT] = _db.addVia(centPosT[viaIdT].first, centPosT[viaIdT].second, netId, ViaType::Target);
+                }
+                tPort->setViaCluster(_db.clusterVia(vViaIdT));
+            } else {
+                cerr << "WARNNING: net" << netId << " tPort" << tPortId << " has no via!" << endl;
+                ViaCluster* viaCluster = new ViaCluster();
+                tPort->setViaCluster(viaCluster);
             }
-            tPort->setViaCluster(_db.clusterVia(vViaIdT));
         }
     }
 

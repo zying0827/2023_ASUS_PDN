@@ -18,11 +18,14 @@ class FlowLP {
         // width unit = meter
         // void addSViaAreaConstraints(size_t netId, double area);
         // void addTViaAreaConstraints(size_t netId, size_t tPortId, double area);
+        // void setWidthConstraints();
         void addViaAreaConstraints(size_t netId, size_t vEdgeId, double area);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         void addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width);
+        void addSameNetCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         // void relaxCapacityConstraints(GRBLinExpr& obj, OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width);
         void relaxCapacityConstraints(vector<double> vLambda);
+        void relaxCapacityConstraints(vector<double> vLambda, vector<double> vSameNetLambda);
         void solve();
         void collectResult();
         void printResult();
@@ -49,6 +52,7 @@ class FlowLP {
         GRBVar*** _vViaFlow;         // flows on vertical OASGEdges, index = [netId] [layPairId] [vEdgeId]
         GRBVar**  _vMaxViaCost;      // the maximum flow on an OASGEdge, index = [netId] [vEdgeId]
         int _numCapConstrs;          // number of capacity constraints
+        int _numNetCapConstrs;       // number of same net capacity constraints
 
         // input constants
         // vector<double> _vMediumLayerThickness;
