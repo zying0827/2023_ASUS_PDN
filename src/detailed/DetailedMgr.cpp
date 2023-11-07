@@ -140,6 +140,7 @@ void DetailedMgr::initGridMap() {
                 Grid* grid = _vGrid[layId][xId][yId];
                 if (occupiedByObstacle(xId, yId, layId)) {
                     grid->incCongestCur();
+                    grid->setObs();
                 }
             }
         }
@@ -253,6 +254,8 @@ void DetailedMgr::plotGridMap() {
                 Polygon* p = new Polygon(vVtx, _plot);
                 if (grid->congestCur() == 0) {
                     p->plot(SVGPlotColor::white, layId);
+                } else if (grid->hasObs()) {
+                    p->plot(SVGPlotColor::gray, layId);
                 } else {
                     for (size_t netId = 0; netId < grid->numNets(); ++ netId) {
                         p->plot(grid->vNetId(netId), layId);
