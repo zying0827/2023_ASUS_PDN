@@ -47,6 +47,11 @@ class GlobalMgr {
         bool checkWithVias(int netId, int layerId, OASGNode* a, OASGNode* b, vector<vector<vector<OASGNode*>>> viaOASGNodes);
         //用來存每一層有哪一個Obstacle要繞Rounding Edges
         vector<bool> addObsRoundEdges;
+        //用來存這一層中有哪些Net已經被建立過了。裡面會存兩個座標的(xMin, xMax, yMin, yMax)
+        //如果有一樣的就不再加
+        std::vector<std::array<int, 4>> alreadyAddedEdges;
+        bool edgeExist(int netId, int layerId, OASGNode* a, OASGNode* b);
+
 
         void plotOASG();
         void plotRGraph();
