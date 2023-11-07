@@ -54,8 +54,8 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
     double gridWidth = 1;
-    double boardWidth = 5*gridWidth;
-    double boardHeight = 4*gridWidth;
+    double boardWidth = 75*gridWidth;
+    double boardHeight = 40*gridWidth;
     size_t numLayers = 4;
     double offsetX = 40;
     double offsetY = 40;
@@ -84,20 +84,20 @@ int main(int argc, char* argv[]){
     // // replace this line with a real OASG building function
     // globalMgr.buildTestOASG();
 
-    globalMgr.buildOASG();
-    // globalMgr.buildOASGXObs();
+    // globalMgr.buildOASG();
+    globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
     // globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
-//    globalMgr.genCapConstrs();
+    globalMgr.genCapConstrs();
     try {
         // globalMgr.voltageDemandAssignment();
         // globalMgr.voltageAssignment();
         // globalMgr.currentDistribution();
-//        globalMgr.voltCurrOpt();
+        globalMgr.voltCurrOpt();
         // globalMgr.checkFeasible();
         // globalMgr.checkVoltDemandFeasible();
     } catch (GRBException e) {
@@ -107,33 +107,34 @@ int main(int argc, char* argv[]){
     // globalMgr.plotCurrentPaths();
     
     DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    printf("--- wirte color map ---\n");
-    detailedMgr.writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
-    detailedMgr.writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
     detailedMgr.initGridMap();
     detailedMgr.check();
-    // // detailedMgr.plotGridMap();
+    detailedMgr.plotGridMap();
+
     detailedMgr.naiveAStar();
     detailedMgr.check();
-    // detailedMgr.plotGridMap();
+    // // detailedMgr.plotGridMap();
     detailedMgr.addPortVia();
     detailedMgr.check();
     // detailedMgr.plotVia();
     detailedMgr.addViaGrid();
     detailedMgr.check();
 
-    // printf("\n==================== print ===================\n");
-    // detailedMgr.print();
+    // // printf("\n==================== print ===================\n");
+    // // detailedMgr.print();
 
-    // printf("\n==================== buildMtx ===================\n");
+    // // printf("\n==================== buildMtx ===================\n");
     detailedMgr.buildMtx();
+
+    printf("--- write color map ---\n");
+    detailedMgr.writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
+    detailedMgr.writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
+
+
     // detailedMgr.plotGridMapVoltage();
     detailedMgr.plotGridMapCurrent();
 
-    detailedMgr.writeColorMap("../exp/output/voltageColorMap.txt", 1);
-    detailedMgr.writeColorMap("../exp/output/currentColorMap.txt", 0);
-
-    // // globalMgr.plotDB();
+    globalMgr.plotDB();
 
 
     // // mgr.genRGraph();

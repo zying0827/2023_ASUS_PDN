@@ -188,7 +188,7 @@ void Parser::parse() {
     // getline(_fin, data);
     // cerr << "before parseConnect: " << data << endl;
     parseConnect();
-    // parseObstacle();
+//    parseObstacle();
 
 }
 

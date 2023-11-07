@@ -490,7 +490,10 @@ void GlobalMgr::buildOASG() {
         for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId){
             vector<vector<OASGNode*>> obsNodes;
             //如果這個Obs已經有要加Round Edges，就變成True 
-            addObsRoundEdges.resize(_db.numObstacles(layerId), false);
+            addObsRoundEdges.resize(_db.numObstacles(layerId));
+            for (int i = 0; i < _db.numObstacles(layerId); ++i){
+                addObsRoundEdges[i] = false;
+            }
 
             bool thisLayerHaveObs = false;
             bool thisNetTouchObsThisLayer = false;
@@ -651,8 +654,16 @@ void GlobalMgr::buildOASG() {
                     }
                 }
             }
-            // AddObstacleRoundEdges
-
+            for(int obsId = 0; obsId < _db.numObstacles(layerId); ++obsId){
+                if(addObsRoundEdges[obsId] == true){
+                    cout << "In Layer " << layerId << "  Net " << netId << "  Touched with the Xth obstacle" << obsId << endl;
+                    int numPolyVtcs = _db.vObstacle(layerId, obsId)->vShape(0)->numBPolyVtcs();
+                    for(int vtxId = 0; vtxId < (numPolyVtcs - 1); ++vtxId){
+                        _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][vtxId], obsNodes[obsId][vtxId+1], false);
+                    }
+                    _rGraph.addOASGEdge(netId, layerId, obsNodes[obsId][0], obsNodes[obsId][numPolyVtcs - 1], false);
+                }
+            }
         }
 
     }
@@ -1002,12 +1013,13 @@ void GlobalMgr::voltCurrOpt() {
     // VoltCP* voltageSolver;
     VoltSLP* voltageSolver;
     vector<double> vLambda(_vCapConstr.size(), 2.0);
+    vector<double> vNetLambda(_vNetCapConstr.size(), 4.0);
     vector<double> vLastOverlap(_vCapConstr.size(), 0.0);
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
     size_t numIVIter = 3; //3
-    size_t numIIter = 6; //6
+    size_t numIIter = 10; //6
     size_t numVIter = 10; //10
 
     // cerr << "Check vEdgeId..." << endl;
@@ -1023,7 +1035,10 @@ void GlobalMgr::voltCurrOpt() {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
                 vLambda[capId] = 2;
-            }
+        }
+        for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                vNetLambda[netCapId] = 4;
+        }
 
         
         // current optimization
@@ -1046,8 +1061,12 @@ void GlobalMgr::voltCurrOpt() {
             SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
             currentSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
         }
+        for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+            CapConstr cap = _vNetCapConstr[netCapId];
+            currentSolver->addSameNetCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+        }
         for (size_t iIter = 0; iIter < numIIter; ++iIter) {
-            currentSolver->relaxCapacityConstraints(vLambda);
+            currentSolver->relaxCapacityConstraints(vLambda, vNetLambda);
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
             _vArea.push_back(currentSolver->area());
@@ -1074,6 +1093,9 @@ void GlobalMgr::voltCurrOpt() {
                 // }
                 // vLambda[capId] += PRatio * curOverlap + DRatio * diffOverlap;
                 // vLastOverlap[capId] = curOverlap;
+            }
+            for (size_t netCapId = 0; netCapId <_vNetCapConstr.size(); ++ netCapId) {
+                vNetLambda[netCapId] *= 2;
             }
         }
 
@@ -1105,7 +1127,11 @@ void GlobalMgr::voltCurrOpt() {
                 SingleCapConstr sglCap = _vSglCapConstr[sglCapId];
                 voltageSolver->addCapacityConstraints(sglCap.e1, sglCap.right1, sglCap.ratio1, sglCap.width);
             }
-            voltageSolver->relaxCapacityConstraints(vLambda);
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                CapConstr cap = _vNetCapConstr[netCapId];
+                voltageSolver->addSameNetCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+            }
+            voltageSolver->relaxCapacityConstraints(vLambda, vNetLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
             _vArea.push_back(voltageSolver->area());
@@ -1164,13 +1190,13 @@ void GlobalMgr::voltCurrOpt() {
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         assert(_rGraph.vViaOASGEdge(netId, 0, 0)->sNode()->port() == _db.vNet(netId)->sourcePort());
         double sViaArea = _rGraph.vViaOASGEdge(netId, 0, 0)->viaArea();
-        assert(sViaArea > 0);
+        assert(sViaArea >= 0);
         _db.vNet(netId)->sourcePort()->setViaArea(sViaArea);
         cerr << "net" << netId << " s: viaArea = " << sViaArea << ", upperbound = " << _vUBViaArea[netId][0] << endl;
         for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
             assert(_rGraph.vViaOASGEdge(netId, 0, tPortId+1)->tNode()->port() == _db.vNet(netId)->targetPort(tPortId));
             double tViaArea = _rGraph.vViaOASGEdge(netId, 0, tPortId+1)->viaArea();
-            assert(tViaArea > 0);
+            assert(tViaArea >= 0);
             _db.vNet(netId)->targetPort(tPortId)->setViaArea(tViaArea);
             cerr << "net" << netId << " t" << tPortId << ": viaArea = " << tViaArea << ", upperbound = " << _vUBViaArea[netId][tPortId+1] << endl;
         }
@@ -1600,6 +1626,33 @@ void GlobalMgr::voltageDemandAssignment() {
         double width2 = 0.5 * _vCapConstr[capId].width / _vCapConstr[capId].ratio2;
         bool right1 = _vCapConstr[capId].right1;
         bool right2 = _vCapConstr[capId].right2;
+        if (right1) {
+            if (width1 < e1->widthRight()) {
+                e1->setWidthRight(width1);
+            }
+        } else {
+            if (width1 < e1->widthLeft()) {
+                e1->setWidthLeft(width1);
+            }
+        }
+        if (right2) {
+            if (width2 < e2->widthRight()) {
+                e2->setWidthRight(width2);
+            }
+        } else {
+            if (width2 < e2->widthLeft()) {
+                e2->setWidthLeft(width2);
+            }
+        }
+    }
+
+    for (size_t capId = 0; capId < _vNetCapConstr.size(); ++ capId) {
+        OASGEdge* e1 = _vNetCapConstr[capId].e1;
+        OASGEdge* e2 = _vNetCapConstr[capId].e2;
+        double width1 = 0.5 * _vNetCapConstr[capId].width / _vNetCapConstr[capId].ratio1;
+        double width2 = 0.5 * _vNetCapConstr[capId].width / _vNetCapConstr[capId].ratio2;
+        bool right1 = _vNetCapConstr[capId].right1;
+        bool right2 = _vNetCapConstr[capId].right2;
         if (right1) {
             if (width1 < e1->widthRight()) {
                 e1->setWidthRight(width1);
@@ -2504,6 +2557,11 @@ void GlobalMgr::genCapConstrs() {
         SingleCapConstr sglCapConstr = {e1, right1, ratio1, width};
         _vSglCapConstr.push_back(sglCapConstr);
     };
+    auto addNetCapConstr = [&] (OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+        assert(e1->netId() == e2->netId());
+        CapConstr netCapConstr = {e1, right1, ratio1, e2, right2, ratio2, width};
+        _vNetCapConstr.push_back(netCapConstr);
+    };
     // set capacity constraints
     // TODO for Tsai and Huang:
     // for each layer, for each neighboring OASGEdges,
@@ -2544,8 +2602,13 @@ void GlobalMgr::genCapConstrs() {
 
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                             S2, T2,ratio, right, width))
-                                addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                                             S2, T2,ratio, right, width)) {
+                                if (S_netId == T_netId) {
+                                    addNetCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                                } else {
+                                    addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
+                                }
+                            }
                         }
                     }   
                 } 
