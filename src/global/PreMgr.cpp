@@ -136,10 +136,17 @@ void PreMgr::kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs
         points.push_back(p);
     }
 
+    vector<bool> isCentroid(points.size(), false);
     vector<Point> centroids;
     srand(time(0));  // need to set the random seed
     for (int i = 0; i < k; ++i) {
-        centroids.push_back(points.at(rand() % points.size()));
+        // centroids.push_back(points.at(rand() % points.size()));
+        int pointId = rand() % points.size();
+        while(isCentroid[pointId]) {
+            pointId = rand() % points.size();
+        }
+        centroids.push_back(points.at(pointId));
+        isCentroid[pointId] = true;
         // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
     }
 
