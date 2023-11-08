@@ -13,61 +13,6 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-    //羅：這裡用來讀參數
-    //################################
-    // 定义一个map来存储参数
-    std::map<std::string, int> parameters;
-
-    // 打开参数文件
-    string root_dir = "/home/b08901047/2023_ASUS_PDN";
-    string parameter_dir = "/app/parameters.txt";
-    string inputFile_dir = root_dir + parameter_dir;
-    std::ifstream input_file(inputFile_dir);
-
-    if (input_file.is_open()) {
-        std::string line;
-
-        // 逐行读取文件
-        while (std::getline(input_file, line)) {
-            size_t delimiter_pos = line.find("=");
-            if (delimiter_pos != std::string::npos) {
-                // 提取键和值
-                std::string key = line.substr(0, delimiter_pos);
-                std::string value_str = line.substr(delimiter_pos + 1);
-                // 去除前导和尾随空格
-                key = key.substr(key.find_first_not_of(" "), key.find_last_not_of(" ") + 1);
-                value_str = value_str.substr(value_str.find_first_not_of(" "), value_str.find_last_not_of(" ") + 1);
-                
-                // 将值转换为整数
-                int value = std::stoi(value_str);
-
-                // 存储到map中
-                parameters[key] = value;
-            }
-        }
-
-        input_file.close();
-
-        // 现在你可以访问这些参数
-        if (parameters.find("width") != parameters.end()) {
-            int width = parameters["width"];
-            std::cout << "Width: " << width << std::endl;
-        }
-
-        if (parameters.find("spacing") != parameters.end()) {
-            int spacing = parameters["spacing"];
-            std::cout << "Spacing: " << spacing << std::endl;
-        }
-    } else {
-        std::cerr << "无法打开参数文件 'parameters.txt'" << std::endl;
-    }
-
-    // return 0;
-    //#################################
-    //
-
-
-
 
     ifstream finST, fin, finOb;
     ofstream fout;
