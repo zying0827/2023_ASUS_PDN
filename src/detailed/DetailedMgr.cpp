@@ -948,8 +948,9 @@ void DetailedMgr::buildMtx() {
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
             double loadResistance = _db.vNet(netId)->targetPort(tPortId)->voltage() / _db.vNet(netId)->targetPort(tPortId)->current();
+            _vTPortVolt[netId][tPortId] = _vTPortCurr[netId][tPortId] * loadResistance;
             cerr << "net" << netId << " tPort" << tPortId << ": current = " << _vTPortCurr[netId][tPortId];
-            cerr << ", voltage = " << _vTPortCurr[netId][tPortId] * loadResistance << endl;
+            cerr << ", voltage = " << _vTPortVolt[netId][tPortId] << endl;
         }
     }
 }
