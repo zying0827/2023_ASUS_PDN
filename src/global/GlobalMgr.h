@@ -66,6 +66,11 @@ class GlobalMgr {
         void plotCurrentPaths();
         void checkFeasible(bool currentBased);
         void checkVoltDemandFeasible();
+
+        //羅：Read from main
+        size_t numIVIter; //3
+        size_t numIIter; //6
+        size_t numVIter; //10
     private:
         Trace* edge2Trace(OASGEdge* edge);
         Segment* edge2Segment(OASGEdge* edge);
@@ -82,6 +87,8 @@ class GlobalMgr {
         vector<SingleCapConstr> _vSglCapConstr;
         vector<CapConstr> _vNetCapConstr;
         vector< vector< double > > _vUBViaArea;     // the upper bound of a via area, index = [netId] [vEdgeId]
+
+        
 };
 
 #endif
