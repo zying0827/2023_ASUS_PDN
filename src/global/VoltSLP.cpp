@@ -522,6 +522,11 @@ void VoltSLP::collectRelaxedResult() {
     for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
         _overlap += _modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X);
     }
+    _sameNetOverlap = 0;
+    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+        _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
+        _sameNetOverlap += _vSameNetOverlap[netCapId];
+    }
 }
 
 void VoltSLP::printRelaxedResult() {

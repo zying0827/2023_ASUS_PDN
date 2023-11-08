@@ -39,6 +39,8 @@ class FlowLP {
         double overlap() const { return _overlap; }
         vector<double> vOverlap() { return _vOverlap; }
         double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
+        double sameNetOverlap() const { return _sameNetOverlap; }
+        double vSameNetOverlap(size_t ovId) const { return _vSameNetOverlap[ovId]; }
 
     private:
         DB& _db;
@@ -64,6 +66,8 @@ class FlowLP {
         double _viaArea;
         double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
         vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
+        double _sameNetOverlap;
+        vector<double> _vSameNetOverlap;
 };
 
 #endif

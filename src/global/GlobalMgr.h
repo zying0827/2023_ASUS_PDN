@@ -62,6 +62,7 @@ class GlobalMgr {
         void voltCurrOpt();
         void voltageAssignment(bool currentBased);
         void voltageDemandAssignment();
+        void swapSTbyVolt();
         void currentDistribution();
         void plotCurrentPaths();
         void checkFeasible(bool currentBased);
@@ -78,6 +79,7 @@ class GlobalMgr {
         vector<double> _vArea;  // record the plane area of each iteration in voltCurrOpt
         vector<double> _vViaArea;
         vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
+        vector<double> _vSameNetOverlap;
         vector<CapConstr> _vCapConstr;
         vector<SingleCapConstr> _vSglCapConstr;
         vector<CapConstr> _vNetCapConstr;

@@ -1008,6 +1008,7 @@ void GlobalMgr::voltCurrOpt() {
 
     // voltageAssignment(true);
     voltageDemandAssignment();
+    swapSTbyVolt();
 
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
@@ -1094,6 +1095,7 @@ void GlobalMgr::voltCurrOpt() {
             _vArea.push_back(currentSolver->area());
             _vViaArea.push_back(currentSolver->viaArea());
             _vOverlap.push_back(currentSolver->overlap());
+            _vSameNetOverlap.push_back(currentSolver->sameNetOverlap());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
             // lagrange multiplier scheduling
@@ -1159,6 +1161,7 @@ void GlobalMgr::voltCurrOpt() {
             _vArea.push_back(voltageSolver->area());
             _vViaArea.push_back(voltageSolver->viaArea());
             _vOverlap.push_back(voltageSolver->overlap());
+            _vSameNetOverlap.push_back(voltageSolver->sameNetOverlap());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
             voltageSolver->collectRelaxedTempVoltage();
@@ -1278,6 +1281,25 @@ void GlobalMgr::voltCurrOpt() {
         cerr << "V opt: ";
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             cerr << _vOverlap[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "/////////////////////////////////////" << endl;
+    cerr << "//    same net overlapped width    //" << endl;
+    cerr << "/////////////////////////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << _vSameNetOverlap[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << _vSameNetOverlap[i] << " -> ";
             i++;
         }
         cerr << endl;
@@ -1889,6 +1911,15 @@ void GlobalMgr::voltageDemandAssignment() {
             for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                 cerr << "net" << netId << " target" << tPortId << " layer" << layId << " voltage = " << _rGraph.targetOASGNode(netId, tPortId, layId)->voltage() << endl;
             }
+        }
+    }
+}
+
+void GlobalMgr::swapSTbyVolt() {
+    for (size_t edgeId = 0; edgeId < _rGraph.numOASGEdges(); ++ edgeId) {
+        OASGEdge* edge = _rGraph.vOASGEdge(edgeId);
+        if (edge->sNode()->voltage() < edge->tNode()->voltage()) {
+            _rGraph.swapST(edge);
         }
     }
 }
@@ -2727,5 +2758,30 @@ void GlobalMgr::genCapConstrs() {
                     addSglCapConstr(e1, right.first, ratio.first, width);
             }
         }  
+    }
+    for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+        // OASGEdge* e1 = _vNetCapConstr[netCapId].e1;
+        // OASGEdge* e2 = _vNetCapConstr[netCapId].e2;
+        // cerr << "same net constraint " << netCapId << ":" << endl;
+        // cerr << "   pEdge (net" << e1->netId() << ", layer" << e1->layId() << ", s(" << e1->sNode()->x() << ", " << e1->sNode()->y();
+        // cerr << "), t(" << e1->tNode()->x() << ", " << e1->tNode()->y() << ")" << endl;
+        // cerr << "   pEdge (net" << e2->netId() << ", layer" << e2->layId() << ", s(" << e2->sNode()->x() << ", " << e2->sNode()->y();
+        // cerr << "), t(" << e2->tNode()->x() << ", " << e2->tNode()->y() << ")" << endl;
+        // if (_vNetCapConstr[netCapId].right1) {
+        //     cerr << "   e1 right, " ;
+        // } else {
+        //     cerr << "   e1 left, " ;
+        // }
+        // cerr << "ratio1 = " << _vNetCapConstr[netCapId].ratio1 << endl;
+        // if (_vNetCapConstr[netCapId].right2) {
+        //     cerr << "   e2 right, " ;
+        // } else {
+        //     cerr << "   e2 left, " ;
+        // }
+        // cerr << "ratio2 = " << _vNetCapConstr[netCapId].ratio2 << endl;
+        // cerr << "   width = " << _vNetCapConstr[netCapId].width << endl;
+        if (_vNetCapConstr[netCapId].width < 1e-4) {
+            _vNetCapConstr[netCapId].width = 0;
+        }
     }
 }
