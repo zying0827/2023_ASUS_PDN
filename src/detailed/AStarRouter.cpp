@@ -262,7 +262,7 @@ void AStarRouter::backTraceNoPad() {
     // double length = _exactLength * _gridWidth;
     // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
     _exactWidth = ceil(_lbWidth/_gridWidth);
-    int halfWidth = floor(0.5 * _lbWidth / _gridWidth);
+    int halfWidth = ceil(0.5 * _lbWidth / _gridWidth);
     // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
     size_t sPathId = _path.size()-1;
     size_t tPathId = 0;

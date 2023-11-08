@@ -343,7 +343,7 @@ void DetailedMgr::naiveAStar() {
             clearNet(layId, netId);
             for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
                 Segment* segment = net->vSegment(layId, segId);
-                if (segment->width() > 0) {
+                if (segment->width() > 3 * _gridWidth) {
                     int sXId = floor(segment->trace()->sNode()->ctrX() / _gridWidth);
                     int sYId = floor(segment->trace()->sNode()->ctrY() / _gridWidth);
                     int tXId = floor(segment->trace()->tNode()->ctrX() / _gridWidth);
@@ -365,6 +365,11 @@ void DetailedMgr::naiveAStar() {
                         }
                     }
                     // _vNetGrid[netId][layId].insert(_vNetGrid[netId][layId].end(), router.path().begin(), router.path().end());
+                }
+                else {
+                    if (segment->width() > 0) {
+                        cerr << "WARNING: net" << netId << " segment" << segId << " is not wide enough. Discard!" << endl;
+                    }
                 }
             }
             // for (size_t gridId = 0; gridId < _vNetPortGrid[netId].size(); ++ gridId) {
