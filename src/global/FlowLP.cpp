@@ -347,6 +347,8 @@ void FlowLP::relaxCapacityConstraints(vector<double> vLambda, vector<double> vSa
         double coef = -1.0;
         _modelRelaxed->addVar(0.0 , GRB_INFINITY , vSameNetLambda[netCapId] , GRB_CONTINUOUS, 1, &c, &coef , "same_net_lambda_" + c.get ( GRB_StringAttr_ConstrName ));
     }
+    // _modelRelaxed->update();
+    // _modelRelaxed->write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
 }
 
 void FlowLP::solve() {
@@ -499,6 +501,11 @@ void FlowLP::collectRelaxedResult() {
     for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
         _vOverlap.push_back(_modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X));
         _overlap += _vOverlap[capId];
+    }
+    _sameNetOverlap = 0;
+    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+        _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
+        _sameNetOverlap += _vSameNetOverlap[netCapId];
     }
 }
 

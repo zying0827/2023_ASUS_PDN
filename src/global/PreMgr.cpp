@@ -2,25 +2,6 @@
 
 void PreMgr::nodeClustering() {
     for (size_t netId =0; netId < _db.numNets(); ++ netId) {
-        if (_vNumTPorts[netId] > 1) {
-            vector<DBNode*> vTNode;
-            for (size_t tNodeId = 0; tNodeId < _db.numTNodes(netId); ++ tNodeId) {
-                vTNode.push_back(_db.vTNode(netId, tNodeId));
-            }
-            // cerr << "kMeans..." << endl;
-            kMeansClustering(netId, vTNode, 10, _vNumTPorts[netId]);
-            for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
-                assert(_vTClusteredNode[netId][tPortId].size() > 0);
-            }
-        }
-        else {
-            for (size_t tNodeId = 0; tNodeId < _db.numTNodes(netId); ++ tNodeId) {
-                _vTClusteredNode[netId][0].push_back(_db.vTNode(netId, tNodeId));
-            }
-        }
-    }
-
-    for (size_t netId =0; netId < _db.numNets(); ++ netId) {
         BoundBox sb = {_db.vSNode(netId, 0)->node()->ctrX(), _db.vSNode(netId, 0)->node()->ctrY(),
                       _db.vSNode(netId, 0)->node()->ctrX(), _db.vSNode(netId, 0)->node()->ctrY()};
         for (size_t sNodeId = 0; sNodeId < _db.numSNodes(netId); ++ sNodeId) {
@@ -42,7 +23,28 @@ void PreMgr::nodeClustering() {
         sb.maxX += 2;
         sb.maxY += 2;
         _vSBoundBox.push_back(sb);
+    }
 
+    for (size_t netId =0; netId < _db.numNets(); ++ netId) {
+        if (_vNumTPorts[netId] > 1) {
+            vector<DBNode*> vTNode;
+            for (size_t tNodeId = 0; tNodeId < _db.numTNodes(netId); ++ tNodeId) {
+                vTNode.push_back(_db.vTNode(netId, tNodeId));
+            }
+            // cerr << "kMeans..." << endl;
+            kMeansClustering(netId, vTNode, 10, _vNumTPorts[netId]);
+            for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
+                assert(_vTClusteredNode[netId][tPortId].size() > 0);
+            }
+        }
+        else {
+            for (size_t tNodeId = 0; tNodeId < _db.numTNodes(netId); ++ tNodeId) {
+                _vTClusteredNode[netId][0].push_back(_db.vTNode(netId, tNodeId));
+            }
+        }
+    }
+
+    for (size_t netId =0; netId < _db.numNets(); ++ netId) {
         for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
             BoundBox tb = {_vTClusteredNode[netId][tPortId][0]->node()->ctrX(), _vTClusteredNode[netId][tPortId][0]->node()->ctrY(),
                            _vTClusteredNode[netId][tPortId][0]->node()->ctrX(), _vTClusteredNode[netId][tPortId][0]->node()->ctrY()};
@@ -216,10 +218,25 @@ void PreMgr::kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs
         }
     }
 
+    vector<size_t> vClusterId;  // index = [tPortId]
+    assert(k=2);
+    double sX = 0.5 * (_vSBoundBox[netId].maxX + _vSBoundBox[netId].minX);
+    double sY = 0.5 * (_vSBoundBox[netId].maxY + _vSBoundBox[netId].minY);
+    double dist0 = pow(centroids[0].x - sX, 2) + pow(centroids[0].y - sY, 2);
+    double dist1 = pow(centroids[1].x - sX, 2) + pow(centroids[1].y - sY, 2);
+    if (dist0 < dist1) {
+        vClusterId.push_back(0);
+        vClusterId.push_back(1);
+    } else {
+        vClusterId.push_back(1);
+        vClusterId.push_back(0);
+    }
+
     for (size_t pointId = 0; pointId < points.size(); ++ pointId) {
         Point p = points[pointId];
         for (size_t tPortId = 0; tPortId < k; ++ tPortId) {
-            if (p.cluster == tPortId) {
+            size_t clusterId = vClusterId[tPortId];
+            if (p.cluster == clusterId) {
                 // cerr << "tPortId = " << tPortId << endl;
                 // cerr << "   node = " << p.node->name() << endl;
                 _vTClusteredNode[netId][tPortId].push_back(p.node);

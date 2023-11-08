@@ -192,6 +192,17 @@ size_t RGraph::addViaOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGN
     return OASGEdgeId;
 }
 
+void RGraph::swapST(OASGEdge* edge) {
+    OASGNode* sNode = edge->sNode();
+    OASGNode* tNode = edge->tNode();
+    size_t edgeId = edge->edgeId();
+    sNode->deleteOutEdge(edgeId);
+    tNode->deleteInEdge(edgeId);
+    sNode->addInEdge(edgeId);
+    tNode->addOutEdge(edgeId);
+    edge->setNode(tNode, sNode);
+}
+
 void RGraph::constructRGraph() {
     // build _vRGEdge and _portPair2Edge
     size_t twoPinNetId = 0;

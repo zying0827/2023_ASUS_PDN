@@ -34,6 +34,8 @@ class VoltSLP {
         double area() const { return _area; }
         double viaArea() const { return _viaArea; }
         double overlap() const { return _overlap; }
+        double sameNetOverlap() const { return _sameNetOverlap; }
+        double vSameNetOverlap(size_t ovId) const { return _vSameNetOverlap[ovId]; }
 
     private:
         GRBLinExpr linApprox(double cost, OASGEdge* edge);
@@ -62,6 +64,8 @@ class VoltSLP {
         double _area;       // the resulting area, assigned in collectRelaxedResult
         double _viaArea;
         double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
+        double _sameNetOverlap;
+        vector<double> _vSameNetOverlap;
 };
 
 #endif

@@ -44,6 +44,18 @@ class OASGNode {
 
         void addOutEdge(size_t OASGEdgeId) { _vOutEdgeId.push_back(OASGEdgeId); }
         void addInEdge(size_t OASGEdgeId) { _vInEdgeId.push_back(OASGEdgeId); }
+        void deleteOutEdge(size_t OASGEdgeId) {
+            std::vector<size_t>::iterator it;
+            it = find(_vOutEdgeId.begin(), _vOutEdgeId.end(), OASGEdgeId);
+            assert(it != _vOutEdgeId.end());
+            _vOutEdgeId.erase(it);
+        }
+        void deleteInEdge(size_t OASGEdgeId) {
+            std::vector<size_t>::iterator it;
+            it = find(_vInEdgeId.begin(), _vInEdgeId.end(), OASGEdgeId);
+            assert(it != _vInEdgeId.end());
+            _vInEdgeId.erase(it);
+        }
         void setVoltage(double voltage) { _voltage = voltage; }
         void setRedundant() { _redundant = true; }
         void print() {
@@ -304,6 +316,7 @@ class RGraph {
         OASGNode* addOASGNode(size_t netId, double x, double y, OASGNodeType type, Port* port = NULL, bool nPort = true);
         size_t addOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, bool viaEdge);
         size_t addViaOASGEdge(size_t netId, size_t layId, OASGNode* sNode, OASGNode* tNode, Polygon* boundPolygon);
+        void swapST(OASGEdge* edge);
         // void addRGEdge(RGEdge* edge, size_t twoPinNetId, size_t layId, size_t RGEdgeId) { _vRGEdge[twoPinNetId][layId][RGEdgeId] = edge; }
     private:
         RGraphType _type;
