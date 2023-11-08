@@ -140,7 +140,8 @@ void DetailedMgr::initGridMap() {
             for (size_t yId = 0; yId < _numYs; ++ yId) {
                 Grid* grid = _vGrid[layId][xId][yId];
                 if (occupiedByObstacle(xId, yId, layId)) {
-                    grid->incCongestCur();
+                    // grid->incCongestCur();
+                    grid->addCongestCur(_obsCongest);
                     grid->setObs();
                 }
             }
@@ -353,7 +354,7 @@ void DetailedMgr::naiveAStar() {
                     int tRealXId = floor(segment->tX() / _gridWidth);
                     int tRealYId = floor(segment->tY() / _gridWidth);
                     AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), make_pair(sRealXId, sRealYId), make_pair(tRealXId, tRealYId), 
-                                       _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2);
+                                       _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2, 0);
                     router.route();
                     segment->setWidth(router.exactWidth() * _gridWidth);
                     segment->setLength(router.exactLength() * _gridWidth);
@@ -388,6 +389,9 @@ void DetailedMgr::naiveAStar() {
                 }
             }
             for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); ++ gridId) {
+                // if (_vNetGrid[netId][layId][gridId]->congestCur() > 0) {
+                //     _vNetGrid[netId][layId][gridId]->incCongestHis();
+                // }
                 _vNetGrid[netId][layId][gridId]->incCongestCur();
             }
         }
@@ -406,6 +410,66 @@ void DetailedMgr::naiveAStar() {
     // overlapArea -= area;
     // cerr << "area = " << area << endl;
     // cerr << "overlapArea = " << overlapArea << endl;
+}
+
+void DetailedMgr::negoAStar() {
+    cerr << "negoAStar..." << endl;
+    for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
+        cerr << "layId = " << layId << endl;
+        for (size_t iter = 0; iter < _numNegoIters; ++ iter) {
+            cerr << "iter = " << iter << endl;
+            for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
+                cerr << " netId = " << netId << endl;
+                Net* net = _db.vNet(netId);
+                clearNet(layId, netId);
+                for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
+                    Segment* segment = net->vSegment(layId, segId);
+                    if (segment->width() > 3 * _gridWidth) {
+                        int sXId = floor(segment->trace()->sNode()->ctrX() / _gridWidth);
+                        int sYId = floor(segment->trace()->sNode()->ctrY() / _gridWidth);
+                        int tXId = floor(segment->trace()->tNode()->ctrX() / _gridWidth);
+                        int tYId = floor(segment->trace()->tNode()->ctrY() / _gridWidth);
+                        int sRealXId = floor(segment->sX() / _gridWidth);
+                        int sRealYId = floor(segment->sY() / _gridWidth);
+                        int tRealXId = floor(segment->tX() / _gridWidth);
+                        int tRealYId = floor(segment->tY() / _gridWidth);
+                        AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), make_pair(sRealXId, sRealYId), make_pair(tRealXId, tRealYId), 
+                                        _gridWidth, segment->length(), segment->width(), _widthRatio, _obsCongest, _distWeight, _cLineDistWeight);
+                        router.route();
+                        segment->setWidth(router.exactWidth() * _gridWidth);
+                        segment->setLength(router.exactLength() * _gridWidth);
+                        for (size_t pGridId = 0; pGridId < router.numPGrids(); ++ pGridId) {
+                            Grid* grid = router.vPGrid(pGridId);
+                            if (!grid->hasNet(netId)) {
+                                _vNetGrid[netId][layId].push_back(grid);
+                                grid->addNet(netId);
+                            }
+                        }
+                    }
+                    else {
+                        if (segment->width() > 0) {
+                            cerr << "WARNING: net" << netId << " segment" << segId << " is not wide enough. Discard!" << endl;
+                        }
+                    }
+                }
+                for (size_t portId = 0; portId < _db.vNet(netId)->numTPorts()+1; ++ portId) {
+                    for (size_t gridId = 0; gridId < _vNetPortGrid[netId][portId].size(); ++ gridId) {
+                        Grid* grid = _vGrid[layId][_vNetPortGrid[netId][portId][gridId].first][_vNetPortGrid[netId][portId][gridId].second];
+                        if (! grid->hasNet(netId)) {
+                            _vNetGrid[netId][layId].push_back(grid);
+                            grid->addNet(netId);
+                        }
+                    }
+                }
+                for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); ++ gridId) {
+                    if (_vNetGrid[netId][layId][gridId]->congestCur() > 0) {
+                        _vNetGrid[netId][layId][gridId]->incCongestHis();
+                    }
+                    _vNetGrid[netId][layId][gridId]->incCongestCur();
+                }
+            }
+        }
+    }
 }
 
 void DetailedMgr::clearNet(size_t layId, size_t netId) {
