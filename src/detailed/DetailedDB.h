@@ -11,6 +11,7 @@ class Grid {
             _congestion = 0;
             _congestCur = 0;
             _congestHis = 0;
+            _hasObs = false;
             for (size_t netId = 0; netId < numNets; ++ netId) {
                 _vVoltage.push_back(-1);
                 _vCurrent.push_back(-1);
@@ -34,6 +35,7 @@ class Grid {
         int yId() { return _yId; }
         double voltage(size_t netId) const { return _vVoltage[netId]; }
         double current(size_t netId) const { return _vCurrent[netId]; }
+        bool hasObs() const { return _hasObs; }
 
         // set function
         void incCongestCur() { _congestCur ++; _congestion ++; }
@@ -49,6 +51,7 @@ class Grid {
         }
         void setVoltage(size_t netId, double voltage) { _vVoltage[netId] = voltage; }
         void setCurrent(size_t netId, double current) { _vCurrent[netId] = current; }
+        void setObs() { _hasObs = true; }
 
         // other function
         void print() {
@@ -62,6 +65,7 @@ class Grid {
         int _congestion;    // _congestHis + _congestCur
         int _congestCur;    // current congestion cost
         int _congestHis;    // history congestion cost
+        bool _hasObs;
         vector<size_t> _vNetId;
         size_t _xId;
         size_t _yId;

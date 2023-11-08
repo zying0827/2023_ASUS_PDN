@@ -80,6 +80,7 @@ class GlobalMgr {
         vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
         vector<CapConstr> _vCapConstr;
         vector<SingleCapConstr> _vSglCapConstr;
+        vector<CapConstr> _vNetCapConstr;
         vector< vector< double > > _vUBViaArea;     // the upper bound of a via area, index = [netId] [vEdgeId]
 };
 

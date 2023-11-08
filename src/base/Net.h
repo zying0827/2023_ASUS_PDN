@@ -34,7 +34,10 @@ class Port {
         Port(size_t portId, double voltage, double current, ViaCluster* viaCstr)
         : _portId(portId), _voltage(voltage), _current(current), _viaCluster(viaCstr) {}
         Port(size_t portId, int netTPortId, double voltage, double current)
-        : _portId(portId), _netTPortId(netTPortId), _voltage(voltage), _current(current) {}
+        : _portId(portId), _netTPortId(netTPortId), _voltage(voltage), _current(current) {
+            _viaCluster = NULL;
+            _viaArea = -1;
+        }
         ~Port() {}
         size_t portId() const { return _portId; }
         int netTPortId() const { return _netTPortId; }
