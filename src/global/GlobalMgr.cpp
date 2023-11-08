@@ -1041,7 +1041,7 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 3; //3
+    size_t numIVIter = 0; //3
     size_t numIIter = 10; //6
     size_t numVIter = 10; //10
 
@@ -2650,8 +2650,8 @@ void GlobalMgr::genCapConstrs() {
                             double vtxY = e2->tNode()->y() - e2->sNode()->y();
                             pair<double, double> S2, T2;
 
-                            S2 = make_pair((e2->sNode()->x() + pow(10,-5)*vtxX), ( e2->sNode()->y() + pow(10,-5)*vtxY));
-                            T2 = make_pair((e2->tNode()->x() - pow(10,-5)*vtxX), ( e2->tNode()->y() - pow(10,-5)*vtxY));
+                            S2 = make_pair((e2->sNode()->x() + pow(10,-7)*vtxX), ( e2->sNode()->y() + pow(10,-7)*vtxY));
+                            T2 = make_pair((e2->tNode()->x() - pow(10,-7)*vtxX), ( e2->tNode()->y() - pow(10,-7)*vtxY));
 
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
@@ -2678,20 +2678,40 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair(obs->vShape(shapeId)->bPolygonX((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()), obs->vShape(shapeId)->bPolygonY((vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs()));
 
                             
-                            double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
-                            double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                            double vectorX = (T2.first - S2.first);
+                            double vectorY = (T2.second - S2.second);
+                            
                             double normalX = vectorY;
                             double normalY = -vectorX;
                             //new S2
-                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            S2 = make_pair((S2.first + pow(10,-6)*(vectorX) - pow(10,-8)*(normalX)), (S2.second + pow(10,-6)*(vectorY) - pow(10,-8)*(normalY)));
                             //new T2 
-                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
+                            T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
+
+                            if(layId == 2 && S_netId == 2){
+                                    cout << "####OBS EDGE###" <<endl; 
+                                    cout << "VId " << vtxId << " vtxId+1 " <<(vtxId+1) % obs->vShape(shapeId)->numBPolyVtcs() << endl;
+                                    cout << S2.first << " " << S2.second << " ";
+                                    cout << T2.first << " " << T2.second << endl;
+                                    cout << "S EDGE"<<endl;
+                                    cout << e1->sNode()->x() << " " << e1->sNode()->y() << " ";
+                                    cout << e1->tNode()->x() << " " << e1->tNode()->y() << endl;        
+                            
+                             }
                             
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                             S2, T2, ratio, right, width))
+                                             S2, T2, ratio, right, width)){
                                 addSglCapConstr(e1, right.first, ratio.first, width);
+                                if(layId == 2 && S_netId == 2){
+                                    
+                                    cout << "RESULT"<<endl;
+                                    cout << "DIS : " << width << " RL : " << right.first << endl;
+                                
+                            
+                                }
+                            }
 
                         }
                     }
@@ -2707,6 +2727,16 @@ void GlobalMgr::genCapConstrs() {
                             // get the edge coordinates
                             S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
                             T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+
+                            double vectorX = (T2.first - S2.first);
+                            double vectorY = (T2.second - S2.second);
+                            double normalX = vectorY;
+                            double normalY = -vectorX;
+                            //new S2
+                            S2 = make_pair((S2.first + pow(10,-6)*(vectorX) - pow(10,-8)*(normalX)), (S2.second + pow(10,-6)*(vectorY) - pow(10,-8)*(normalY)));
+                            //new T2 
+                            T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
+
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
                                              S2, T2, ratio, right, width))
@@ -2718,6 +2748,16 @@ void GlobalMgr::genCapConstrs() {
                                 // get the edge coordinates
                                 S2 = make_pair(bPolygon->vtxX(vtxId), bPolygon->vtxY(vtxId));
                                 T2 = make_pair(bPolygon->vtxX((vtxId+1) % bPolygon->numVtcs()), bPolygon->vtxY((vtxId+1) % bPolygon->numVtcs()));
+
+                                /*double vectorX = (T2.first - S2.first)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                                double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
+                                double normalX = vectorY;
+                                double normalY = -vectorX;
+                                //new S2
+                                S2 = make_pair((S2.first + pow(10,-5)*(vectorX - normalX)), (S2.second + pow(10,-5)*(vectorY - normalY)));
+                                //new T2 
+                                T2 = make_pair((T2.first + pow(10,-5)*(-vectorX - normalX)), (S2.second + pow(10,-5)*(-vectorY - normalY)));*/
+
                                 if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                                 make_pair(e1->tNode()->x(), e1->tNode()->y()),
                                                 S2, T2, ratio, right, width))

@@ -994,3 +994,181 @@ void DetailedMgr::check() {
         }
     }
 }
+
+//function for current sortint
+bool compareByCurrent(const std::pair<double, int>& a, const std::pair<double, int>& b) {
+    return a.first < b.first;
+}
+
+
+// void DetailedMgr::SmartGrow(size_t layId, size_t netId, int k){
+//     cout << "###########Smart GROW###########" << endl;
+//     //cout << "size of NetGrid after smartgrow : " << _vNetGrid[netId][layId].size() << endl;  
+
+
+//     vector<int> Candidate; // store new node's gridID
+//     size_t InitialSize = _vNetGrid[netId][layId].size();
+
+//     for(size_t gridId = 0; gridId < InitialSize ; gridId++){
+//         Grid* grid = _vNetGrid[netId][layId][gridId];
+//         size_t xId = grid->xId();
+//         size_t yId = grid->yId();
+
+//         if (legal(xId+1, yId)) {
+//             Grid* rGrid = _vGrid[layId][xId+1][yId];
+//             if (!rGrid->occupied()) {
+//                 int GridID = _vNetGrid[netId][layId].size();
+//                 _vNetGrid[netId][layId].push_back(rGrid);
+//                 Candidate.push_back(GridID);
+//                 rGrid->setNetId(netId);
+//                 rGrid->setOccupied(1);
+//             }
+//         }
+//         if (legal(xId-1, yId)) {
+//             Grid* lGrid = _vGrid[layId][xId-1][yId];
+//             if (!lGrid->occupied()) {
+//                 int GridID = _vNetGrid[netId][layId].size();
+//                 _vNetGrid[netId][layId].push_back(lGrid);
+//                 Candidate.push_back(GridID);
+//                 lGrid->setNetId(netId);
+//                 lGrid->setOccupied(1);
+//             }
+//         }
+//         if (legal(xId, yId+1)) {
+//             Grid* uGrid = _vGrid[layId][xId][yId+1];
+//             if (!uGrid->occupied()) {
+//                 int GridID = _vNetGrid[netId][layId].size();
+//                 _vNetGrid[netId][layId].push_back(uGrid);
+//                 Candidate.push_back(GridID);
+//                 uGrid->setNetId(netId);
+//                 uGrid->setOccupied(1);
+                
+//             }
+//         }
+//         if (legal(xId, yId-1)) {
+//             Grid* dGrid = _vGrid[layId][xId][yId-1];
+//             if (!dGrid->occupied()) {
+//                 int GridID = _vNetGrid[netId][layId].size();
+//                 _vNetGrid[netId][layId].push_back(dGrid);
+//                 Candidate.push_back(GridID);
+//                 dGrid->setNetId(netId);
+//                 dGrid->setOccupied(1);
+//             }
+//         }
+//     }
+
+//     //cout << "size of adding neighbor : " << _vNetGrid[netId][layId].size()<<endl;
+
+//     //DO PEEC CURRENT SIMULATION
+//     buildMtx();
+
+//     vector<pair<double,int>> NodeCurrent;
+
+//     for(size_t i = 0; i < Candidate.size();i++){
+//         int GridID = Candidate[i];
+//         Grid* grid = _vNetGrid[netId][layId][GridID];
+//         double current = grid->current(); ///*_vTPortCurr[netId][GridID];*/   /*PEEC GridID CURRENT*/
+//         NodeCurrent.push_back(make_pair(current,GridID));
+//     }
+
+//     //sort 
+//     std::sort(NodeCurrent.begin(), NodeCurrent.end(), compareByCurrent);
+
+//     //only keep k nodes and remove other nodes
+//     int removeNum = NodeCurrent.size() - k;
+//     int alreadyRemove = 0;
+
+//     if(removeNum > 0){
+//         Grid* r = new Grid(0,0);//new a pointer for later remove operation
+//         for(int i = 0; alreadyRemove < removeNum && i < NodeCurrent.size() ; i++){
+//             bool CanRemove = false;
+//             int gridId = NodeCurrent[i].second;
+//             Grid* grid = _vNetGrid[netId][layId][gridId];
+//             for(size_t j = 0; j < grid->numNeighbors();j++ ){
+//                 Grid* nGrid = grid->vNeighbor(j);
+//                 if(nGrid->netId() != grid->netId()){
+//                     CanRemove = true;
+//                     break;
+//                 }
+//             }
+//             if(CanRemove){
+//                 grid->setNetId(-1);//remove it from net
+//                 grid->setOccupied(0);
+//                 _vNetGrid[netId][layId][gridId] = r; //set pointer to r and delete later (avoid changing the size if vNetGrid[netId][layId])
+//                 //cout << "Remove GridID : " << gridId << " ";
+//                 //cout << "Remove current : " << NodeCurrent[i].first<<endl;
+//                 alreadyRemove ++;
+//             }
+            
+//         }
+
+//         //delete removed grid
+//         _vNetGrid[netId][layId].erase(std::remove(_vNetGrid[netId][layId].begin(),_vNetGrid[netId][layId].end(), r), _vNetGrid[netId][layId].end());
+//         delete r;
+//     }
+
+//     //cout << "size of NetGrid after smartgrow : " << _vNetGrid[netId][layId].size() << endl;  
+
+// }
+
+
+// void DetailedMgr::SmartRefine(size_t layId, size_t netId, int k){
+
+//     cout << "###########Smart Refine###########" << endl;
+
+//     buildMtx();
+
+//     vector<pair<double,int>> NodeCurrent;
+
+//     for(size_t gridId = 0; gridId < _vNetGrid[netId][layId].size() ; gridId++){
+//         Grid* grid = _vNetGrid[netId][layId][gridId];
+//         double current = grid->current();/*PEEC GridID CURRENT*/
+//         NodeCurrent.push_back(make_pair(current,gridId));
+//     }
+
+//     //sort 
+//     std::sort(NodeCurrent.begin(), NodeCurrent.end(), compareByCurrent);
+
+//     //remove k nodes
+//     Grid* r = new Grid(0,0);//new a pointer for later remove operation
+//     for(int i = 0; i < k ; i++){
+//         int gridId = NodeCurrent[i].second;
+//         Grid* grid = _vNetGrid[netId][layId][gridId];
+//         grid->setNetId(-1);//remove it from net
+//         grid->setOccupied(0);
+//         _vNetGrid[netId][layId][gridId] = r; //set pointer to r and delete later (avoid changing the size if vNetGrid[netId][layId])
+//         //cout << "Remove GridID : " << gridId << " ";
+//         //cout << "Remove current : " << NodeCurrent[i].first<<endl;
+//     }
+
+//     //delete removed grid
+//     _vNetGrid[netId][layId].erase(std::remove(_vNetGrid[netId][layId].begin(),_vNetGrid[netId][layId].end(), r), _vNetGrid[netId][layId].end());
+//     delete r;
+
+//     //do SmartGrow for k nodes
+//     SmartGrow(layId, netId, k);
+// }
+
+// void DetailedMgr::SPROUT(){
+//     //set one target impedance/area 之後是根據net/layer不同給target，若是全部層的net一起跑，需要改上面smartGROW的寫法
+//     vector<vector<double>> target = {{600,600,600,300},{600,600,600,600},{400,400,400,400}}; // target[netId][layId]
+
+//     //for loop for each layer and net
+//     for(size_t netId = 0; netId < _vNetGrid.size(); ++netId){
+//         for(size_t layId = 0; layId < _vNetGrid[netId].size();++layId){
+//             //SmartGrow stage
+//             int Area = _vNetGrid[netId][layId].size(); // number of grid is area but this might have to change to impedance
+//             int k = 150;
+        
+//             while(Area < target[netId][layId]){
+//                 SmartGrow(layId,netId,k);
+//                 k = (int)(k/1.25);//隨便設一個遞減函數
+//                 Area = _vNetGrid[netId][layId].size();
+//             }
+
+//             //Refine stage
+//             ///int r = 20;
+//             //SmartRefine(layId,netId,r);
+//         } 
+//     }
+// }

@@ -97,6 +97,10 @@ class DetailedMgr {
         void buildMtx();
         double getResistance(Grid*, Grid*);
         void check();
+        void SmartGrow(size_t layId, size_t netId, int k);
+        void SmartRefine(size_t layId, size_t netId, int k);
+        void SPROUT();
+        
     private:
         vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
         void clearNet(size_t layId, size_t netId);
