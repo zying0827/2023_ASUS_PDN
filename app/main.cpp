@@ -129,7 +129,7 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    // preMgr.plotBoundBox();
+    preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -162,16 +162,16 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
     
-    DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    detailedMgr.initGridMap();
-    detailedMgr.check();
+    // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    // detailedMgr.initGridMap();
+    // detailedMgr.check();
+    // // detailedMgr.plotGridMap();
+    // // detailedMgr.naiveAStar();
+    // detailedMgr.negoAStar();
+    // detailedMgr.check();
     // detailedMgr.plotGridMap();
-    // detailedMgr.naiveAStar();
-    detailedMgr.negoAStar();
-    detailedMgr.check();
-    detailedMgr.plotGridMap();
     // detailedMgr.addPortVia();
     // detailedMgr.check();
     // // // detailedMgr.plotVia();
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
     // detailedMgr.plotGridMapVoltage();
     // // detailedMgr.plotGridMapCurrent();
 
-    // globalMgr.plotDB();
+    globalMgr.plotDB();
 
 
     // // mgr.genRGraph();

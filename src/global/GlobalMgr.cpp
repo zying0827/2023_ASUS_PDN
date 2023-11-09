@@ -1041,7 +1041,7 @@ void GlobalMgr::voltCurrOpt() {
     vector<double> vDiffLastOverlap;
     double PRatio = 10.0;
     double DRatio = 1.0;
-    size_t numIVIter = 3; //3
+    size_t numIVIter = 0; //3
     size_t numIIter = 10; //6
     size_t numVIter = 10; //10
 
@@ -1920,6 +1920,27 @@ void GlobalMgr::swapSTbyVolt() {
         OASGEdge* edge = _rGraph.vOASGEdge(edgeId);
         if (edge->sNode()->voltage() < edge->tNode()->voltage()) {
             _rGraph.swapST(edge);
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++capId) {
+                if (_vCapConstr[capId].e1 == edge) {
+                    _vCapConstr[capId].right1 = ! _vCapConstr[capId].right1;
+                }
+                if (_vCapConstr[capId].e2 == edge) {
+                    _vCapConstr[capId].right2 = ! _vCapConstr[capId].right2;
+                }
+            }
+            for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
+                if (_vSglCapConstr[sglCapId].e1 == edge) {
+                    _vSglCapConstr[sglCapId].right1 = ! _vSglCapConstr[sglCapId].right1;
+                }
+            }
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++netCapId) {
+                if (_vNetCapConstr[netCapId].e1 == edge) {
+                    _vNetCapConstr[netCapId].right1 = ! _vNetCapConstr[netCapId].right1;
+                }
+                if (_vNetCapConstr[netCapId].e2 == edge) {
+                    _vNetCapConstr[netCapId].right2 = ! _vNetCapConstr[netCapId].right2;
+                }
+            }
         }
     }
 }
@@ -2682,10 +2703,14 @@ void GlobalMgr::genCapConstrs() {
                             double vectorY = (T2.second - S2.second)/sqrt(pow(T2.first - S2.first,2)+pow(T2.second - S2.second,2));
                             double normalX = vectorY;
                             double normalY = -vectorX;
+                            // //new S2
+                            // S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            // //new T2 
+                            // T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
                             //new S2
-                            S2 = make_pair((S2.first - pow(10,-5)*(-vectorX +  normalX)), (S2.second - pow(10,-5)*(-vectorY +  normalY)));
+                            S2 = make_pair((S2.first + pow(10,-6)*(vectorX) - pow(10,-8)*(normalX)), (S2.second + pow(10,-6)*(vectorY) - pow(10,-8)*(normalY)));
                             //new T2 
-                            T2 = make_pair((T2.first - pow(10,-5)*(vectorX +  normalX)), (S2.second - pow(10,-5)*(vectorY +  normalY)));
+                            T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
                             
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
