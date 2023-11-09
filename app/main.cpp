@@ -134,7 +134,7 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    // preMgr.plotBoundBox();
+    preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -171,30 +171,250 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
     
-    DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    detailedMgr.initGridMap();
-    detailedMgr.check();
-    // detailedMgr.plotGridMap();
-    detailedMgr.naiveAStar();
-    detailedMgr.check();
-    // detailedMgr.plotGridMap();
-    detailedMgr.addPortVia();
-    detailedMgr.check();
-    // // detailedMgr.plotVia();
-    detailedMgr.addViaGrid();
-    detailedMgr.check();
+    
 
-    // printf("\n==================== print ===================\n");
-    // detailedMgr.print();
+    // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    // detailedMgr.initGridMap();
+    // detailedMgr.check();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.naiveAStar();
+    // detailedMgr.check();
+    // // detailedMgr.plotGridMap();
+    // detailedMgr.addPortVia();
+    // detailedMgr.check();
+    // // // detailedMgr.plotVia();
+    // detailedMgr.addViaGrid();
+    // detailedMgr.check();
 
-    // printf("\n==================== buildMtx ===================\n");
-    detailedMgr.buildMtx();
-    detailedMgr.plotGridMapVoltage();
-    // detailedMgr.plotGridMapCurrent();
+    // // printf("\n==================== print ===================\n");
+    // // detailedMgr.print();
+
+    // // printf("\n==================== buildMtx ===================\n");
+    // detailedMgr.buildMtx();
+    // detailedMgr.plotGridMapVoltage();
+    // // detailedMgr.plotGridMapCurrent();
 
     globalMgr.plotDB();
+
+    //羅：匯出3個Vector of double
+    //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
+    string result_dir1 = "/exp/output/tuningRes1.txt";
+    string result_dir2 = "/exp/output/tuningRes2.txt";
+    string result_dir3 = "/exp/output/tuningRes3.txt";
+    string result_dir4 = "/exp/output/tuningRes4.txt";
+
+
+    string tuningOutputFile_dir1 = root_dir + result_dir1;
+    string tuningOutputFile_dir2 = root_dir + result_dir2;
+    string tuningOutputFile_dir3 = root_dir + result_dir3;
+    string tuningOutputFile_dir4 = root_dir + result_dir4;
+
+    std::ofstream tuningOutput_file1(tuningOutputFile_dir1);
+    std::ofstream tuningOutput_file2(tuningOutputFile_dir2);
+    std::ofstream tuningOutput_file3(tuningOutputFile_dir3);
+    std::ofstream tuningOutput_file4(tuningOutputFile_dir4);
+
+    vector<int> vXI;
+    vector<double> vYI;
+    vector<int> vXV;
+    vector<double> vYV;
+
+    // 遍历向量并将每个 double 写入文件
+    //每個資料的第一行是xI , 再來是yI, xV, yV
+    int indexIV = 0;
+    int IVnum = numIIter + numVIter;
+
+    //1
+    for (const double& value : globalMgr._vArea) {
+        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+            vXI.push_back(indexIV);
+            // cout << "Now we Are Dealing I" <<endl;
+            // cout << indexIV << endl;
+            // cout << value << endl;
+            vYI.push_back(value);
+        }
+        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+            // cout << "Now we Are Dealing V" <<endl;
+            vXV.push_back(indexIV);
+            vYV.push_back(value);
+            // cout << indexIV << endl;
+            // cout << value << endl;
+        }
+        ++ indexIV;
+    }
+    for (const double& element : vXI) {
+        tuningOutput_file1 << element << " ";
+    }
+    tuningOutput_file1 << "\n";
+    for (const double& element : vYI) {
+        tuningOutput_file1 << element << " ";
+    }
+    tuningOutput_file1 << "\n";
+    for (const double& element : vXV) {
+        tuningOutput_file1 << element << " ";
+    }
+    tuningOutput_file1 << "\n";
+    for (const double& element : vYV) {
+        tuningOutput_file1 << element << " ";
+    }
+    tuningOutput_file1 << "\n"; 
+
+    cout << "IV num is" << IVnum << endl;
+    cout << " numIIter is " << numIIter << endl;
+    indexIV = 0;
+    vXI.clear();
+    vYI.clear();
+    vXV.clear();
+    vYV.clear();
+
+    //2
+     for (const double& value : globalMgr._vOverlap) {
+        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+            vXI.push_back(indexIV);
+            // cout << "Now we Are Dealing I" <<endl;
+            // cout << indexIV << endl;
+            // cout << value << endl;
+            vYI.push_back(value);
+        }
+        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+            // cout << "Now we Are Dealing V" <<endl;
+            vXV.push_back(indexIV);
+            vYV.push_back(value);
+            // cout << indexIV << endl;
+            // cout << value << endl;
+        }
+        ++ indexIV;
+    }
+    for (const double& element : vXI) {
+        tuningOutput_file2 << element << " ";
+    }
+    tuningOutput_file2 << "\n";
+    for (const double& element : vYI) {
+        tuningOutput_file2 << element << " ";
+    }
+    tuningOutput_file2 << "\n";
+    for (const double& element : vXV) {
+        tuningOutput_file2 << element << " ";
+    }
+    tuningOutput_file2 << "\n";
+    for (const double& element : vYV) {
+        tuningOutput_file2 << element << " ";
+    }
+    tuningOutput_file2 << "\n"; 
+
+    // cout << "IV num is" << IVnum << endl;
+    // cout << " numIIter is " << numIIter << endl;
+    indexIV = 0;
+    vXI.clear();
+    vYI.clear();
+    vXV.clear();
+    vYV.clear();
+
+    //3
+     for (const double& value : globalMgr._vSameNetOverlap) {
+        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+            vXI.push_back(indexIV);
+            // cout << "Now we Are Dealing I" <<endl;
+            // cout << indexIV << endl;
+            // cout << value << endl;
+            vYI.push_back(value);
+        }
+        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+            // cout << "Now we Are Dealing V" <<endl;
+            vXV.push_back(indexIV);
+            vYV.push_back(value);
+            // cout << indexIV << endl;
+            // cout << value << endl;
+        }
+        ++ indexIV;
+    }
+    for (const double& element : vXI) {
+        tuningOutput_file3 << element << " ";
+    }
+    tuningOutput_file3 << "\n";
+    for (const double& element : vYI) {
+        tuningOutput_file3 << element << " ";
+    }
+    tuningOutput_file3 << "\n";
+    for (const double& element : vXV) {
+        tuningOutput_file3 << element << " ";
+    }
+    tuningOutput_file3 << "\n";
+    for (const double& element : vYV) {
+        tuningOutput_file3 << element << " ";
+    }
+    tuningOutput_file3 << "\n"; 
+
+    // cout << "IV num is" << IVnum << endl;
+    // cout << " numIIter is " << numIIter << endl;
+    indexIV = 0;
+    vXI.clear();
+    vYI.clear();
+    vXV.clear();
+    vYV.clear();
+    
+
+    //4
+     for (const double& value : globalMgr._vViaArea) {
+        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+            vXI.push_back(indexIV);
+            // cout << "Now we Are Dealing I" <<endl;
+            // cout << indexIV << endl;
+            // cout << value << endl;
+            vYI.push_back(value);
+        }
+        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+            // cout << "Now we Are Dealing V" <<endl;
+            vXV.push_back(indexIV);
+            vYV.push_back(value);
+            // cout << indexIV << endl;
+            // cout << value << endl;
+        }
+        ++ indexIV;
+    }
+    for (const double& element : vXI) {
+        tuningOutput_file4 << element << " ";
+    }
+    tuningOutput_file4 << "\n";
+    for (const double& element : vYI) {
+        tuningOutput_file4 << element << " ";
+    }
+    tuningOutput_file4 << "\n";
+    for (const double& element : vXV) {
+        tuningOutput_file4 << element << " ";
+    }
+    tuningOutput_file4 << "\n";
+    for (const double& element : vYV) {
+        tuningOutput_file4 << element << " ";
+    }
+    tuningOutput_file4 << "\n"; 
+
+    // cout << "IV num is" << IVnum << endl;
+    // cout << " numIIter is " << numIIter << endl;
+    indexIV = 0;
+    vXI.clear();
+    vYI.clear();
+    vXV.clear();
+    vYV.clear();
+
+
+    // for (const double& value : globalMgr._vViaArea) {
+    //     tuningOutput_file << value << " " ; // 写入每个 double，并在每行后添加换行符
+    // }
+    // tuningOutput_file << "\n";
+
+    // // 关闭文件流
+    // tuningOutput_file.close();
+
+    // std::cout << "数据已成功写入到 tuningRes.txt 文件." << std::endl;
+    
+
+    //#################################
+    //羅
+    //
+
 
 
     // // mgr.genRGraph();
