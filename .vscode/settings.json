@@ -52,7 +52,9 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "complex": "cpp",
+        "list": "cpp"
     },
     "cmake.debugConfig": {
         "args": [
