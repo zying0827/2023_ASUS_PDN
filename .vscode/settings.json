@@ -52,14 +52,16 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "complex": "cpp",
+        "list": "cpp"
     },
     "cmake.debugConfig": {
         "args": [
             "${workspaceFolder}/exp/input/ST_Components_1.txt",
             "${workspaceFolder}/exp/input/Example_Project_1.txt",
             "${workspaceFolder}/exp/input/obstacle.txt",
-            "${workspaceFolder}/exp/output/astar_110803.html"
+            "${workspaceFolder}/exp/output/voltAssign_110901.html"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",
             // "${workspaceFolder}/output/iccad2022-problem-b/case4.txt",
             // "--ntuplace3",

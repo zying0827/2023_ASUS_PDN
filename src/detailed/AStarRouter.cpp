@@ -38,7 +38,7 @@ bool AStarRouter::route() {
             // cerr << ", lineDist = " << newLineDist;
             newCongest = marginCongestCost(xId, yId, dir) + orgNode->congest();
             // cerr << ", marginCongestCost = " << marginCongestCost(xId, yId, dir);
-            newCost = _distWeight*(newCurDist + newEstDist + 0*newLineDist) + (1-_distWeight)*newCongest;
+            newCost = _distWeight*(newCurDist + newEstDist) + _cLineDistWeight*newLineDist + (1-_distWeight-_cLineDistWeight)*newCongest;
             if (stepNode->status() == GNodeStatus::Init) {
                 // cerr << stepNode << ": Init" << endl;
                 stepNode->setCurDist(newCurDist);
@@ -263,7 +263,9 @@ void AStarRouter::backTraceNoPad() {
     // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
     _exactWidth = ceil(_lbWidth/_gridWidth);
     int halfWidth = ceil(0.5 * _lbWidth / _gridWidth);
-    // cerr << "_length = " << _lbLength << ", _exactLength = " << _exactLength << " _width = " << _lbWidth << ", _exactWidth = " << _exactWidth << endl;
+    double lineLength = pathLength(3, 0) * _gridWidth;
+    cerr << "lbLength = " << _lbLength << ", _exactLength*gridWidth = " << _exactLength*_gridWidth << ", lineLength = " << lineLength <<  endl;
+    cerr << "lbWidth = " << _lbWidth << ", _exactWidth*gridWidth = " << _exactWidth*_gridWidth << endl;
     size_t sPathId = _path.size()-1;
     size_t tPathId = 0;
     bool TEncloseS = false;
@@ -586,7 +588,7 @@ double AStarRouter::pathLength(int threshold, int method) {
         bool turn = false;
         GNode* node = _vGNode[_tPos.first][_tPos.second];
         //一開始的Node就是從Target開始找，所以直接用_tPos，也就是target Pos。
-        cout << "Coordinate of this pt -> X =" <<   _tPos.first << "Y = " << _tPos.second << endl;
+        // cout << "Coordinate of this pt -> X =" <<   _tPos.first << "Y = " << _tPos.second << endl;
         
         bool firstStepStraight = false;
         Direction dir, prevDir;
@@ -644,8 +646,8 @@ double AStarRouter::pathLength(int threshold, int method) {
             Grid* grid = _path[pGridId];
         }
         cout << endl;
-        cout << "Grid Count is  " << gridCount << endl;
-        cout << "Path Length is  " << pathLength << endl;
+        // cout << "Grid Count is  " << gridCount << endl;
+        // cout << "Path Length is  " << pathLength << endl;
 
         // return gridCount;
         return pathLength;

@@ -67,6 +67,17 @@ class GlobalMgr {
         void plotCurrentPaths();
         void checkFeasible(bool currentBased);
         void checkVoltDemandFeasible();
+
+        //羅：Read from main
+        size_t numIVIter; //3
+        size_t numIIter; //6
+        size_t numVIter; //10
+
+        //羅：1109把它丟到public
+        vector<double> _vArea;  // record the plane area of each iteration in voltCurrOpt
+        vector<double> _vViaArea;
+        vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
+        vector<double> _vSameNetOverlap;
     private:
         Trace* edge2Trace(OASGEdge* edge);
         Segment* edge2Segment(OASGEdge* edge);
@@ -76,14 +87,13 @@ class GlobalMgr {
         DB& _db;
         SVGPlot& _plot;
         RGraph _rGraph;
-        vector<double> _vArea;  // record the plane area of each iteration in voltCurrOpt
-        vector<double> _vViaArea;
-        vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
-        vector<double> _vSameNetOverlap;
+        
         vector<CapConstr> _vCapConstr;
         vector<SingleCapConstr> _vSglCapConstr;
         vector<CapConstr> _vNetCapConstr;
         vector< vector< double > > _vUBViaArea;     // the upper bound of a via area, index = [netId] [vEdgeId]
+
+        
 };
 
 #endif
