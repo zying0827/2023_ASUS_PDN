@@ -13,7 +13,6 @@ class Shape {
         // double ctrY() const { return _center.second; }
         virtual double ctrX() { double ctrX; return ctrX; }
         virtual double ctrY() { double ctrY; return ctrY; }
-        virtual double radius() { double radius; return radius; }
         virtual void print() {}
         virtual void plot(size_t colorId, size_t layId) {}
         virtual double maxX() { double maxX; return maxX; }

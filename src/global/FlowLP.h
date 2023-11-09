@@ -13,7 +13,7 @@ class FlowLP {
         FlowLP(DB& db, RGraph& rGraph);
         ~FlowLP() {}
 
-        void setObjective(double areaWeight, double viaWeight);
+        void setObjective(double areaWeight, double viaWeight, double diffWeight);
         void setConserveConstraints(bool useDemandCurrent);
         // width unit = meter
         // void addSViaAreaConstraints(size_t netId, double area);
@@ -39,6 +39,8 @@ class FlowLP {
         double overlap() const { return _overlap; }
         vector<double> vOverlap() { return _vOverlap; }
         double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
+        double sameNetOverlap() const { return _sameNetOverlap; }
+        double vSameNetOverlap(size_t ovId) const { return _vSameNetOverlap[ovId]; }
 
     private:
         DB& _db;
@@ -49,6 +51,7 @@ class FlowLP {
         // gurobi variables
         GRBVar*** _vPlaneLeftFlow;   // flows on the left of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
         GRBVar*** _vPlaneRightFlow;  // flows on the right of horizontal OASGEdges, index = [netId] [layId] [pEdgeId]
+        GRBVar*** _vPlaneDiffFlow;   // auxiliary variables representing abs(leftFlow - rightFlow), index = [netId] [layId] [pEdgeId]
         GRBVar*** _vViaFlow;         // flows on vertical OASGEdges, index = [netId] [layPairId] [vEdgeId]
         GRBVar**  _vMaxViaCost;      // the maximum flow on an OASGEdge, index = [netId] [vEdgeId]
         int _numCapConstrs;          // number of capacity constraints
@@ -63,6 +66,8 @@ class FlowLP {
         double _viaArea;
         double _overlap;    // the resulting overlapped width, assigned in collectRelaxedResult
         vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
+        double _sameNetOverlap;
+        vector<double> _vSameNetOverlap;
 };
 
 #endif

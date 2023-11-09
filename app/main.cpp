@@ -132,7 +132,7 @@ int main(int argc, char* argv[]){
 
 
     // detailedMgr.plotGridMapVoltage();
-    detailedMgr.plotGridMapCurrent();
+    // detailedMgr.plotGridMapCurrent();
 
     globalMgr.plotDB();
 

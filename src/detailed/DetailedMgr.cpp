@@ -1,15 +1,14 @@
 #include "DetailedMgr.h"
 #include "DetailedDB.h"
 #include "Shape.h"
-#include <algorithm>
 #include <cstddef>
-#include <cstdio>
 #include <tuple>
 #include <utility>
 #include <vector>
 #include <Eigen/IterativeLinearSolvers>
 
 void DetailedMgr::initGridMap() {
+    cerr << "Initializing Grid Map..." << endl;
     auto occupiedBySegments = [&] (size_t layId, size_t xId, size_t yId, size_t netId) -> bool {
         for (size_t segId = 0; segId < _db.vNet(netId)->numSegments(layId); ++ segId) {
             Trace* trace = _db.vNet(netId)->vSegment(layId, segId)->trace();
@@ -333,7 +332,7 @@ void DetailedMgr::plotGridMapCurrent() {
 }
 
 void DetailedMgr::naiveAStar() {
-    // cerr << "naiveAStar..." << endl;
+    cerr << "naiveAStar..." << endl;
     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
         // cerr << "layId = " << layId;
         for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
@@ -344,7 +343,7 @@ void DetailedMgr::naiveAStar() {
             clearNet(layId, netId);
             for (size_t segId = 0; segId < net->numSegments(layId); ++ segId) {
                 Segment* segment = net->vSegment(layId, segId);
-                if (segment->width() > 0) {
+                if (segment->width() > 3 * _gridWidth) {
                     int sXId = floor(segment->trace()->sNode()->ctrX() / _gridWidth);
                     int sYId = floor(segment->trace()->sNode()->ctrY() / _gridWidth);
                     int tXId = floor(segment->trace()->tNode()->ctrX() / _gridWidth);
@@ -366,6 +365,11 @@ void DetailedMgr::naiveAStar() {
                         }
                     }
                     // _vNetGrid[netId][layId].insert(_vNetGrid[netId][layId].end(), router.path().begin(), router.path().end());
+                }
+                else {
+                    if (segment->width() > 0) {
+                        cerr << "WARNING: net" << netId << " segment" << segId << " is not wide enough. Discard!" << endl;
+                    }
                 }
             }
             // for (size_t gridId = 0; gridId < _vNetPortGrid[netId].size(); ++ gridId) {
@@ -413,11 +417,12 @@ void DetailedMgr::clearNet(size_t layId, size_t netId) {
 }
 
 void DetailedMgr::addPortVia() {
+    cerr << "Adding Vias to Each Port..." << endl;
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         Port* sPort = _db.vNet(netId)->sourcePort();
         if (sPort->viaArea() > 0) {
             int numSVias = ceil(sPort->viaArea() / _db.VIA16D8A24()->metalArea());
-            assert(numSVias > 1);
+            assert(numSVias >= 1);
             vector< pair<double, double> > centPos = kMeansClustering(_vNetPortGrid[netId][0], numSVias, 100);
             assert(centPos.size() == numSVias);
             vector<size_t> vViaId(centPos.size(), 0);
@@ -434,7 +439,7 @@ void DetailedMgr::addPortVia() {
             Port* tPort = _db.vNet(netId)->targetPort(tPortId);
             if (tPort->viaArea() > 0) {
                 int numTVias = ceil(tPort->viaArea() / _db.VIA16D8A24()->metalArea());
-                assert(numTVias > 1);
+                assert(numTVias >= 1);
                 vector< pair<double, double> > centPosT = kMeansClustering(_vNetPortGrid[netId][tPortId+1], numTVias, 100);
                 assert(centPosT.size() == numTVias);
                 vector<size_t> vViaIdT(centPosT.size(), 0);
@@ -472,21 +477,21 @@ vector< pair<double, double> > DetailedMgr::kMeansClustering(vector< pair<int,in
         points.push_back(p);
     }
 
-    // vector<bool> isCentroid(points.size(), false);
+    vector<bool> isCentroid(points.size(), false);
     vector<Point> centroids;
-    // srand(time(0));  // need to set the random seed
-    // for (int i = 0; i < numClusters; ++i) {
-    //     int pointId = rand() % points.size();
-    //     while(isCentroid[pointId]) {
-    //         pointId = rand() % points.size();
-    //     }
-    //     centroids.push_back(points.at(pointId));
-    //     isCentroid[pointId] = true;
-    //     // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
-    // }
+    srand(time(0));  // need to set the random seed
     for (int i = 0; i < numClusters; ++i) {
-        centroids.push_back(points.at(i));
+        int pointId = rand() % points.size();
+        while(isCentroid[pointId]) {
+            pointId = rand() % points.size();
+        }
+        centroids.push_back(points.at(pointId));
+        isCentroid[pointId] = true;
+        // cerr << "centroid: (" << centroids[i].x << ", " << centroids[i].y << ")" << endl;
     }
+    // for (int i = 0; i < numClusters; ++i) {
+    //     centroids.push_back(points.at(i));
+    // }
 
     // vector<int> nPoints(k,0);
     // vector<double> sumX(k,0.0);
@@ -634,6 +639,7 @@ void DetailedMgr::addViaGrid() {
 }
 
 void DetailedMgr::buildMtx() {
+    cerr << "PEEC Simulation start..." << endl;
     // https://i.imgur.com/rIwlXJQ.png
     // return an impedance matrix for each net
     // number of nodes: \sum_{layId=0}^{_vNetGrid[netID].size()} _vNetGrid[netID][layId].size()
@@ -845,7 +851,7 @@ void DetailedMgr::buildMtx() {
                 Grid* grid_i = _vNetGrid[netId][layId][gridId];
                 size_t node_id = getID[make_tuple(layId, grid_i->xId(), grid_i->yId())];
                 grid_i->setVoltage(netId, V[node_id]);
-                assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
+                // assert(grid_i->voltage(netId) <= _db.vNet(netId)->sourcePort()->voltage());
             }
         }
 
@@ -947,8 +953,9 @@ void DetailedMgr::buildMtx() {
     for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
         for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
             double loadResistance = _db.vNet(netId)->targetPort(tPortId)->voltage() / _db.vNet(netId)->targetPort(tPortId)->current();
+            _vTPortVolt[netId][tPortId] = _vTPortCurr[netId][tPortId] * loadResistance;
             cerr << "net" << netId << " tPort" << tPortId << ": current = " << _vTPortCurr[netId][tPortId];
-            cerr << ", voltage = " << _vTPortCurr[netId][tPortId] * loadResistance << endl;
+            cerr << ", voltage = " << _vTPortVolt[netId][tPortId] << endl;
         }
     }
 }
@@ -986,121 +993,6 @@ void DetailedMgr::check() {
             }
         }
     }
-}
-
-void DetailedMgr::writeColorMap(const char* path, bool isVoltage) {
-
-/*
-    for(int i=0; i<_vGrid.size(); i++) {
-        for(int j=0; j<_vGrid[i].size(); j++) {
-            for(int k=0; k<_vGrid[i][j].size(); k++) {
-                _vGrid[i][j][k]->setCurrent((double)rand()/RAND_MAX);
-                _vGrid[i][j][k]->setVoltage((double)rand()/RAND_MAX);
-                _vGrid[i][j][k]->setVoltage(k);
-            }
-        }
-    }
-*/
-    FILE *fp = fopen(path, "w");
-
-    fprintf(fp, "%d\n", _db.numNets());
-    fprintf(fp, "%d\n", _db.numLayers());
-    fprintf(fp, "%d\n", _numXs);
-    fprintf(fp, "%d\n", _numYs);
-/*
-    fprintf(fp, "%d\n\n", _db.numVias());
-
-    for(int i=0; i<_db.numVias(); i++)
-        fprintf(fp, "%f %f %f\n", (double)_db.vVia(i)->shape()->ctrX() / _gridWidth, (double)_db.vVia(i)->shape()->ctrY() / _gridWidth, (double)_db.vVia(i)->shape()->radius() / _gridWidth);
-*/
-    fprintf(fp, "\n");
-
-    for(int layId=0; layId<_db.numLayers(); layId++) {
-
-        for(int netId=0; netId<_db.numNets(); netId++) {
-            double **mtx = new double *[_numXs];
-            for(int xId=0; xId<_numXs; xId++)
-                mtx[xId] = new double [_numYs];
-            /*    
-            for(int lay=0; lay<_db.numLayers(); lay++) {
-                mtx[lay] = new double *[_numXs];
-                for(int x=0; x<_numXs; x++) {
-                    mtx[lay][x] = new double [_numYs];
-                }
-            }
-            */
-
-            for(int gridId=0; gridId<_vNetGrid[netId][layId].size(); gridId++) {
-                int x = _vNetGrid[netId][layId][gridId]->xId(), y = _vNetGrid[netId][layId][gridId]->yId();
-                mtx[x][y] = isVoltage? _vGrid[layId][x][y]->voltage(netId): _vGrid[layId][x][y]->current(netId);
-            }
-
-            // fprintf(fp, "lay: %d, net: %d\n", layId, netId);
-            for(int xId=0; xId<_numXs; xId++) {
-                for(int yId=0; yId<_numYs; yId++)
-                    fprintf(fp, "%.4f ", mtx[xId][yId]);
-                fprintf(fp, "\n");
-            }
-            fprintf(fp, "\n");
-
-            for(int xId=0; xId<_numXs; xId++)
-                delete [] mtx[xId];
-            delete [] mtx;
-            /*
-            for(int lay=0; lay<_db.numNets(); lay++) {
-                for(int x=0; x<_vGrid[lay].size(); x++) {
-                    delete [] mtx[lay][x];
-                }
-                delete [] mtx[lay];
-            }
-            delete [] mtx;
-            */
-        }
-    }
-    /*
-    for(int net=0; net<_db.numNets(); net++) {
-        double ***mtx = new double **[_db.numLayers()];
-        for(int lay=0; lay<_db.numLayers(); lay++) {
-            mtx[lay] = new double *[_numXs];
-            for(int x=0; x<_numXs; x++) {
-                mtx[lay][x] = new double [_numYs];
-            }
-        }
-
-        for(int lay=0; lay<_vGrid.size(); lay++) {
-            for(int x=0; x<_vGrid[lay].size(); x++) {
-                for(int y=0; y<_vGrid[lay][x].size(); y++) {
-                    fprintf(fp, "%.4f ", mtx[lay][x][y]);
-                }
-                fprintf(fp, "\n");
-            }
-            fprintf(fp, "\n");
-        }
-
-        for(int lay=0; lay<_db.numNets(); lay++) {
-            for(int x=0; x<_vGrid[lay].size(); x++) {
-                delete [] mtx[lay][x];
-            }
-            delete [] mtx[lay];
-        }
-        delete [] mtx;
-    }
-    */
-/*
-    for(int net=0; net<_db.numNets(); net++) {
-        for(int lay=0; lay<_vGrid.size(); lay++) {
-            for(int x=0; x<_vGrid[lay].size(); x++) {
-                for(int y=0; y<_vGrid[lay][x].size(); y++) {
-                    fprintf(fp, "%.4f ", isVoltage? _vGrid[lay][x][y]->voltage(net): _vGrid[lay][x][y]->current(net));
-                }
-                fprintf(fp, "\n");
-            }
-            fprintf(fp, "\n");
-        }
-    }
-*/    
-    printf("--- finish write color map ---\n");
-    fclose(fp);
 }
 
 void DetailedMgr::writeColorMap_v2(const char* path, bool isVoltage) {

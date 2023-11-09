@@ -97,7 +97,6 @@ class DetailedMgr {
         void buildMtx();
         double getResistance(Grid*, Grid*);
         void check();
-        void writeColorMap(const char*, bool);
         void writeColorMap_v2(const char*, bool);
     private:
         vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
