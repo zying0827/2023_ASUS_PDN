@@ -1,6 +1,7 @@
 /*
 	https://www.cs.cmu.edu/%7Equake/triangle.html
-	
+
+ 	0. need triangle exacutable
 	1. store polygon vertices in pointList
 	2. call triangulate(pointList, numTri), return vector<Triangle> (ps. real # of triangle >= numTri)
 	3. return set of triangles in counter-clockwise
