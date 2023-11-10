@@ -121,7 +121,7 @@ int main() {
     
     
     int nTri = 10;
-    cin>> nTri;
+    // cin>> nTri;
     vector<Triangle> triList = triangulate(pointList, nTri);
 
 
