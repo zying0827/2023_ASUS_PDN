@@ -167,7 +167,7 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    globalMgr.plotCurrentPaths();
+    //globalMgr.plotCurrentPaths();
     
      DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
      detailedMgr.initGridMap();
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]){
     // // detailedMgr.naiveAStar();
      detailedMgr.negoAStar();
      detailedMgr.check();
-     detailedMgr.plotGridMap();
+    //detailedMgr.plotGridMap();
      detailedMgr.addPortVia();
      detailedMgr.check();
     // // // detailedMgr.plotVia();
@@ -187,12 +187,13 @@ int main(int argc, char* argv[]){
     // // detailedMgr.print();
 
     // // printf("\n==================== buildMtx ===================\n");
-     detailedMgr.buildMtx();
-     detailedMgr.plotGridMap();
+    detailedMgr.buildMtx();
+    detailedMgr.SPROUT();
+    //detailedMgr.plotGridMap();
     // detailedMgr.plotGridMapVoltage();
-    // // detailedMgr.plotGridMapCurrent();
+    detailedMgr.plotGridMapCurrent();
 
-    //globalMgr.plotDB();
+    globalMgr.plotDB();
 
     //羅：匯出3個Vector of double
     //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea

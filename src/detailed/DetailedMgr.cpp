@@ -1341,8 +1341,8 @@ void DetailedMgr::buildSingleNetMtx(size_t netId) {
                         } else {
                             current += abs(grid_i->voltage(netId)) /(1.0/via_condutance_up + 1.0/loadConductance);
                             _vTPortCurr[netId][tPortId] += abs(grid_i->voltage(netId)) /(1.0/via_condutance_up + 1.0/loadConductance);
-                            cerr << "net" << netId << ", tPort" << tPortId << ": voltage = " << grid_i->voltage(netId);
-                            cerr << ", current = " << abs(grid_i->voltage(netId)) /(1.0/via_condutance_up + 1.0/loadConductance) << endl;
+                            //cerr << "net" << netId << ", tPort" << tPortId << ": voltage = " << grid_i->voltage(netId);
+                            //cerr << ", current = " << abs(grid_i->voltage(netId)) /(1.0/via_condutance_up + 1.0/loadConductance) << endl;
                         }
                         if (layId < _db.numLayers()-1) {
                             current += abs(grid_i->voltage(netId) - _vGrid[layId+1][xId][yId]->voltage(netId)) * via_condutance_up;
@@ -1404,6 +1404,7 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                     _vNetGrid[netId][layId].push_back(rGrid);
                     Candidate.push_back(make_pair(layId,GridID));
                     rGrid->addNet(netId);
+                    rGrid->incCongestCur();
                 }
             }
             if (legal(xId-1, yId)) {
@@ -1413,6 +1414,7 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                     _vNetGrid[netId][layId].push_back(lGrid);
                     Candidate.push_back(make_pair(layId,GridID));
                     lGrid->addNet(netId);
+                    lGrid->incCongestCur();
                 }
             }
             if (legal(xId, yId+1)) {
@@ -1422,6 +1424,7 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                     _vNetGrid[netId][layId].push_back(uGrid);
                     Candidate.push_back(make_pair(layId,GridID));
                     uGrid->addNet(netId);
+                    uGrid->incCongestCur();
                 }
             }
             if (legal(xId, yId-1)) {
@@ -1431,19 +1434,18 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                     _vNetGrid[netId][layId].push_back(dGrid);
                     Candidate.push_back(make_pair(layId,GridID));
                     dGrid->addNet(netId);
+                    dGrid->incCongestCur();
                 }
             }
         }
     }
     
     //cout << "size of adding neighbor : " << _vNetGrid[netId][layId].size()<<endl;
-    std::cout << "HI FIRST"<<endl;
 
     //DO PEEC CURRENT SIMULATION
-    buildMtx();
-    //buildSingleNetMtx(netId);
-
-    std::cout << "HI SECOND"<<endl;
+    check();
+    //buildMtx();
+    buildSingleNetMtx(netId);
 
     vector<tuple<double,int,int>> NodeCurrent;
 
@@ -1455,12 +1457,10 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
         NodeCurrent.push_back(make_tuple(current,LayID,GridID));
     }
 
-    std::cout << "HI THIRD"<<endl;
 
     //sort 
     std::sort(NodeCurrent.begin(), NodeCurrent.end(), compareByCurrent);
 
-    std::cout << "HI FORTH"<<endl;
 
     //only keep k nodes and remove other nodes
     int removeNum = NodeCurrent.size() - k;
@@ -1482,7 +1482,9 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                 }
             }*/
             if(CanRemove){
+                cout << "NetId " << netId << " remove grid ID "  << gridId << endl;
                 grid->removeNet(netId);//remove it from net
+                grid->decCongestCur();
                 _vNetGrid[netId][layId][gridId] = r; //set pointer to r and delete later (avoid changing the size if vNetGrid[netId][layId])
                 //cout << "Remove GridID : " << gridId << " ";
                 //cout << "Remove current : " << NodeCurrent[i].first<<endl;
@@ -1491,7 +1493,8 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
             
         }
 
-        std::cout << "HI FIFTH"<<endl;
+        cout <<"Candidate size " << NodeCurrent.size() <<" k = " << k << " RemoveNum : " << removeNum << " alreadyremove : " << alreadyRemove << endl; 
+
 
         //delete removed grid
         for(size_t layId = 0; layId < _vNetGrid[netId].size();layId ++){
@@ -1499,8 +1502,24 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
         }
         delete r;
 
-        std::cout << "HI SIXTH"<<endl;
     }
+
+    //Plot Adding Grid
+    // for(int i = alreadyRemove ; i < NodeCurrent.size();i++){
+    //     int layId =  get<1>(NodeCurrent[i]);
+    //     int gridId = get<2>(NodeCurrent[i]);
+    //     cout << "layer id : " << layId << " Grid id : " << gridId << endl;
+    //     Grid* grid = _vNetGrid[netId][layId][gridId];
+    //     size_t xId = grid->xId();
+    //     size_t yId = grid->yId();
+    //     vector< pair<double, double> > vVtx;
+    //     vVtx.push_back(make_pair(xId*_gridWidth, yId*_gridWidth));
+    //     vVtx.push_back(make_pair((xId+1)*_gridWidth, yId*_gridWidth));
+    //     vVtx.push_back(make_pair((xId+1)*_gridWidth, (yId+1)*_gridWidth));
+    //     vVtx.push_back(make_pair(xId*_gridWidth, (yId+1)*_gridWidth));
+    //     Polygon* p = new Polygon(vVtx, _plot);
+    //     p->plot(SVGPlotColor::black, layId);
+    // }
 
     //cout << "size of NetGrid after smartgrow : " << _vNetGrid[netId][layId].size() << endl;  
 
@@ -1510,6 +1529,8 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
 void DetailedMgr::SmartRefine(size_t netId, int k){
 
     cout << "###########Smart Refine###########" << endl;
+
+    check();
 
     buildSingleNetMtx(netId);
 
@@ -1551,30 +1572,54 @@ void DetailedMgr::SPROUT(){
     for(size_t netId = 0; netId < _vNetGrid.size(); ++netId){
             //SmartGrow stage
             bool ReachTarget = true;
-            int k = 500;
+            int k = 0;
+
+            for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
+                k += _vNetGrid[netId][layId].size();
+            }
+            k /= 30;   
 
             for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
                 if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
                     ReachTarget = false;
+                    break;
+                }
+                if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
+                    ReachTarget = false;
+                    break;
                 }
             }
 
             int count = 0;
 
             while(!ReachTarget){
+                ReachTarget = true;
                 SmartGrow(netId,k);
                 k = (int)(k/1.25);//隨便設一個遞減函數
+
+                check();
+
+                buildSingleNetMtx(netId);
 
                 for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
                     if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
                         ReachTarget = false;
                     }
+                    if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
+                        ReachTarget = false;
+                    break;
+                }
                 }   
                 count ++;
                 if(count > 5){
+                    cout << "######OUT of TIME########" << endl; 
                     break;
                 }
             }
+
+            cout <<"NET " << netId << " DO " << count << " times SmartGrow to reach the target" << endl;
+
+
             //Refine stage
             ///int r = 20;
             //SmartRefine(layId,netId,r);
