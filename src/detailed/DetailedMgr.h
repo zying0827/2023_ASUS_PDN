@@ -101,10 +101,11 @@ class DetailedMgr {
             }
         }
         void buildMtx();
+        void buildSingleNetMtx(size_t netId);
         double getResistance(Grid*, Grid*);
         void check();
-        void SmartGrow(size_t layId, size_t netId, int k);
-        void SmartRefine(size_t layId, size_t netId, int k);
+        void SmartGrow(size_t netId, int k);
+        void SmartRefine(size_t netId, int k);
         void SPROUT();
         
     private:

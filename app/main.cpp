@@ -176,7 +176,7 @@ int main(int argc, char* argv[]){
     // // detailedMgr.naiveAStar();
      detailedMgr.negoAStar();
      detailedMgr.check();
-    // detailedMgr.plotGridMap();
+     detailedMgr.plotGridMap();
      detailedMgr.addPortVia();
      detailedMgr.check();
     // // // detailedMgr.plotVia();
