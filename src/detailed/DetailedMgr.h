@@ -61,12 +61,17 @@ class DetailedMgr {
         }
         ~DetailedMgr() {}
 
+        vector< vector< vector< pair<int, int> > > > vNetPortGrid() { return _vNetPortGrid; }
+
         void initGridMap();
+        void initPortGridMap();
+        void initSegObsGridMap();
+        void printResult();
         void plotGridMap();
         void plotGridMapVoltage();
         void plotGridMapCurrent();
         void naiveAStar();
-        void negoAStar();
+        void negoAStar(bool sameNetCong);
         void addPortVia();
         void plotVia();
         void addViaGrid();

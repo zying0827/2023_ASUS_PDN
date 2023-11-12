@@ -137,6 +137,10 @@ int main(int argc, char* argv[]){
 
     // db.print();
     
+    DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
+    detailedMgr->initPortGridMap();
+    detailedMgr->check();
+
     GlobalMgr globalMgr(db, plot);
     globalMgr.numIIter = numIIter;
     globalMgr.numVIter = numVIter;
@@ -156,6 +160,7 @@ int main(int argc, char* argv[]){
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
     globalMgr.genCapConstrs();
+    globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
     try {
         // globalMgr.voltageDemandAssignment();
         // globalMgr.voltageAssignment();
@@ -167,33 +172,36 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    //globalMgr.plotCurrentPaths();
+    // //globalMgr.plotCurrentPaths();
     
-     DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-     detailedMgr.initGridMap();
-     detailedMgr.check();
+    // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    delete detailedMgr;
+    detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    detailedMgr->initGridMap();
+    // detailedMgr->initSegObsGridMap();
+    detailedMgr->check();
     // // detailedMgr.plotGridMap();
     // // detailedMgr.naiveAStar();
-     detailedMgr.negoAStar();
-     detailedMgr.check();
-    //detailedMgr.plotGridMap();
-     detailedMgr.addPortVia();
-     detailedMgr.check();
-    // // // detailedMgr.plotVia();
-     detailedMgr.addViaGrid();
-     detailedMgr.check();
+    detailedMgr->negoAStar(false);
+    detailedMgr->check();
+    detailedMgr->plotGridMap();
+    // detailedMgr->addPortVia();
+    // detailedMgr->check();
+    // // // // detailedMgr.plotVia();
+    // detailedMgr->addViaGrid();
+    // detailedMgr->check();
 
     // // printf("\n==================== print ===================\n");
     // // detailedMgr.print();
 
     // // printf("\n==================== buildMtx ===================\n");
-    detailedMgr.buildMtx();
+    detailedMgr->buildMtx();
     detailedMgr.SPROUT();
     //detailedMgr.plotGridMap();
-    // detailedMgr.plotGridMapVoltage();
-    detailedMgr.plotGridMapCurrent();
+    // detailedMgr->plotGridMapVoltage();
+    detailedMgr->plotGridMapCurrent();
 
-    globalMgr.plotDB();
+    // globalMgr.plotDB();
 
     //羅：匯出3個Vector of double
     //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
