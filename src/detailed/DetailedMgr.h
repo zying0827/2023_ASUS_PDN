@@ -111,6 +111,9 @@ class DetailedMgr {
         void check();
         void SmartGrow(size_t netId, int k);
         void SmartRefine(size_t netId, int k);
+        void SmartRemove(size_t netId, int k);
+        bool NetEdgeDetect(size_t netId, size_t layId, Grid* grid);
+        void SmartDistribute();
         void SPROUT();
         
     private:

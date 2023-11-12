@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     int numVIter, numIIter, numIVIter; 
 
     // 打开参数文件
-    string root_dir = "/home/b08611045/2023_ASUS_PDN";
+    string root_dir = "/home/leotseng/2023_ASUS_PDN";
     string parameter_dir = "/exp/input/parameters.txt";
     string inputFile_dir = root_dir + parameter_dir;
     std::ifstream input_file(inputFile_dir);
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    preMgr.plotBoundBox();
+    // preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    // //globalMgr.plotCurrentPaths();
+    // globalMgr.plotCurrentPaths();
     
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     delete detailedMgr;
@@ -184,24 +184,25 @@ int main(int argc, char* argv[]){
     // // detailedMgr.naiveAStar();
     detailedMgr->negoAStar(false);
     detailedMgr->check();
+    //detailedMgr->plotGridMap();
+    detailedMgr->addPortVia();
+    detailedMgr->check();
+    // // // detailedMgr.plotVia();
+    detailedMgr->addViaGrid();
+    detailedMgr->check();
+
+    // printf("\n==================== print ===================\n");
+    // detailedMgr.print();
+
+    // printf("\n==================== buildMtx ===================\n");
+    //detailedMgr->buildMtx();
+    //detailedMgr->SmartDistribute();
+    detailedMgr->SPROUT();
     detailedMgr->plotGridMap();
-    // detailedMgr->addPortVia();
-    // detailedMgr->check();
-    // // // // detailedMgr.plotVia();
-    // detailedMgr->addViaGrid();
-    // detailedMgr->check();
+    //detailedMgr->plotGridMapVoltage();
+    //detailedMgr->plotGridMapCurrent();
 
-    // // printf("\n==================== print ===================\n");
-    // // detailedMgr.print();
-
-    // // printf("\n==================== buildMtx ===================\n");
-    detailedMgr->buildMtx();
-    detailedMgr.SPROUT();
-    //detailedMgr.plotGridMap();
-    // detailedMgr->plotGridMapVoltage();
-    detailedMgr->plotGridMapCurrent();
-
-    // globalMgr.plotDB();
+    globalMgr.plotDB();
 
     //羅：匯出3個Vector of double
     //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
