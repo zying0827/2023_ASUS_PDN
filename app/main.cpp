@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     int numVIter, numIIter, numIVIter; 
 
     // 打开参数文件
-    string root_dir = "/home/b08901047/2023_ASUS_PDN";
+    string root_dir = "/home/b08611045/2023_ASUS_PDN";
     string parameter_dir = "/exp/input/parameters.txt";
     string inputFile_dir = root_dir + parameter_dir;
     std::ifstream input_file(inputFile_dir);
@@ -70,10 +70,6 @@ int main(int argc, char* argv[]){
 
     //#################################
     //
-
-
-
-
     ifstream finST, fin, finOb;
     ofstream fout;
     finST.open(argv[1], ifstream::in);
