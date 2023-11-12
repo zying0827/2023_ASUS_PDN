@@ -251,21 +251,32 @@ void AStarRouter::backTraceNoPad() {
     };
     GNode* node = _vGNode[_tPos.first][_tPos.second];
     // GNode* node = _vGNode[tXId][tYId];
+    _exactLength = 0.0;
     while(node->parent() != node) {
         _path.push_back(_vGrid[node->xId()][node->yId()]);
         node = node->parent();
+        if (node->parent()->xId() == node->xId() || node->parent()->yId() == node->yId()) {
+            _exactLength += 1;
+        } else {
+            _exactLength += sqrt(2.0);
+        }
     }
     assert(node->xId() == _sPos.first && node->yId() == _sPos.second);
     _path.push_back(_vGrid[node->xId()][node->yId()]);
 
-    _exactLength = _path.size()-1;
+    // _exactLength = _path.size()-1;
     // double length = _exactLength * _gridWidth;
-    // _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
-    _exactWidth = ceil(_lbWidth/_gridWidth);
+    _exactWidth = ceil(_lbWidth * _exactLength / _lbLength);
+    if (_exactWidth < ceil(_lbWidth/_gridWidth)) {
+        _exactWidth = ceil(_lbWidth/_gridWidth);
+        cerr << "WARNING: A* grid length < global length !" << endl;
+    }
+    // _exactWidth = ceil(_lbWidth/_gridWidth);
     int halfWidth = ceil(0.5 * _lbWidth / _gridWidth);
-    double lineLength = pathLength(3, 0) * _gridWidth;
-    cerr << "lbLength = " << _lbLength << ", _exactLength*gridWidth = " << _exactLength*_gridWidth << ", lineLength = " << lineLength <<  endl;
-    cerr << "lbWidth = " << _lbWidth << ", _exactWidth*gridWidth = " << _exactWidth*_gridWidth << endl;
+    // int halfWidth = ceil(0.5 * _exactWidth);
+    // double lineLength = pathLength(3, 0) * _gridWidth;
+    // cerr << "lbLength = " << _lbLength << ", _exactLength*gridWidth = " << _exactLength*_gridWidth << ", lineLength = " << lineLength <<  endl;
+    // cerr << "lbWidth = " << _lbWidth << ", _exactWidth*gridWidth = " << _exactWidth*_gridWidth << endl;
     size_t sPathId = _path.size()-1;
     size_t tPathId = 0;
     bool TEncloseS = false;
@@ -282,7 +293,7 @@ void AStarRouter::backTraceNoPad() {
     assert(encloseNode(_path[sPathId]->xId(), _path[sPathId]->yId(), halfWidth, _sRealPos.first, _sRealPos.second));
     assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
     while(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second)) {
-        if (tPathId == _path.size()) {
+        if (tPathId == _path.size()-1) {
             SEncloseT = true;
             break;
         }

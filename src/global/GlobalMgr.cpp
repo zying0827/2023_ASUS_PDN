@@ -1308,14 +1308,14 @@ void GlobalMgr::voltCurrOpt() {
 }
 
 void GlobalMgr::voltageAssignment(bool currentBased) {
-    auto viaEdgeArea = [&] (OASGEdge* e) -> double {
-        assert(e->viaEdge());
-        double polygonArea = e->boundPolygon()->area();
-        double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
-        double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
-        double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
-        return polygonArea * ratio;
-    };
+    // auto viaEdgeArea = [&] (OASGEdge* e) -> double {
+    //     assert(e->viaEdge());
+    //     double polygonArea = e->boundPolygon()->area();
+    //     double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+    //     double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+    //     double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+    //     return polygonArea * ratio;
+    // };
 
     for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
         OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
@@ -1376,9 +1376,11 @@ void GlobalMgr::voltageAssignment(bool currentBased) {
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
                     // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(outEdge);
+                    // A = viaEdgeArea(outEdge);
+                    // outEdge->setViaArea(A);
+                    // _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][outEdge->typeEdgeId()];
                     outEdge->setViaArea(A);
-                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
                 } else {
                     cerr << "planeEdge ";
@@ -1415,9 +1417,11 @@ void GlobalMgr::voltageAssignment(bool currentBased) {
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(inEdge);
+                    // A = viaEdgeArea(inEdge);
+                    // inEdge->setViaArea(A);
+                    // _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][inEdge->typeEdgeId()];
                     inEdge->setViaArea(A);
-                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
                 } else {
                     cerr << "planeEdge ";
@@ -1464,9 +1468,11 @@ void GlobalMgr::voltageAssignment(bool currentBased) {
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
                     // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(outEdge);
+                    // A = viaEdgeArea(outEdge);
+                    // outEdge->setViaArea(A);
+                    // _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][outEdge->typeEdgeId()];
                     outEdge->setViaArea(A);
-                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
                 } else {
                     cerr << "planeEdge ";
@@ -1499,9 +1505,11 @@ void GlobalMgr::voltageAssignment(bool currentBased) {
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(inEdge);
+                    // A = viaEdgeArea(inEdge);
+                    // inEdge->setViaArea(A);
+                    // _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][inEdge->typeEdgeId()];
                     inEdge->setViaArea(A);
-                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l*1E-3);
                 } else {
                     cerr << "planeEdge ";
@@ -1639,15 +1647,24 @@ void GlobalMgr::voltageAssignment(bool currentBased) {
     
 }
 
+double GlobalMgr::oldViaEdgeArea(OASGEdge* e) {
+    assert(e->viaEdge());
+    double polygonArea = e->boundPolygon()->area();
+    double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+    double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+    double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+    return polygonArea * ratio;
+}
+
 void GlobalMgr::voltageDemandAssignment() {
-    auto viaEdgeArea = [&] (OASGEdge* e) -> double {
-        assert(e->viaEdge());
-        double polygonArea = e->boundPolygon()->area();
-        double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
-        double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
-        double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
-        return polygonArea * ratio;
-    };
+    // auto viaEdgeArea = [&] (OASGEdge* e) -> double {
+    //     assert(e->viaEdge());
+    //     double polygonArea = e->boundPolygon()->area();
+    //     double lowLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId());
+    //     double upLayPadRadius = _db.VIA16D8A24()->padRadius(e->layId()+1);
+    //     double ratio = _db.VIA16D8A24()->metalArea() / pow(max(lowLayPadRadius, upLayPadRadius), 2);
+    //     return polygonArea * ratio;
+    // };
 
     for (size_t sCapId = 0; sCapId < _vSglCapConstr.size(); ++ sCapId) {
         OASGEdge* sglEdge = _vSglCapConstr[sCapId].e1;
@@ -1735,9 +1752,11 @@ void GlobalMgr::voltageDemandAssignment() {
                         + 0.5*_db.vMetalLayer(outEdge->layId()+1)->thickness();
                     // cerr << "l=" << l << " ";
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(outEdge);
+                    // A = viaEdgeArea(outEdge);
+                    // outEdge->setViaArea(A);
+                    // _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][outEdge->typeEdgeId()];
                     outEdge->setViaArea(A);
-                    _vUBViaArea[netId][outEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A * 1E-6) / (l * 1E-3);
                 } else {
                     cerr << "planeEdge ";
@@ -1775,9 +1794,11 @@ void GlobalMgr::voltageDemandAssignment() {
                         + _db.vMediumLayer(inEdge->layId()+1)->thickness() 
                         + 0.5*_db.vMetalLayer(inEdge->layId()+1)->thickness();
                     // resistance = _db.vMetalLayer(0)->conductivity() * l / _db.vVia(0)->shape()->boxH();
-                    A = viaEdgeArea(inEdge);
+                    // A = viaEdgeArea(inEdge);
+                    // inEdge->setViaArea(A);
+                    // _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
+                    A = _vUBViaArea[netId][inEdge->typeEdgeId()];
                     inEdge->setViaArea(A);
-                    _vUBViaArea[netId][inEdge->typeEdgeId()] = A;
                     conductance = (_db.vMetalLayer(0)->conductivity() * A*1E-6) / (l*1E-3);
                 } else {
                     cerr << "planeEdge ";
