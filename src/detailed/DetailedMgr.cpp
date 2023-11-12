@@ -1462,6 +1462,9 @@ void DetailedMgr::buildSingleNetMtx(size_t netId) {
     }
 
     // set current of each grid
+    for (size_t tPortId = 0; tPortId < _db.vNet(netId)->numTPorts(); ++ tPortId) {
+        _vTPortCurr[netId][tPortId] = 0.0;
+    }
     assert(_vNetGrid[netId].size() == _db.numLayers());
     for (size_t layId = 0; layId < _vNetGrid[netId].size(); ++ layId) {
         for (size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId ++) {
@@ -1673,7 +1676,7 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
                 }
             }*/
             if(CanRemove){
-                cout << "NetId " << netId << " remove grid ID "  << gridId << endl;
+                // cout << "NetId " << netId << " remove grid ID "  << gridId << endl;
                 grid->removeNet(netId);//remove it from net
                 grid->decCongestCur();
                 _vNetGrid[netId][layId][gridId] = r; //set pointer to r and delete later (avoid changing the size if vNetGrid[netId][layId])
