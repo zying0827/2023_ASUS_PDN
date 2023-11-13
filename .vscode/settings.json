@@ -58,7 +58,7 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "${workspaceFolder}/exp/input/ST_Components_1.txt",
+            "${workspaceFolder}/exp/input/ST_Components_1_ori.txt",
             "${workspaceFolder}/exp/input/Example_Project_1.txt",
             "${workspaceFolder}/exp/input/obstacle.txt",
             "${workspaceFolder}/exp/output/voltAssign_110901.html"
