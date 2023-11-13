@@ -36,7 +36,7 @@ class AStarRouter {
             return longer + shorter * (sqrt(2.0)-1.0);
         }
         double lineDistCost(int xId, int yId) {
-            double den = abs(xId*(_tPos.second-_sPos.first) + _tPos.first*(_sPos.second-yId) + _sPos.first*(yId-_tPos.second));
+            double den = abs(xId*(_tPos.second-_sPos.second) + _tPos.first*(_sPos.second-yId) + _sPos.first*(yId-_tPos.second));
             double num = sqrt(pow(_tPos.first-_sPos.first,2)+pow(_tPos.second-_sPos.second,2));
             return den / num;
         }
@@ -48,6 +48,8 @@ class AStarRouter {
         size_t numPGrids() const { return _vPGrid.size(); }
         size_t exactWidth() const { return _exactWidth; }
         size_t exactLength() const { return _exactLength; }
+        Grid* vPath(size_t pathId) { return _path[pathId]; }
+        size_t numPaths() const { return _path.size(); }
         // Temporarily set pathLength as public
         double pathLength(int threshold, int method);
         Direction giveDirection (GNode* curNode);

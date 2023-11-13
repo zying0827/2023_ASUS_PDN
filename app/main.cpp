@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     int numVIter, numIIter, numIVIter; 
 
     // 打开参数文件
-    string root_dir = "/home/b08901047/2023_ASUS_PDN";
+    string root_dir = "/home/leotseng/2023_ASUS_PDN";
     string parameter_dir = "/exp/input/parameters.txt";
     string inputFile_dir = root_dir + parameter_dir;
     std::ifstream input_file(inputFile_dir);
@@ -70,10 +70,6 @@ int main(int argc, char* argv[]){
 
     //#################################
     //
-
-
-
-
     ifstream finST, fin, finOb;
     ofstream fout;
     finST.open(argv[1], ifstream::in);
@@ -134,13 +130,17 @@ int main(int argc, char* argv[]){
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
     preMgr.assignPortPolygon();
-    preMgr.plotBoundBox();
+    // preMgr.plotBoundBox();
     
     // // replace this line with a real parser function
     // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
     // db.print();
     
+    DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
+    detailedMgr->initPortGridMap();
+    detailedMgr->check();
+
     GlobalMgr globalMgr(db, plot);
     globalMgr.numIIter = numIIter;
     globalMgr.numVIter = numVIter;
@@ -160,6 +160,7 @@ int main(int argc, char* argv[]){
     // // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
     globalMgr.genCapConstrs();
+    globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
     try {
         // globalMgr.voltageDemandAssignment();
         // globalMgr.voltageAssignment();
@@ -171,29 +172,33 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    globalMgr.plotCurrentPaths();
+    // globalMgr.plotCurrentPaths();
     
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    // detailedMgr.initGridMap();
-    // detailedMgr.check();
+    delete detailedMgr;
+    detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    detailedMgr->initGridMap();
+    // detailedMgr->initSegObsGridMap();
+    detailedMgr->check();
     // // detailedMgr.plotGridMap();
     // // detailedMgr.naiveAStar();
-    // detailedMgr.negoAStar();
-    // detailedMgr.check();
-    // detailedMgr.plotGridMap();
-    // detailedMgr.addPortVia();
-    // detailedMgr.check();
+    detailedMgr->negoAStar(false);
+    detailedMgr->check();
+    detailedMgr->plotGridMap();
+    detailedMgr->addPortVia();
+    detailedMgr->check();
     // // // detailedMgr.plotVia();
-    // detailedMgr.addViaGrid();
-    // detailedMgr.check();
+    detailedMgr->addViaGrid();
+    detailedMgr->check();
 
-    // // printf("\n==================== print ===================\n");
-    // // detailedMgr.print();
+    // printf("\n==================== print ===================\n");
+    // detailedMgr.print();
 
-    // // printf("\n==================== buildMtx ===================\n");
-    // detailedMgr.buildMtx();
-    // detailedMgr.plotGridMapVoltage();
-    // // detailedMgr.plotGridMapCurrent();
+    // printf("\n==================== buildMtx ===================\n");
+    detailedMgr->buildMtx();
+    detailedMgr->SPROUT();
+    detailedMgr->plotGridMapVoltage();
+    // detailedMgr->plotGridMapCurrent();
 
     globalMgr.plotDB();
 

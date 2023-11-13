@@ -61,12 +61,17 @@ class DetailedMgr {
         }
         ~DetailedMgr() {}
 
+        vector< vector< vector< pair<int, int> > > > vNetPortGrid() { return _vNetPortGrid; }
+
         void initGridMap();
+        void initPortGridMap();
+        void initSegObsGridMap();
+        void printResult();
         void plotGridMap();
         void plotGridMapVoltage();
         void plotGridMapCurrent();
         void naiveAStar();
-        void negoAStar();
+        void negoAStar(bool sameNetCong);
         void addPortVia();
         void plotVia();
         void addViaGrid();
@@ -101,8 +106,13 @@ class DetailedMgr {
             }
         }
         void buildMtx();
+        void buildSingleNetMtx(size_t netId);
         double getResistance(Grid*, Grid*);
         void check();
+        void SmartGrow(size_t netId, int k);
+        void SmartRefine(size_t netId, int k);
+        void SPROUT();
+        
     private:
         vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
         void clearNet(size_t layId, size_t netId);
