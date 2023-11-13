@@ -40,6 +40,9 @@ class Grid {
         // set function
         void incCongestCur() { _congestCur ++; _congestion ++; }
         void decCongestCur() { _congestCur --; _congestion --; }
+        void incCongestHis() { _congestHis ++; _congestion ++; }
+        // void decCongestHis() { _congestHis --; _congestion --; }
+        void addCongestCur(int congestion) { _congestCur += congestion; _congestion += congestion; } 
         void addNet(size_t netId) { _vNetId.push_back(netId); }
         void removeNet(size_t netId) {
             for (vector<size_t>::iterator i = _vNetId.begin(); i != _vNetId.end(); ++ i) {

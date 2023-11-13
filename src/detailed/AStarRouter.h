@@ -12,8 +12,8 @@ enum Direction {
 
 class AStarRouter {
     public:
-        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, pair<int, int> sRealPos, pair<int, int> tRealPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight)
-        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _sRealPos(sRealPos), _tRealPos(tRealPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight) {
+        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, pair<int, int> sRealPos, pair<int, int> tRealPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight, double cLineDistWeight)
+        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _sRealPos(sRealPos), _tRealPos(tRealPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight), _cLineDistWeight(cLineDistWeight) {
             for (size_t xId = 0; xId < numXId(); ++ xId) {
                 vector<GNode*> temp;
                 for (size_t yId = 0; yId < numYId(); ++ yId) {
@@ -36,7 +36,7 @@ class AStarRouter {
             return longer + shorter * (sqrt(2.0)-1.0);
         }
         double lineDistCost(int xId, int yId) {
-            double den = abs(xId*(_tPos.second-_sPos.first) + _tPos.first*(_sPos.second-yId) + _sPos.first*(yId-_tPos.second));
+            double den = abs(xId*(_tPos.second-_sPos.second) + _tPos.first*(_sPos.second-yId) + _sPos.first*(yId-_tPos.second));
             double num = sqrt(pow(_tPos.first-_sPos.first,2)+pow(_tPos.second-_sPos.second,2));
             return den / num;
         }
@@ -48,6 +48,8 @@ class AStarRouter {
         size_t numPGrids() const { return _vPGrid.size(); }
         size_t exactWidth() const { return _exactWidth; }
         size_t exactLength() const { return _exactLength; }
+        Grid* vPath(size_t pathId) { return _path[pathId]; }
+        size_t numPaths() const { return _path.size(); }
         // Temporarily set pathLength as public
         double pathLength(int threshold, int method);
         Direction giveDirection (GNode* curNode);
@@ -68,6 +70,7 @@ class AStarRouter {
         // double _lbWidthRight;
         double _widthRatio;     // the probability of straight routing (without detour on a step)
         double _distWeight;     // the weight of distance cost w.r.t. congestion cost
+        double _cLineDistWeight;
         // output
         vector< Grid* > _path;  // the spine of the path
         vector< Grid* > _vPGrid;    // the grids in the path (considering width)
