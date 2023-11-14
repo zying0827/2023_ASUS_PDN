@@ -126,282 +126,282 @@ int main(int argc, char* argv[]){
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
     parser.parse();
-    // NetworkMgr mgr(db, plot);
-    PreMgr preMgr(db, plot);
-    preMgr.nodeClustering();
-    preMgr.assignPortPolygon();
-    // preMgr.plotBoundBox();
+    // // NetworkMgr mgr(db, plot);
+    // PreMgr preMgr(db, plot);
+    // preMgr.nodeClustering();
+    // preMgr.assignPortPolygon();
+    // // preMgr.plotBoundBox();
     
-    // // replace this line with a real parser function
-    // parser.testInitialize(boardWidth, boardHeight, gridWidth);
+    // // // replace this line with a real parser function
+    // // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
-    // db.print();
+    // // db.print();
     
-    DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
-    detailedMgr->initPortGridMap();
-    detailedMgr->check();
+    // DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
+    // detailedMgr->initPortGridMap();
+    // detailedMgr->check();
 
-    GlobalMgr globalMgr(db, plot);
-    globalMgr.numIIter = numIIter;
-    globalMgr.numVIter = numVIter;
-    globalMgr.numIVIter = numIVIter;
+    // GlobalMgr globalMgr(db, plot);
+    // globalMgr.numIIter = numIIter;
+    // globalMgr.numVIter = numVIter;
+    // globalMgr.numIVIter = numIVIter;
 
     
 
-    // // replace this line with a real OASG building function
-    // globalMgr.buildTestOASG();
+    // // // replace this line with a real OASG building function
+    // // globalMgr.buildTestOASG();
 
-    globalMgr.buildOASG();
-    // globalMgr.buildOASGXObs();
-    // globalMgr.plotOASG();
-    // globalMgr.layerDistribution();
-    // // //globalMgr.plotRGraph();
-    // globalMgr.buildTestNCOASG();
-    // // globalMgr.plotNCOASG();
-    // // globalMgr.voltageAssignment();
-    globalMgr.genCapConstrs();
-    globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
-    try {
-        // globalMgr.voltageDemandAssignment();
-        // globalMgr.voltageAssignment();
-        // globalMgr.currentDistribution();
-        globalMgr.voltCurrOpt();
-        // globalMgr.checkFeasible();
-        // globalMgr.checkVoltDemandFeasible();
-    } catch (GRBException e) {
-        cerr << "Error = " << e.getErrorCode() << endl;
-        cerr << e.getMessage() << endl;
-    }
-    // globalMgr.plotCurrentPaths();
+    // globalMgr.buildOASG();
+    // // globalMgr.buildOASGXObs();
+    // // globalMgr.plotOASG();
+    // // globalMgr.layerDistribution();
+    // // // //globalMgr.plotRGraph();
+    // // globalMgr.buildTestNCOASG();
+    // // // globalMgr.plotNCOASG();
+    // // // globalMgr.voltageAssignment();
+    // globalMgr.genCapConstrs();
+    // globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
+    // try {
+    //     // globalMgr.voltageDemandAssignment();
+    //     // globalMgr.voltageAssignment();
+    //     // globalMgr.currentDistribution();
+    //     globalMgr.voltCurrOpt();
+    //     // globalMgr.checkFeasible();
+    //     // globalMgr.checkVoltDemandFeasible();
+    // } catch (GRBException e) {
+    //     cerr << "Error = " << e.getErrorCode() << endl;
+    //     cerr << e.getMessage() << endl;
+    // }
+    // // globalMgr.plotCurrentPaths();
     
-    // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    delete detailedMgr;
-    detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    detailedMgr->initGridMap();
-    // detailedMgr->initSegObsGridMap();
-    detailedMgr->check();
-    // // detailedMgr.plotGridMap();
-    // // detailedMgr.naiveAStar();
-    detailedMgr->negoAStar(false);
-    detailedMgr->check();
-    detailedMgr->plotGridMap();
-    detailedMgr->addPortVia();
-    detailedMgr->check();
-    // // // detailedMgr.plotVia();
-    detailedMgr->addViaGrid();
-    detailedMgr->check();
+    // // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    // delete detailedMgr;
+    // detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    // detailedMgr->initGridMap();
+    // // detailedMgr->initSegObsGridMap();
+    // detailedMgr->check();
+    // detailedMgr->plotGridMap();
+    // // // detailedMgr.naiveAStar();
+    // // detailedMgr->negoAStar(false);
+    // // detailedMgr->check();
+    // // detailedMgr->plotGridMap();
+    // // detailedMgr->addPortVia();
+    // // detailedMgr->check();
+    // // // // // detailedMgr.plotVia();
+    // // detailedMgr->addViaGrid();
+    // // detailedMgr->check();
 
-    // printf("\n==================== print ===================\n");
-    // detailedMgr.print();
+    // // // printf("\n==================== print ===================\n");
+    // // // detailedMgr.print();
 
-    // printf("\n==================== buildMtx ===================\n");
-    detailedMgr->buildMtx();
-    detailedMgr->SPROUT();
-    detailedMgr->plotGridMapVoltage();
-    // detailedMgr->plotGridMapCurrent();
+    // // // printf("\n==================== buildMtx ===================\n");
+    // // detailedMgr->buildMtx();
+    // // detailedMgr->SPROUT();
+    // // detailedMgr->plotGridMapVoltage();
+    // // // detailedMgr->plotGridMapCurrent();
 
-    globalMgr.plotDB();
+    // globalMgr.plotDB();
 
     //羅：匯出3個Vector of double
     //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
-    string result_dir1 = "/exp/output/tuningRes1.txt";
-    string result_dir2 = "/exp/output/tuningRes2.txt";
-    string result_dir3 = "/exp/output/tuningRes3.txt";
-    string result_dir4 = "/exp/output/tuningRes4.txt";
+    // string result_dir1 = "/exp/output/tuningRes1.txt";
+    // string result_dir2 = "/exp/output/tuningRes2.txt";
+    // string result_dir3 = "/exp/output/tuningRes3.txt";
+    // string result_dir4 = "/exp/output/tuningRes4.txt";
 
 
-    string tuningOutputFile_dir1 = root_dir + result_dir1;
-    string tuningOutputFile_dir2 = root_dir + result_dir2;
-    string tuningOutputFile_dir3 = root_dir + result_dir3;
-    string tuningOutputFile_dir4 = root_dir + result_dir4;
+    // string tuningOutputFile_dir1 = root_dir + result_dir1;
+    // string tuningOutputFile_dir2 = root_dir + result_dir2;
+    // string tuningOutputFile_dir3 = root_dir + result_dir3;
+    // string tuningOutputFile_dir4 = root_dir + result_dir4;
 
-    std::ofstream tuningOutput_file1(tuningOutputFile_dir1);
-    std::ofstream tuningOutput_file2(tuningOutputFile_dir2);
-    std::ofstream tuningOutput_file3(tuningOutputFile_dir3);
-    std::ofstream tuningOutput_file4(tuningOutputFile_dir4);
+    // std::ofstream tuningOutput_file1(tuningOutputFile_dir1);
+    // std::ofstream tuningOutput_file2(tuningOutputFile_dir2);
+    // std::ofstream tuningOutput_file3(tuningOutputFile_dir3);
+    // std::ofstream tuningOutput_file4(tuningOutputFile_dir4);
 
-    vector<int> vXI;
-    vector<double> vYI;
-    vector<int> vXV;
-    vector<double> vYV;
+    // vector<int> vXI;
+    // vector<double> vYI;
+    // vector<int> vXV;
+    // vector<double> vYV;
 
-    // 遍历向量并将每个 double 写入文件
-    //每個資料的第一行是xI , 再來是yI, xV, yV
-    int indexIV = 0;
-    int IVnum = numIIter + numVIter;
+    // // 遍历向量并将每个 double 写入文件
+    // //每個資料的第一行是xI , 再來是yI, xV, yV
+    // int indexIV = 0;
+    // int IVnum = numIIter + numVIter;
 
-    //1
-    for (const double& value : globalMgr._vArea) {
-        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
-            vXI.push_back(indexIV);
-            // cout << "Now we Are Dealing I" <<endl;
-            // cout << indexIV << endl;
-            // cout << value << endl;
-            vYI.push_back(value);
-        }
-        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
-            // cout << "Now we Are Dealing V" <<endl;
-            vXV.push_back(indexIV);
-            vYV.push_back(value);
-            // cout << indexIV << endl;
-            // cout << value << endl;
-        }
-        ++ indexIV;
-    }
-    for (const double& element : vXI) {
-        tuningOutput_file1 << element << " ";
-    }
-    tuningOutput_file1 << "\n";
-    for (const double& element : vYI) {
-        tuningOutput_file1 << element << " ";
-    }
-    tuningOutput_file1 << "\n";
-    for (const double& element : vXV) {
-        tuningOutput_file1 << element << " ";
-    }
-    tuningOutput_file1 << "\n";
-    for (const double& element : vYV) {
-        tuningOutput_file1 << element << " ";
-    }
-    tuningOutput_file1 << "\n"; 
-
-    cout << "IV num is" << IVnum << endl;
-    cout << " numIIter is " << numIIter << endl;
-    indexIV = 0;
-    vXI.clear();
-    vYI.clear();
-    vXV.clear();
-    vYV.clear();
-
-    //2
-     for (const double& value : globalMgr._vOverlap) {
-        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
-            vXI.push_back(indexIV);
-            // cout << "Now we Are Dealing I" <<endl;
-            // cout << indexIV << endl;
-            // cout << value << endl;
-            vYI.push_back(value);
-        }
-        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
-            // cout << "Now we Are Dealing V" <<endl;
-            vXV.push_back(indexIV);
-            vYV.push_back(value);
-            // cout << indexIV << endl;
-            // cout << value << endl;
-        }
-        ++ indexIV;
-    }
-    for (const double& element : vXI) {
-        tuningOutput_file2 << element << " ";
-    }
-    tuningOutput_file2 << "\n";
-    for (const double& element : vYI) {
-        tuningOutput_file2 << element << " ";
-    }
-    tuningOutput_file2 << "\n";
-    for (const double& element : vXV) {
-        tuningOutput_file2 << element << " ";
-    }
-    tuningOutput_file2 << "\n";
-    for (const double& element : vYV) {
-        tuningOutput_file2 << element << " ";
-    }
-    tuningOutput_file2 << "\n"; 
+    // //1
+    // for (const double& value : globalMgr._vArea) {
+    //     if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+    //         vXI.push_back(indexIV);
+    //         // cout << "Now we Are Dealing I" <<endl;
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //         vYI.push_back(value);
+    //     }
+    //     if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+    //         // cout << "Now we Are Dealing V" <<endl;
+    //         vXV.push_back(indexIV);
+    //         vYV.push_back(value);
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //     }
+    //     ++ indexIV;
+    // }
+    // for (const double& element : vXI) {
+    //     tuningOutput_file1 << element << " ";
+    // }
+    // tuningOutput_file1 << "\n";
+    // for (const double& element : vYI) {
+    //     tuningOutput_file1 << element << " ";
+    // }
+    // tuningOutput_file1 << "\n";
+    // for (const double& element : vXV) {
+    //     tuningOutput_file1 << element << " ";
+    // }
+    // tuningOutput_file1 << "\n";
+    // for (const double& element : vYV) {
+    //     tuningOutput_file1 << element << " ";
+    // }
+    // tuningOutput_file1 << "\n"; 
 
     // cout << "IV num is" << IVnum << endl;
     // cout << " numIIter is " << numIIter << endl;
-    indexIV = 0;
-    vXI.clear();
-    vYI.clear();
-    vXV.clear();
-    vYV.clear();
+    // indexIV = 0;
+    // vXI.clear();
+    // vYI.clear();
+    // vXV.clear();
+    // vYV.clear();
 
-    //3
-     for (const double& value : globalMgr._vSameNetOverlap) {
-        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
-            vXI.push_back(indexIV);
-            // cout << "Now we Are Dealing I" <<endl;
-            // cout << indexIV << endl;
-            // cout << value << endl;
-            vYI.push_back(value);
-        }
-        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
-            // cout << "Now we Are Dealing V" <<endl;
-            vXV.push_back(indexIV);
-            vYV.push_back(value);
-            // cout << indexIV << endl;
-            // cout << value << endl;
-        }
-        ++ indexIV;
-    }
-    for (const double& element : vXI) {
-        tuningOutput_file3 << element << " ";
-    }
-    tuningOutput_file3 << "\n";
-    for (const double& element : vYI) {
-        tuningOutput_file3 << element << " ";
-    }
-    tuningOutput_file3 << "\n";
-    for (const double& element : vXV) {
-        tuningOutput_file3 << element << " ";
-    }
-    tuningOutput_file3 << "\n";
-    for (const double& element : vYV) {
-        tuningOutput_file3 << element << " ";
-    }
-    tuningOutput_file3 << "\n"; 
+    // //2
+    //  for (const double& value : globalMgr._vOverlap) {
+    //     if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+    //         vXI.push_back(indexIV);
+    //         // cout << "Now we Are Dealing I" <<endl;
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //         vYI.push_back(value);
+    //     }
+    //     if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+    //         // cout << "Now we Are Dealing V" <<endl;
+    //         vXV.push_back(indexIV);
+    //         vYV.push_back(value);
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //     }
+    //     ++ indexIV;
+    // }
+    // for (const double& element : vXI) {
+    //     tuningOutput_file2 << element << " ";
+    // }
+    // tuningOutput_file2 << "\n";
+    // for (const double& element : vYI) {
+    //     tuningOutput_file2 << element << " ";
+    // }
+    // tuningOutput_file2 << "\n";
+    // for (const double& element : vXV) {
+    //     tuningOutput_file2 << element << " ";
+    // }
+    // tuningOutput_file2 << "\n";
+    // for (const double& element : vYV) {
+    //     tuningOutput_file2 << element << " ";
+    // }
+    // tuningOutput_file2 << "\n"; 
 
-    // cout << "IV num is" << IVnum << endl;
-    // cout << " numIIter is " << numIIter << endl;
-    indexIV = 0;
-    vXI.clear();
-    vYI.clear();
-    vXV.clear();
-    vYV.clear();
+    // // cout << "IV num is" << IVnum << endl;
+    // // cout << " numIIter is " << numIIter << endl;
+    // indexIV = 0;
+    // vXI.clear();
+    // vYI.clear();
+    // vXV.clear();
+    // vYV.clear();
+
+    // //3
+    //  for (const double& value : globalMgr._vSameNetOverlap) {
+    //     if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+    //         vXI.push_back(indexIV);
+    //         // cout << "Now we Are Dealing I" <<endl;
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //         vYI.push_back(value);
+    //     }
+    //     if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+    //         // cout << "Now we Are Dealing V" <<endl;
+    //         vXV.push_back(indexIV);
+    //         vYV.push_back(value);
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //     }
+    //     ++ indexIV;
+    // }
+    // for (const double& element : vXI) {
+    //     tuningOutput_file3 << element << " ";
+    // }
+    // tuningOutput_file3 << "\n";
+    // for (const double& element : vYI) {
+    //     tuningOutput_file3 << element << " ";
+    // }
+    // tuningOutput_file3 << "\n";
+    // for (const double& element : vXV) {
+    //     tuningOutput_file3 << element << " ";
+    // }
+    // tuningOutput_file3 << "\n";
+    // for (const double& element : vYV) {
+    //     tuningOutput_file3 << element << " ";
+    // }
+    // tuningOutput_file3 << "\n"; 
+
+    // // cout << "IV num is" << IVnum << endl;
+    // // cout << " numIIter is " << numIIter << endl;
+    // indexIV = 0;
+    // vXI.clear();
+    // vYI.clear();
+    // vXV.clear();
+    // vYV.clear();
     
 
-    //4
-     for (const double& value : globalMgr._vViaArea) {
-        if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
-            vXI.push_back(indexIV);
-            // cout << "Now we Are Dealing I" <<endl;
-            // cout << indexIV << endl;
-            // cout << value << endl;
-            vYI.push_back(value);
-        }
-        if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
-            // cout << "Now we Are Dealing V" <<endl;
-            vXV.push_back(indexIV);
-            vYV.push_back(value);
-            // cout << indexIV << endl;
-            // cout << value << endl;
-        }
-        ++ indexIV;
-    }
-    for (const double& element : vXI) {
-        tuningOutput_file4 << element << " ";
-    }
-    tuningOutput_file4 << "\n";
-    for (const double& element : vYI) {
-        tuningOutput_file4 << element << " ";
-    }
-    tuningOutput_file4 << "\n";
-    for (const double& element : vXV) {
-        tuningOutput_file4 << element << " ";
-    }
-    tuningOutput_file4 << "\n";
-    for (const double& element : vYV) {
-        tuningOutput_file4 << element << " ";
-    }
-    tuningOutput_file4 << "\n"; 
+    // //4
+    //  for (const double& value : globalMgr._vViaArea) {
+    //     if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){
+    //         vXI.push_back(indexIV);
+    //         // cout << "Now we Are Dealing I" <<endl;
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //         vYI.push_back(value);
+    //     }
+    //     if( (indexIV % IVnum ) >= numIIter || (indexIV % IVnum ) == numIIter -1 ){
+    //         // cout << "Now we Are Dealing V" <<endl;
+    //         vXV.push_back(indexIV);
+    //         vYV.push_back(value);
+    //         // cout << indexIV << endl;
+    //         // cout << value << endl;
+    //     }
+    //     ++ indexIV;
+    // }
+    // for (const double& element : vXI) {
+    //     tuningOutput_file4 << element << " ";
+    // }
+    // tuningOutput_file4 << "\n";
+    // for (const double& element : vYI) {
+    //     tuningOutput_file4 << element << " ";
+    // }
+    // tuningOutput_file4 << "\n";
+    // for (const double& element : vXV) {
+    //     tuningOutput_file4 << element << " ";
+    // }
+    // tuningOutput_file4 << "\n";
+    // for (const double& element : vYV) {
+    //     tuningOutput_file4 << element << " ";
+    // }
+    // tuningOutput_file4 << "\n"; 
 
-    // cout << "IV num is" << IVnum << endl;
-    // cout << " numIIter is " << numIIter << endl;
-    indexIV = 0;
-    vXI.clear();
-    vYI.clear();
-    vXV.clear();
-    vYV.clear();
+    // // cout << "IV num is" << IVnum << endl;
+    // // cout << " numIIter is " << numIIter << endl;
+    // indexIV = 0;
+    // vXI.clear();
+    // vYI.clear();
+    // vXV.clear();
+    // vYV.clear();
 
 
     // for (const double& value : globalMgr._vViaArea) {
