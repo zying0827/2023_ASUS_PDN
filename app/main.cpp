@@ -10,6 +10,7 @@
 #include "base/OutputWriter.h"
 
 
+
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -182,6 +183,8 @@ int main(int argc, char* argv[]){
     // // detailedMgr->plotGridMapVoltage();
     // // // detailedMgr->plotGridMapCurrent();
 
+    // detailedMgr->writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
+    // detailedMgr->writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
     globalMgr.plotDB();
     OutputWriter outputWriter;
 

@@ -112,7 +112,7 @@ class DetailedMgr {
         void SmartGrow(size_t netId, int k);
         void SmartRefine(size_t netId, int k);
         void SPROUT();
-        
+        void writeColorMap_v2(const char*, bool);
     private:
         vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
         void clearNet(size_t layId, size_t netId);
