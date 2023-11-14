@@ -180,7 +180,7 @@ int main(int argc, char* argv[]){
     detailedMgr->initGridMap();
     // detailedMgr->initSegObsGridMap();
     detailedMgr->check();
-    // // detailedMgr.plotGridMap();
+    detailedMgr->plotGridMap();
     // // detailedMgr.naiveAStar();
     detailedMgr->negoAStar(false);
     detailedMgr->check();
@@ -197,8 +197,8 @@ int main(int argc, char* argv[]){
     // printf("\n==================== buildMtx ===================\n");
     //detailedMgr->buildMtx();
     //detailedMgr->SmartDistribute();
-    detailedMgr->SPROUT();
-    detailedMgr->plotGridMap();
+    //detailedMgr->SPROUT();
+    //detailedMgr->plotGridMap();
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
