@@ -1057,9 +1057,11 @@ void GlobalMgr::voltCurrOpt() {
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                //調
                 vLambda[capId] = 2;
         }
         for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                //調
                 vNetLambda[netCapId] = 4;
         }
 
@@ -1104,6 +1106,7 @@ void GlobalMgr::voltCurrOpt() {
                 // vLambda[capId] *= vLambda[capId];
 
                 // schedule2: exp(.)
+                //調
                 vLambda[capId] *= 2;
 
                 // schedule3: P control
@@ -1119,6 +1122,7 @@ void GlobalMgr::voltCurrOpt() {
                 // vLastOverlap[capId] = curOverlap;
             }
             for (size_t netCapId = 0; netCapId <_vNetCapConstr.size(); ++ netCapId) {
+                //調
                 vNetLambda[netCapId] *= 2;
             }
         }
