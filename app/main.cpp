@@ -95,11 +95,27 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
     double gridWidth = 1;
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
+
+    // For Example 1
+    // double boardWidth = 75*gridWidth;
+    // double boardHeight = 40*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 40;
+    // double offsetY = 40;
+
+    // For Example 2 
+    // double boardWidth = 100*gridWidth;
+    // double boardHeight = 70*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 95;
+    // double offsetY = 45;
+
+    // For Example 3 
+    double boardWidth = 100*gridWidth;
+    double boardHeight = 70*gridWidth;
     size_t numLayers = 4;
-    double offsetX = 40;
-    double offsetY = 40;
+    double offsetX = 95;
+    double offsetY = 45;
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
@@ -107,12 +123,18 @@ int main(int argc, char* argv[]){
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
+    cout << "a4" << endl;
     parser.parse();
+    cout << "b" << endl;
     // // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
+    cout << "c" << endl;
     preMgr.nodeClustering();
+    cout << "d" << endl;
     preMgr.assignPortPolygon();
+    cout << "e" << endl;
     preMgr.plotBoundBox();
+    cout << "f" << endl;
     
     // // // replace this line with a real parser function
     // // parser.testInitialize(boardWidth, boardHeight, gridWidth);
