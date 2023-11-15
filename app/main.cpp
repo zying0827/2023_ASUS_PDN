@@ -10,6 +10,7 @@
 #include "base/OutputWriter.h"
 
 
+
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -141,9 +142,9 @@ int main(int argc, char* argv[]){
 
     // // db.print();
     
-    // DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
-    // detailedMgr->initPortGridMap();
-    // detailedMgr->check();
+    DetailedMgr* detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->padRadius(0));
+    detailedMgr->initPortGridMap();
+    detailedMgr->check();
 
     GlobalMgr globalMgr(db, plot);
     globalMgr.numIIter = numIIter;
@@ -155,28 +156,28 @@ int main(int argc, char* argv[]){
     // // // replace this line with a real OASG building function
     // // globalMgr.buildTestOASG();
 
-    // globalMgr.buildOASG();
-    // // globalMgr.buildOASGXObs();
-    // // globalMgr.plotOASG();
-    // // globalMgr.layerDistribution();
-    // // // //globalMgr.plotRGraph();
-    // // globalMgr.buildTestNCOASG();
-    // // // globalMgr.plotNCOASG();
-    // // // globalMgr.voltageAssignment();
-    // globalMgr.genCapConstrs();
-    // globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
-    // try {
-    //     // globalMgr.voltageDemandAssignment();
-    //     // globalMgr.voltageAssignment();
-    //     // globalMgr.currentDistribution();
-    //     globalMgr.voltCurrOpt();
-    //     // globalMgr.checkFeasible();
-    //     // globalMgr.checkVoltDemandFeasible();
-    // } catch (GRBException e) {
-    //     cerr << "Error = " << e.getErrorCode() << endl;
-    //     cerr << e.getMessage() << endl;
-    // }
-    // // globalMgr.plotCurrentPaths();
+    globalMgr.buildOASG();
+    // globalMgr.buildOASGXObs();
+    // globalMgr.plotOASG();
+    // globalMgr.layerDistribution();
+    // // //globalMgr.plotRGraph();
+    // globalMgr.buildTestNCOASG();
+    // // globalMgr.plotNCOASG();
+    // // globalMgr.voltageAssignment();
+    globalMgr.genCapConstrs();
+    globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
+    try {
+        // globalMgr.voltageDemandAssignment();
+        // globalMgr.voltageAssignment();
+        // globalMgr.currentDistribution();
+        globalMgr.voltCurrOpt();
+        // globalMgr.checkFeasible();
+        // globalMgr.checkVoltDemandFeasible();
+    } catch (GRBException e) {
+        cerr << "Error = " << e.getErrorCode() << endl;
+        cerr << e.getMessage() << endl;
+    }
+    globalMgr.plotCurrentPaths();
     
     // // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     // delete detailedMgr;
@@ -204,6 +205,8 @@ int main(int argc, char* argv[]){
     // // detailedMgr->plotGridMapVoltage();
     // // // detailedMgr->plotGridMapCurrent();
 
+    // detailedMgr->writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
+    // detailedMgr->writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
     globalMgr.plotDB();
     OutputWriter outputWriter;
 

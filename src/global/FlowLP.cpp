@@ -13,6 +13,11 @@ FlowLP::FlowLP(DB& db, RGraph& rGraph)
     _overlap = 0;
     _numCapConstrs = 0;
     _numNetCapConstrs = 0;
+    _beforeCost = 0;
+    _afterCost = 0;
+    _areaWeight = 0;
+    _viaWeight = 0;
+    _diffWeight = 0;
     _vPlaneLeftFlow = new GRBVar** [_rGraph.numNets()];
     _vPlaneRightFlow = new GRBVar** [_rGraph.numNets()];
     _vPlaneDiffFlow = new GRBVar** [_rGraph.numNets()];
@@ -56,6 +61,9 @@ FlowLP::FlowLP(DB& db, RGraph& rGraph)
 }
 
 void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight){
+    _areaWeight = areaWeight;
+    _viaWeight = viaWeight;
+    _diffWeight = diffWeight;
     GRBLinExpr obj;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // add cost for horizontal flows
@@ -82,17 +90,20 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                     // cerr << " sVolt = " << e->sNode()->voltage() << ", tVolt = " << e->tNode()->voltage() << ", thickness = " << _db.vMetalLayer(layId)->thickness();
                     // cerr << ", cost = " << cost << endl;
                     obj += cost * (_vPlaneLeftFlow[netId][layId][pEdgeId] + _vPlaneRightFlow[netId][layId][pEdgeId]);
+                    // _beforeCost += cost * (e->currentLeft() + e->currentRight()) * 1E6;
 
                     // set diff flow
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneLeftFlow[netId][layId][pEdgeId] - _vPlaneRightFlow[netId][layId][pEdgeId]);
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneRightFlow[netId][layId][pEdgeId] - _vPlaneLeftFlow[netId][layId][pEdgeId]);
                     obj += diffWeight * cost * _vPlaneDiffFlow[netId][layId][pEdgeId];
+                    // _beforeCost += diffWeight * cost * abs(e->currentLeft() - e->currentRight()) * 1E6;
                 }
             }
         }
         // add cost for vertical flows
         // cerr << "add cost for vertical flows" << endl;
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+            // double viaCost = 0;
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
                 if (!e->redundant()) {
@@ -111,11 +122,15 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                         _model.addConstr(cost * _vViaFlow[netId][layPairId][vEdgeId] <= _vMaxViaCost[netId][vEdgeId], 
                                         "max_via_cost_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId));
                         _model.addConstr(cost * _vViaFlow[netId][layPairId][vEdgeId] * 1E6 >= _db.VIA16D8A24()->metalArea());
+                        // if (cost * e->current() > viaCost) {
+                        //     viaCost = cost * e->current();
+                        // }
                     }
                     
                 }
             }
             obj += viaWeight * _vMaxViaCost[netId][vEdgeId];
+            // _beforeCost += viaWeight * viaCost * 1E6;
         }
     }
     // cerr << "_model.setObjective(obj, GRB_MINIMIZE)" << endl;
@@ -238,7 +253,7 @@ void FlowLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, OA
         totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
     } else {
         // totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
-        totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
+        totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
     }
     _model.addConstr(totalWidth * 1E3 <= width, "capacity_" + to_string(_numCapConstrs));
     // _model.update();
@@ -302,7 +317,7 @@ void FlowLP::addSameNetCapacityConstraints(OASGEdge* e1, bool right1, double rat
         totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
     } else {
         // totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
-        totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
+        totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * widthWeight2 * ratio2;
     }
     _model.addConstr(totalWidth * 1E3 <= width, "same_net_capacity_" + to_string(_numNetCapConstrs));
     // _model.update();
@@ -434,6 +449,8 @@ void FlowLP::solveRelaxed() {
 
 void FlowLP::collectRelaxedResult() {
     _viaArea = 0;
+    _beforeCost = 0;
+    _afterCost = 0;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // collect results for horizontal flows
         for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
@@ -457,16 +474,25 @@ void FlowLP::collectRelaxedResult() {
                 double rightFlow = _modelRelaxed->getVarByName("Fr_n" + to_string(netId) + "_l_" + to_string(layId) + "_i_" + to_string(pEdgeId)).get(GRB_DoubleAttr_X);
                 if (abs(rightFlow) < 1E-3) { rightFlow = 0; }
                 cerr << " rightFlow = " << rightFlow << endl;
+
+                // set before cost
+                _beforeCost += _areaWeight * widthWeight * 1E3 * e->length() * e->current();
+
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrentRight(rightFlow);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setCurrentLeft(leftFlow);
                 assert(leftFlow * widthWeight >= 0);
                 assert(rightFlow * widthWeight >= 0);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(leftFlow * widthWeight * 1E3);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(rightFlow * widthWeight * 1E3);
+
+                // set after cost
+                _afterCost += _areaWeight * _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->length() * (_rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthLeft() + _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthRight());
+                // _afterCost += _areaWeight * _diffWeight * _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->length() * (_rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthLeft() + _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthRight());
             }
         }
         // collect results for vertical flows
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+            double viaCost = 0;
             // double viaArea = _vMaxViaCost[netId][vEdgeId].get(GRB_DoubleAttr_X) * _currentNorm / _vConductivity[0];
             // double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X) * _currentNorm / _vConductivity[0];
             double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X);
@@ -479,11 +505,26 @@ void FlowLP::collectRelaxedResult() {
                     double flow = _modelRelaxed->getVarByName("Fv_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X);
                     if (abs(flow) < 1E-3) { flow = 0; }
                     cerr << "flow = " << flow << endl;
+
+                    // set before cost
+                    OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
+                    if (e->sNode()->voltage() != e->tNode()->voltage()) {
+                        assert (e->sNode()->voltage() > e->tNode()->voltage());
+                        double costNum = 1E-3 * (0.5*_db.vMetalLayer(layPairId)->thickness()+ _db.vMediumLayer(layPairId+1)->thickness()+0.5* _db.vMetalLayer(layPairId+1)->thickness());
+                        double costDen = _db.vMetalLayer(0)->conductivity() * (e->sNode()->voltage() - e->tNode()->voltage()); // has not * via cross-sectional area
+                        double cost = costNum / costDen;
+                        if (cost * e->current() > viaCost) {
+                            viaCost = cost * e->current();
+                        }
+                    }
+
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrentRight(flow);
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setCurrentLeft(0.0);
                     _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
                 }
             }
+            _beforeCost += _viaWeight * viaCost * 1E6;
+            _afterCost += _viaWeight * viaArea * 1E6;
         }
     }
 
@@ -497,16 +538,16 @@ void FlowLP::collectRelaxedResult() {
             }
         }
     }
-    _overlap = 0;
-    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
-        _vOverlap.push_back(_modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X));
-        _overlap += _vOverlap[capId];
-    }
-    _sameNetOverlap = 0;
-    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
-        _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
-        _sameNetOverlap += _vSameNetOverlap[netCapId];
-    }
+    // _overlap = 0;
+    // for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+    //     _vOverlap.push_back(_modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X));
+    //     _overlap += _vOverlap[capId];
+    // }
+    // _sameNetOverlap = 0;
+    // for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+    //     _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
+    //     _sameNetOverlap += _vSameNetOverlap[netCapId];
+    // }
 }
 
 void FlowLP::printRelaxedResult() {
@@ -525,4 +566,136 @@ void FlowLP::printRelaxedResult() {
         }
     }
     cerr << "planeArea = " << planeArea << endl;
+}
+
+void FlowLP::addCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width, bool before) {
+    double totalWidth = 0;
+    double widthWeight1, widthWeight2;
+    assert(!e1->viaEdge());
+    assert(!e2->viaEdge());
+    // assert(e1->sNode()->voltage() != e1->tNode()->voltage());
+    if (e1->sNode()->voltage() == e1->tNode()->voltage()) {
+        widthWeight1 = 0;
+    } else {
+        widthWeight1 = (e1->length()) / ( _db.vMetalLayer(e1->layId())->conductivity() * (e1->sNode()->voltage()-e1->tNode()->voltage()) * _db.vMetalLayer(e1->layId())->thickness());
+    }
+    // assert(e2->sNode()->voltage() != e2->tNode()->voltage());
+    if (e2->sNode()->voltage() == e2->tNode()->voltage()) {
+        widthWeight2 = 0;
+    } else {
+        widthWeight2 = (e2->length()) / ( _db.vMetalLayer(e2->layId())->conductivity() * (e2->sNode()->voltage()-e2->tNode()->voltage()) * _db.vMetalLayer(e2->layId())->thickness());
+    }
+
+    if (right1) {
+        // totalWidth += _vPlaneRightFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
+        totalWidth += e1->currentRight() * widthWeight1 * ratio1;
+
+    } else {
+        // totalWidth += _vPlaneLeftFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
+        totalWidth += e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (right2) {
+        // totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
+        totalWidth += e2->currentRight() * widthWeight2 * ratio2;
+    } else {
+        // totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
+        totalWidth += e2->currentLeft() * widthWeight2 * ratio2;
+    }
+    if (totalWidth * 1E3 > width) {
+        if (before) {
+            _vBeforeOverlap.push_back(totalWidth * 1E3 - width);
+        } else {
+            _vAfterOverlap.push_back(totalWidth * 1E3 - width);
+        }
+    } else {
+        if (before) {
+            _vBeforeOverlap.push_back(0);
+        } else {
+            _vAfterOverlap.push_back(0);
+        }
+    }
+}
+
+void FlowLP::addSameNetCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width, bool before) {
+    double totalWidth = 0;
+    double widthWeight1, widthWeight2;
+    assert(!e1->viaEdge());
+    assert(!e2->viaEdge());
+    // assert(e1->sNode()->voltage() != e1->tNode()->voltage());
+    if (e1->sNode()->voltage() == e1->tNode()->voltage()) {
+        widthWeight1 = 0;
+    } else {
+        widthWeight1 = (e1->length()) / ( _db.vMetalLayer(e1->layId())->conductivity() * (e1->sNode()->voltage()-e1->tNode()->voltage()) * _db.vMetalLayer(e1->layId())->thickness());
+    }
+    // assert(e2->sNode()->voltage() != e2->tNode()->voltage());
+    if (e2->sNode()->voltage() == e2->tNode()->voltage()) {
+        widthWeight2 = 0;
+    } else {
+        widthWeight2 = (e2->length()) / ( _db.vMetalLayer(e2->layId())->conductivity() * (e2->sNode()->voltage()-e2->tNode()->voltage()) * _db.vMetalLayer(e2->layId())->thickness());
+    }
+
+    if (right1) {
+        // totalWidth += _vPlaneRightFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
+        totalWidth += e1->currentRight() * widthWeight1 * ratio1;
+
+    } else {
+        // totalWidth += _vPlaneLeftFlow[e1->netId()][e1->layId()][e1->typeEdgeId()] * _currentNorm * widthWeight1 * ratio1;
+        totalWidth += e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (right2) {
+        // totalWidth += _vPlaneRightFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
+        totalWidth += e2->currentRight() * widthWeight2 * ratio2;
+    } else {
+        // totalWidth += _vPlaneLeftFlow[e2->netId()][e2->layId()][e2->typeEdgeId()] * _currentNorm * widthWeight2 * ratio2;
+        totalWidth += e2->currentLeft() * widthWeight2 * ratio2;
+    }
+    if (totalWidth * 1E3 > width) {
+        if (before) {
+            _vBeforeSameOverlap.push_back(totalWidth * 1E3 - width);
+        } else {
+            _vAfterSameOverlap.push_back(totalWidth * 1E3 - width);
+        }
+    } else {
+        if (before) {
+            _vBeforeSameOverlap.push_back(0);
+        } else {
+            _vAfterSameOverlap.push_back(0);
+        }
+    }
+}
+
+void FlowLP::calculateOverlapCost(vector<double> vLambda, vector<double> vNetLambda) {
+    _beforeOverlapCost = 0;
+    _afterOverlapCost = 0;
+    _overlap = 0;
+    _sameNetOverlap = 0;
+    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+        _beforeOverlapCost += vLambda[capId] * _vBeforeOverlap[capId];
+        _afterOverlapCost += vLambda[capId] * _vAfterOverlap[capId];
+        _overlap += _vAfterOverlap[capId];
+    }
+    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+        _beforeOverlapCost += vNetLambda[netCapId] * _vBeforeSameOverlap[netCapId];
+        _afterOverlapCost += vNetLambda[netCapId] * _vAfterSameOverlap[netCapId];
+        _sameNetOverlap += _vAfterSameOverlap[netCapId];
+    }
+    if (_overlap < 1E-3) {
+        _overlap = 0;
+    }
+    if (_sameNetOverlap < 1E-3) {
+        _sameNetOverlap = 0;
+    }
+    if (_beforeOverlapCost < 1E-3) {
+        _beforeOverlapCost = 0;
+    }
+    if (_afterOverlapCost < 1E-3) {
+        _afterOverlapCost = 0;
+    }
+}
+
+void FlowLP::clearVOverlap() {
+    _vBeforeOverlap.clear();
+    _vBeforeSameOverlap.clear();
+    _vAfterOverlap.clear();
+    _vAfterSameOverlap.clear();
 }
