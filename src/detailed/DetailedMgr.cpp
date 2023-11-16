@@ -99,7 +99,6 @@ void DetailedMgr::initGridMap() {
                     // }
                     if (occupiedBySegments(layId, xId, yId, netId)) {
                         assert(!grid->hasNet(netId));
-                        //grid->setPort(netId);
                         grid->addNet(netId);
                         grid->incCongestCur();
                         _vNetGrid[netId][layId].push_back(grid);
@@ -112,8 +111,8 @@ void DetailedMgr::initGridMap() {
                     _vNetPortGrid[netId][0].push_back(make_pair(xId, yId));
                     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                         Grid* grid = _vGrid[layId][xId][yId];
+                        grid->setPort(netId);
                         if (! grid->hasNet(netId)) {
-                            //grid->setPort(netId);
                             grid->addNet(netId);
                             grid->incCongestCur();
                             _vNetGrid[netId][layId].push_back(grid);
@@ -125,8 +124,8 @@ void DetailedMgr::initGridMap() {
                         _vNetPortGrid[netId][tPortId+1].push_back(make_pair(xId, yId));
                         for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                             Grid* grid = _vGrid[layId][xId][yId];
+                            grid->setPort(netId);
                             if (! grid->hasNet(netId)) {
-                                //grid->setPort(netId);
                                 grid->addNet(netId);
                                 grid->incCongestCur();
                                 _vNetGrid[netId][layId].push_back(grid);
@@ -284,8 +283,8 @@ void DetailedMgr::initPortGridMap() {
                     _vNetPortGrid[netId][0].push_back(make_pair(xId, yId));
                     for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                         Grid* grid = _vGrid[layId][xId][yId];
+                        grid->setPort(netId);
                         if (! grid->hasNet(netId)) {
-                            //grid->setPort(netId);
                             grid->addNet(netId);
                             grid->incCongestCur();
                             _vNetGrid[netId][layId].push_back(grid);
@@ -297,8 +296,8 @@ void DetailedMgr::initPortGridMap() {
                         _vNetPortGrid[netId][tPortId+1].push_back(make_pair(xId, yId));
                         for (size_t layId = 0; layId < _db.numLayers(); ++ layId) {
                             Grid* grid = _vGrid[layId][xId][yId];
+                            grid->setPort(netId);
                             if (! grid->hasNet(netId)) {
-                                //grid->setPort(netId);
                                 grid->addNet(netId);
                                 grid->incCongestCur();
                                 _vNetGrid[netId][layId].push_back(grid);
@@ -415,11 +414,13 @@ void DetailedMgr::plotGridMap() {
                 } else {
                     for (size_t netId = 0; netId < grid->numNets(); ++ netId) {
                         p->plot(grid->vNetId(netId), layId);
-                        
-                        if(grid->IsPort(netId)){
-                            p->plot(SVGPlotColor::black, layId);
+
+                        //size_t NETID = grid-> vNetId(netId);
+                
+                        // if(grid->IsPort(NETID)){
+                        //     p->plot(SVGPlotColor::black, layId);
                             
-                        }
+                        // }
                     }
                 }
             }
@@ -1850,6 +1851,8 @@ bool DetailedMgr::SmartRemove(size_t netId, int k){
     }
     delete r;
 
+    buildSingleNetMtx(netId);
+
     bool ReachTarget = false;
     for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
         if(_vTPortCurr[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->current()){
@@ -1954,7 +1957,7 @@ void DetailedMgr::PostProcessing(){
                 rm += _vNetGrid[netId][layId].size();
             }
 
-            rm = rm/100;
+            rm = rm/50;
 
             for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
                 if(_vTPortCurr[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->current()){
@@ -1972,17 +1975,14 @@ void DetailedMgr::PostProcessing(){
             while(!ReachTarget){
                 ReachTarget = SmartRemove(netId,rm);
                 rm = (int)(rm/1.25);//隨便設一個遞減函數
-
-                //check();
-
                 count ++;
-                // if(count > 3){
-                //     cout << "######OUT of TIME########" << endl; 
-                //     break;
-                // }
+                if(count > 5){
+                    cout << "######OUT of TIME########" << endl; 
+                    break;
+                }
             }
 
-            cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
+            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
 
             //SmartGrow stage
             ReachTarget = true;
@@ -2032,62 +2032,59 @@ void DetailedMgr::PostProcessing(){
                 }
             }
 
-            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartGrow to reach the target" << endl;
-
+            if(count <= 5) cout <<"NET " << netId << " DO " << count << " times SmartGrow to reach the target" << endl;
 
             //Refine stage
-            int rf = 0;//作微調
-            for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
-                rf += _vNetGrid[netId][layId].size();
-            }
+            // int rf = 0;//作微調
+            // for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
+            //     rf += _vNetGrid[netId][layId].size();
+            // }
 
-            rf /= 50;
+            // rf /= 50;
 
-            ReachTarget = true;
+            // ReachTarget = true;
 
+            // for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
+            //     if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
+            //         ReachTarget = false;
+            //         break;
+            //     }
+            //     if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
+            //         ReachTarget = false;
+            //         break;
+            //     }
+            // }
 
-            for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
-                if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
-                    ReachTarget = false;
-                    break;
-                }
-                if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
-                    ReachTarget = false;
-                    break;
-                }
-            }
+            // count = 0;
 
-            count = 0;
+            // while(!ReachTarget){
+            //     ReachTarget = true;
+            //     SmartRefine(netId,rf);
+            //     rf = (int)(rf/1.25);//隨便設一個遞減函數
 
-            while(!ReachTarget){
-                ReachTarget = true;
-                SmartRefine(netId,rf);
-                rf = (int)(rf/1.25);//隨便設一個遞減函數
+            //     check();
 
-                check();
+            //     buildSingleNetMtx(netId);
 
-                buildSingleNetMtx(netId);
-
-                for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
-                    if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
-                        ReachTarget = false;
-                        break;
-                    }
-                    if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
-                        ReachTarget = false;
-                        break;
-                    }
-                }   
-                count ++;
-                if(count > 3){
-                    cout << "######OUT of TIME########" << endl; 
-                    break;
-                }
-            }
+            //     for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
+            //         if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
+            //             ReachTarget = false;
+            //             break;
+            //         }
+            //         if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
+            //             ReachTarget = false;
+            //             break;
+            //         }
+            //     }   
+            //     count ++;
+            //     if(count > 3){
+            //         cout << "######OUT of TIME########" << endl; 
+            //         break;
+            //     }
+            // }
             
-            if(count <= 3) cout <<"NET " << netId << " DO " << count << " times SmartRefine to reach the target" << endl;
+            // if(count <= 3) cout <<"NET " << netId << " DO " << count << " times SmartRefine to reach the target" << endl;
     }
-    
 }
 
 

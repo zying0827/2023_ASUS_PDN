@@ -179,8 +179,8 @@ int main(int argc, char* argv[]){
     detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     detailedMgr->initGridMap();
     // detailedMgr->initSegObsGridMap();
-    detailedMgr->check();
-    detailedMgr->plotGridMap();
+    //detailedMgr->check();
+    //detailedMgr->plotGridMap();
     // // detailedMgr.naiveAStar();
     detailedMgr->negoAStar(false);
     detailedMgr->check();
@@ -197,12 +197,12 @@ int main(int argc, char* argv[]){
     // printf("\n==================== buildMtx ===================\n");
     //detailedMgr->buildMtx();
     //detailedMgr->SmartDistribute();
-    //detailedMgr->SPROUT();
-    //detailedMgr->plotGridMap();
+    detailedMgr->PostProcessing();
+    detailedMgr->plotGridMap();
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
-    globalMgr.plotDB();
+    //globalMgr.plotDB();
 
     //羅：匯出3個Vector of double
     //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
