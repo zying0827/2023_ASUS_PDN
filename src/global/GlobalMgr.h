@@ -86,6 +86,10 @@ class GlobalMgr {
         vector<double> _vViaArea;
         vector<double> _vOverlap;   // record the overlapped width of each iteration in voltCurrOpt
         vector<double> _vSameNetOverlap;
+        vector<double> _vBeforeCost;
+        vector<double> _vAfterCost;
+        vector<double> _vBeforeOverlapCost;
+        vector<double> _vAfterOverlapCost;
     private:
         double oldViaEdgeArea(OASGEdge* e);
         // double viaEdgeArea(OASGEdge* e);

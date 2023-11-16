@@ -1057,9 +1057,11 @@ void GlobalMgr::voltCurrOpt() {
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                //調
                 vLambda[capId] = 2;
         }
         for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                //調
                 vNetLambda[netCapId] = 4;
         }
 
@@ -1089,13 +1091,35 @@ void GlobalMgr::voltCurrOpt() {
             currentSolver->addSameNetCapacityConstraints(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
         }
         for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            currentSolver->clearVOverlap();
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                CapConstr cap = _vCapConstr[capId];
+                currentSolver->addCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width, true);
+            }
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                CapConstr cap = _vNetCapConstr[netCapId];
+                currentSolver->addSameNetCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width, true);
+            }
             currentSolver->relaxCapacityConstraints(vLambda, vNetLambda);
             currentSolver->solveRelaxed();
             currentSolver->collectRelaxedResult();
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                CapConstr cap = _vCapConstr[capId];
+                currentSolver->addCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width, false);
+            }
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                CapConstr cap = _vNetCapConstr[netCapId];
+                currentSolver->addSameNetCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width, false);
+            }
+            currentSolver->calculateOverlapCost(vLambda, vNetLambda);
             _vArea.push_back(currentSolver->area());
             _vViaArea.push_back(currentSolver->viaArea());
             _vOverlap.push_back(currentSolver->overlap());
             _vSameNetOverlap.push_back(currentSolver->sameNetOverlap());
+            _vBeforeCost.push_back(currentSolver->beforeCost());
+            _vAfterCost.push_back(currentSolver->afterCost());
+            _vBeforeOverlapCost.push_back(currentSolver->beforeOverlapCost());
+            _vAfterOverlapCost.push_back(currentSolver->afterOverlapCost());
             cerr << "iIter = " << iIter << endl;
             currentSolver->printRelaxedResult();
             // lagrange multiplier scheduling
@@ -1104,7 +1128,8 @@ void GlobalMgr::voltCurrOpt() {
                 // vLambda[capId] *= vLambda[capId];
 
                 // schedule2: exp(.)
-                vLambda[capId] *= 2;
+                //調
+                vLambda[capId] *= 1;
 
                 // schedule3: P control
                 // vLambda[capId] += PRatio * currentSolver->vOverlap(capId);
@@ -1119,22 +1144,24 @@ void GlobalMgr::voltCurrOpt() {
                 // vLastOverlap[capId] = curOverlap;
             }
             for (size_t netCapId = 0; netCapId <_vNetCapConstr.size(); ++ netCapId) {
-                vNetLambda[netCapId] *= 2;
+                //調
+                vNetLambda[netCapId] *= 1;
             }
         }
 
         // voltage optimization
-        vector< vector< double > > vOldVoltage;
-        for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-            vector<double> temp;
-            for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
-                temp.push_back(_rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage());
-                // vOldVoltage[netId][nPortNodeId] = _rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage();
-            }
-            vOldVoltage.push_back(temp);
-        }
+        // vector< vector< double > > vOldVoltage;
+        // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        //     vector<double> temp;
+        //     for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+        //         temp.push_back(_rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage());
+        //         // vOldVoltage[netId][nPortNodeId] = _rGraph.vNPortOASGNode(netId, nPortNodeId)->voltage();
+        //     }
+        //     vOldVoltage.push_back(temp);
+        // }
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
-            voltageSolver = new VoltSLP(_db, _rGraph, vOldVoltage);
+            // voltageSolver = new VoltSLP(_db, _rGraph, vOldVoltage);
+            voltageSolver = new VoltSLP(_db, _rGraph);
             voltageSolver->setObjective(_db.areaWeight(), _db.viaWeight());
             // voltageSolver->setVoltConstraints(1E-15);
             voltageSolver->setLimitConstraint(0.9);
@@ -1158,14 +1185,27 @@ void GlobalMgr::voltCurrOpt() {
             voltageSolver->relaxCapacityConstraints(vLambda, vNetLambda);
             voltageSolver->solveRelaxed();
             voltageSolver->collectRelaxedResult();
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+                CapConstr cap = _vCapConstr[capId];
+                voltageSolver->addCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+            }
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                CapConstr cap = _vNetCapConstr[netCapId];
+                voltageSolver->addSameNetCapacityOverlap(cap.e1, cap.right1, cap.ratio1, cap.e2, cap.right2, cap.ratio2, cap.width);
+            }
+            voltageSolver->calculateOverlapCost(vLambda, vNetLambda);
             _vArea.push_back(voltageSolver->area());
             _vViaArea.push_back(voltageSolver->viaArea());
             _vOverlap.push_back(voltageSolver->overlap());
             _vSameNetOverlap.push_back(voltageSolver->sameNetOverlap());
+            _vBeforeCost.push_back(voltageSolver->beforeCost());
+            _vAfterCost.push_back(voltageSolver->afterCost());
+            _vBeforeOverlapCost.push_back(voltageSolver->beforeOverlapCost());
+            _vAfterOverlapCost.push_back(voltageSolver->afterOverlapCost());
             cerr << "vIter = " << vIter << endl;
             voltageSolver->printRelaxedResult();
-            voltageSolver->collectRelaxedTempVoltage();
-            vOldVoltage = voltageSolver->vNewVoltage();
+            // voltageSolver->collectRelaxedTempVoltage();
+            // vOldVoltage = voltageSolver->vNewVoltage();
         }
         // voltageSolver->collectRelaxedResult();
         // // cerr << "vIter = " << vIter << endl;
@@ -1300,6 +1340,44 @@ void GlobalMgr::voltCurrOpt() {
         cerr << "V opt: ";
         for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
             cerr << _vSameNetOverlap[i] << " -> ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "//////////////////////" << endl;
+    cerr << "//    Total Cost    //" << endl;
+    cerr << "//////////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << "(" << _vBeforeCost[i] << " -> " << _vAfterCost[i] << ") => ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << "(" << _vBeforeCost[i] << " -> " << _vAfterCost[i] << ") => ";
+            i++;
+        }
+        cerr << endl;
+    }
+    cerr << "////////////////////////" << endl;
+    cerr << "//    Overlap Cost    //" << endl;
+    cerr << "////////////////////////" << endl;
+    i = 0;
+    for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
+        cerr << "ivIter = " << ivIter << endl;
+        cerr << "I opt: ";
+        for (size_t iIter = 0; iIter < numIIter; ++iIter) {
+            cerr << "(" << _vBeforeOverlapCost[i] << " -> " << _vAfterOverlapCost[i] << ") => ";
+            i++;
+        }
+        cerr << endl;
+        cerr << "V opt: ";
+        for (size_t vIter = 0; vIter < numVIter; ++ vIter) {
+            cerr << "(" << _vBeforeOverlapCost[i] << " -> " << _vAfterOverlapCost[i] << ") => ";
             i++;
         }
         cerr << endl;

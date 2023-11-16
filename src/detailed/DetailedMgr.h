@@ -115,8 +115,10 @@ class DetailedMgr {
         bool NetEdgeDetect(size_t netId, size_t layId, Grid* grid);
         void SmartDistribute();
         void PostProcessing();
-        
+        void writeColorMap_v2(const char*, bool);
+
     private:
+    
         vector< pair<double, double> > kMeansClustering(vector< pair<int,int> > vGrid, int numClusters, int numEpochs);
         void clearNet(size_t layId, size_t netId);
         bool legal(int xId, int yId) { return (xId>=0 && xId<_vGrid[0].size() && yId>=0 && yId<_vGrid[0][0].size()); }

@@ -780,7 +780,11 @@ string Parser::toLineBegin(string word) {
     string word1;
     word1.assign(data, 0, word.size());
     while (word1 != word) {
-        _fin.ignore(numeric_limits<streamsize>::max(), '\n');
+        // cerr << "word1 = " << word1 << endl; 
+        // if (word1.substr(0,5) == "Patch") {
+        //     assert(false);
+        // }
+        // _fin.ignore(numeric_limits<streamsize>::max(), '\n');
         getline(_fin, data);
         // cerr << "data = " << data << endl;
         // ss.str("");

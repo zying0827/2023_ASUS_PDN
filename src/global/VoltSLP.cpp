@@ -1,12 +1,18 @@
 #include "VoltSLP.h"
 
-VoltSLP::VoltSLP(DB& db, RGraph& rGraph, vector< vector< double > > vOldVoltage)
- : _model(_env), _db(db), _rGraph(rGraph), _vOldVoltage(vOldVoltage) {
+VoltSLP::VoltSLP(DB& db, RGraph& rGraph)
+ : _model(_env), _db(db), _rGraph(rGraph) {
     _model.set(GRB_DoubleParam_FeasibilityTol, 1e-9);
     _area = 0;
     _overlap = 0;
     _numCapConstrs = 0;
     _numNetCapConstrs = 0;
+    _beforeCost = 0;
+    _afterCost = 0;
+    _beforeOverlapCost = 0;
+    _afterOverlapCost = 0;
+    _areaWeight = 0;
+    _viaWeight = 0;
     _vVoltage = new GRBVar* [_rGraph.numNets()];
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         _vVoltage[netId] = new GRBVar [_rGraph.numNPortOASGNodes(netId)];
@@ -44,10 +50,10 @@ VoltSLP::VoltSLP(DB& db, RGraph& rGraph, vector< vector< double > > vOldVoltage)
         }
     }
 
-    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-        vector<double> temp(_rGraph.numNPortOASGNodes(netId), 0.0);
-        _vNewVoltage.push_back(temp);
-    }
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     vector<double> temp(_rGraph.numNPortOASGNodes(netId), 0.0);
+    //     _vNewVoltage.push_back(temp);
+    // }
 }
 
 void VoltSLP::setVoltConstraints(double threshold) {
@@ -100,14 +106,16 @@ GRBLinExpr VoltSLP::linApprox(double cost, OASGEdge* edge) {
     double sOldVolt, tOldVolt;
     GRBLinExpr sVolt, tVolt;
     if (edge->sNode()->nPort()) {
-        sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+        // sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+        sOldVolt = edge->sNode()->voltage();
         sVolt += _vVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
     } else {
         sOldVolt = edge->sNode()->voltage();
         sVolt += edge->sNode()->voltage();
     }
     if (edge->tNode()->nPort()) {
-        tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+        // tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+        tOldVolt = edge->tNode()->voltage();
         tVolt += _vVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
     } else {
         tOldVolt = edge->tNode()->voltage();
@@ -123,6 +131,8 @@ GRBLinExpr VoltSLP::linApprox(double cost, OASGEdge* edge) {
 }
 
 void VoltSLP::setObjective(double areaWeight, double viaWeight){
+    _areaWeight = areaWeight;
+    _viaWeight = viaWeight;
     GRBLinExpr obj;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // add cost for horizontal flows
@@ -134,11 +144,26 @@ void VoltSLP::setObjective(double areaWeight, double viaWeight){
                 double cost = (areaWeight * pow(1E-3 * e->length(), 2)) * e->current() / (_db.vMetalLayer(layId)->conductivity() * _db.vMetalLayer(layId)->thickness() * 1E-3);
                 // cerr << "cost = " << cost << endl;
                 obj += linApprox(cost, e);
+                // double sOldVolt, tOldVolt;
+                // if (e->sNode()->nPort()) {
+                //     sOldVolt = _vOldVoltage[e->netId()][e->sNode()->nPortNodeId()];
+                // } else {
+                //     sOldVolt = e->sNode()->voltage();
+                // }
+                // if (e->tNode()->nPort()) {
+                //     tOldVolt = _vOldVoltage[e->netId()][e->tNode()->nPortNodeId()];
+                // } else {
+                //     tOldVolt = e->tNode()->voltage();
+                // }
+                // if (sOldVolt != tOldVolt) {
+                //     _beforeCost += 1E6 * cost / (sOldVolt - tOldVolt);
+                // }
             }
         }
         // add cost for vertical flows
         // cerr << "add cost for vertical flows" << endl;
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+            double viaCost = 0;
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
                 if (!e->redundant()) {
@@ -154,9 +179,27 @@ void VoltSLP::setObjective(double areaWeight, double viaWeight){
                     _model.addConstr(linApprox(cost, e) <= _vMaxViaCost[netId][vEdgeId], 
                                     "max_via_cost_n" + to_string(netId) + "_l_" + to_string(layPairId) + "_i_" + to_string(vEdgeId));
                     _model.addConstr(linApprox(cost, e) * 1E6 >= _db.VIA16D8A24()->metalArea());
+                    // double sOldVolt, tOldVolt;
+                    // if (e->sNode()->nPort()) {
+                    //     sOldVolt = _vOldVoltage[e->netId()][e->sNode()->nPortNodeId()];
+                    // } else {
+                    //     sOldVolt = e->sNode()->voltage();
+                    // }
+                    // if (e->tNode()->nPort()) {
+                    //     tOldVolt = _vOldVoltage[e->netId()][e->tNode()->nPortNodeId()];
+                    // } else {
+                    //     tOldVolt = e->tNode()->voltage();
+                    // }
+                    // if (sOldVolt != tOldVolt) {
+                    //     if (viaCost < cost / (sOldVolt - tOldVolt)) {
+                    //         viaCost = cost / (sOldVolt - tOldVolt);
+                    //     }
+                    // }
+                    
                 }
             }
             obj += viaWeight * _vMaxViaCost[netId][vEdgeId];
+            // _beforeCost += 1E6 * viaWeight * viaCost;
         }
     }
     // cerr << "_model.setObjective(obj, GRB_MINIMIZE)" << endl;
@@ -175,14 +218,16 @@ void VoltSLP::setLimitConstraint(double ratio) {
                 double sOldVolt, tOldVolt;
                 GRBLinExpr sVolt, tVolt;
                 if (edge->sNode()->nPort()) {
-                    sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+                    // sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+                    sOldVolt = edge->sNode()->voltage();
                     sVolt += _vVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
                 } else {
                     sOldVolt = edge->sNode()->voltage();
                     sVolt += edge->sNode()->voltage();
                 }
                 if (edge->tNode()->nPort()) {
-                    tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+                    // tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+                    tOldVolt = edge->tNode()->voltage();
                     tVolt += _vVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
                 } else {
                     tOldVolt = edge->tNode()->voltage();
@@ -207,14 +252,16 @@ void VoltSLP::setLimitConstraint(double ratio) {
                     double sOldVolt, tOldVolt;
                     GRBLinExpr sVolt, tVolt;
                     if (edge->sNode()->nPort()) {
-                        sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+                        // sOldVolt = _vOldVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
+                        sOldVolt = edge->sNode()->voltage();
                         sVolt += _vVoltage[edge->netId()][edge->sNode()->nPortNodeId()];
                     } else {
                         sOldVolt = edge->sNode()->voltage();
                         sVolt += edge->sNode()->voltage();
                     }
                     if (edge->tNode()->nPort()) {
-                        tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+                        // tOldVolt = _vOldVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
+                        tOldVolt = edge->tNode()->voltage();
                         tVolt += _vVoltage[edge->netId()][edge->tNode()->nPortNodeId()];
                     } else {
                         tOldVolt = edge->tNode()->voltage();
@@ -240,6 +287,7 @@ void VoltSLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, O
     double widthWeight1 = (e1->length()) / (_db.vMetalLayer(e1->layId())->conductivity() * _db.vMetalLayer(e1->layId())->thickness());
     double widthWeight2 = (e2->length()) / (_db.vMetalLayer(e2->layId())->conductivity() * _db.vMetalLayer(e2->layId())->thickness());
     double cost1, cost2;
+    double oldTotalWidth = 0;
     if (right1) {
         cost1 = e1->currentRight() * widthWeight1 * ratio1;
         totalWidth += linApprox(cost1, e1);
@@ -248,6 +296,9 @@ void VoltSLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, O
         cost1 = e1->currentLeft() * widthWeight1 * ratio1;
         totalWidth += linApprox(cost1, e1);
         // totalWidth += _vPEdgeInV[e1->netId()][e1->layId()][e1->typeEdgeId()] * e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (e1->sNode()->voltage() != e1->tNode()->voltage()) {
+        oldTotalWidth += cost1 / (e1->sNode()->voltage() - e1->tNode()->voltage());
     }
     if (right2) {
         cost2 = e2->currentRight() * widthWeight2 * ratio2;
@@ -258,10 +309,18 @@ void VoltSLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, O
         totalWidth += linApprox(cost2, e2);
         // totalWidth += _vPEdgeInV[e2->netId()][e2->layId()][e2->typeEdgeId()] * e2->currentLeft() * widthWeight2 * ratio2;
     }
+    if (e2->sNode()->voltage() != e2->tNode()->voltage()) {
+        oldTotalWidth += cost2 / (e2->sNode()->voltage() - e2->tNode()->voltage());
+    }
     _model.addConstr(totalWidth * 1E3 <= width, "capacity_" + to_string(_numCapConstrs));
     // _model.update();
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
     _numCapConstrs ++;
+    if (oldTotalWidth * 1E3 > width) {
+        _vBeforeOverlap.push_back(oldTotalWidth * 1E3 - width);
+    } else {
+        _vBeforeOverlap.push_back(0);
+    }
 }
 
 void VoltSLP::addCapacityConstraints(OASGEdge* e1, bool right1, double ratio1, double width) {
@@ -289,6 +348,7 @@ void VoltSLP::addSameNetCapacityConstraints(OASGEdge* e1, bool right1, double ra
     double widthWeight1 = (e1->length()) / (_db.vMetalLayer(e1->layId())->conductivity() * _db.vMetalLayer(e1->layId())->thickness());
     double widthWeight2 = (e2->length()) / (_db.vMetalLayer(e2->layId())->conductivity() * _db.vMetalLayer(e2->layId())->thickness());
     double cost1, cost2;
+    double oldTotalWidth = 0;
     if (right1) {
         cost1 = e1->currentRight() * widthWeight1 * ratio1;
         totalWidth += linApprox(cost1, e1);
@@ -297,6 +357,9 @@ void VoltSLP::addSameNetCapacityConstraints(OASGEdge* e1, bool right1, double ra
         cost1 = e1->currentLeft() * widthWeight1 * ratio1;
         totalWidth += linApprox(cost1, e1);
         // totalWidth += _vPEdgeInV[e1->netId()][e1->layId()][e1->typeEdgeId()] * e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (e1->sNode()->voltage() != e1->tNode()->voltage()) {
+        oldTotalWidth += cost1 / (e1->sNode()->voltage() - e1->tNode()->voltage());
     }
     if (right2) {
         cost2 = e2->currentRight() * widthWeight2 * ratio2;
@@ -307,10 +370,18 @@ void VoltSLP::addSameNetCapacityConstraints(OASGEdge* e1, bool right1, double ra
         totalWidth += linApprox(cost2, e2);
         // totalWidth += _vPEdgeInV[e2->netId()][e2->layId()][e2->typeEdgeId()] * e2->currentLeft() * widthWeight2 * ratio2;
     }
+    if (e2->sNode()->voltage() != e2->tNode()->voltage()) {
+        oldTotalWidth += cost2 / (e2->sNode()->voltage() - e2->tNode()->voltage());
+    }
     _model.addConstr(totalWidth * 1E3 <= width, "same_net_capacity_" + to_string(_numNetCapConstrs));
     // _model.update();
     // _model.write("/home/leotseng/2023_ASUS_PDN/exp/output/FlowLP_debug.lp");
     _numNetCapConstrs ++;
+    if (oldTotalWidth * 1E3 > width) {
+        _vBeforeSameOverlap.push_back(oldTotalWidth * 1E3 - width);
+    } else {
+        _vBeforeSameOverlap.push_back(0);
+    }
 }
 
 void VoltSLP::relaxCapacityConstraints(vector<double> vLambda) {
@@ -355,11 +426,11 @@ void VoltSLP::solve() {
 }
 
 void VoltSLP::collectTempVoltage() {
-    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
-        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
-            _vNewVoltage[netId][nPortNodeId] = _vVoltage[netId][nPortNodeId].get(GRB_DoubleAttr_X) ;
-        }
-    }
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+    //         _vNewVoltage[netId][nPortNodeId] = _vVoltage[netId][nPortNodeId].get(GRB_DoubleAttr_X) ;
+    //     }
+    // }
 }
 
 void VoltSLP::collectResult() {
@@ -414,12 +485,14 @@ void VoltSLP::solveRelaxed() {
                 cerr << "vPEdge[" << netId << "][" << layId << "][" << pEdgeId << "]: ";
                 double sVolt, tVolt;
                 if (e->sNode()->nPort()) {
-                    sVolt  = _vOldVoltage[netId][e->sNode()->nPortNodeId()];
+                    // sVolt  = _vOldVoltage[netId][e->sNode()->nPortNodeId()];
+                    sVolt = e->sNode()->voltage();
                 } else {
                     sVolt = e->sNode()->voltage();
                 }
                 if (e->tNode()->nPort()) {
-                    tVolt  = _vOldVoltage[netId][e->tNode()->nPortNodeId()];
+                    // tVolt  = _vOldVoltage[netId][e->tNode()->nPortNodeId()];
+                    tVolt = e->tNode()->voltage();
                 } else {
                     tVolt = e->tNode()->voltage();
                 }
@@ -433,12 +506,14 @@ void VoltSLP::solveRelaxed() {
                     cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                     double sVolt, tVolt;
                     if (e->sNode()->nPort()) {
-                        sVolt  = _vOldVoltage[netId][e->sNode()->nPortNodeId()];
+                        // sVolt  = _vOldVoltage[netId][e->sNode()->nPortNodeId()];
+                        sVolt = e->sNode()->voltage();
                     } else {
                         sVolt = e->sNode()->voltage();
                     }
                     if (e->tNode()->nPort()) {
-                        tVolt  = _vOldVoltage[netId][e->tNode()->nPortNodeId()];
+                        // tVolt  = _vOldVoltage[netId][e->tNode()->nPortNodeId()];
+                        tVolt = e->tNode()->voltage();
                     } else {
                         tVolt = e->tNode()->voltage();
                     }
@@ -451,15 +526,84 @@ void VoltSLP::solveRelaxed() {
 }
 
 void VoltSLP::collectRelaxedTempVoltage() {
-    for(size_t netId = 0; netId < _db.numNets(); ++ netId) {
-        for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
-            _vNewVoltage[netId][nPortNodeId] = _modelRelaxed->getVarByName("V_n" + to_string(netId) + "_i_" + to_string(nPortNodeId)).get(GRB_DoubleAttr_X);
-        }
-    }
+    // for(size_t netId = 0; netId < _db.numNets(); ++ netId) {
+    //     for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
+    //         _vNewVoltage[netId][nPortNodeId] = _modelRelaxed->getVarByName("V_n" + to_string(netId) + "_i_" + to_string(nPortNodeId)).get(GRB_DoubleAttr_X);
+    //     }
+    // }
 }
 
 void VoltSLP::collectRelaxedResult() {
+    // set before cost
+    _beforeCost = 0;
+    for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+        for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+            for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+                OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+                // assert(e->current() * (e->sNode()->voltage() - e->tNode()->voltage()) >= 0); // asserted in linApprox (use oldVolt)
+                double cost = (_areaWeight * pow(1E-3 * e->length(), 2)) * e->current() / (_db.vMetalLayer(layId)->conductivity() * _db.vMetalLayer(layId)->thickness() * 1E-3);
+                cerr << "current = " << e->current() <<  ", cost = " << cost << endl;
+                double sOldVolt, tOldVolt;
+                if (e->sNode()->nPort()) {
+                    // sOldVolt = _vOldVoltage[e->netId()][e->sNode()->nPortNodeId()];
+                    sOldVolt = e->sNode()->voltage();
+                } else {
+                    sOldVolt = e->sNode()->voltage();
+                }
+                if (e->tNode()->nPort()) {
+                    // tOldVolt = _vOldVoltage[e->netId()][e->tNode()->nPortNodeId()];
+                    tOldVolt = e->tNode()->voltage();
+                } else {
+                    tOldVolt = e->tNode()->voltage();
+                }
+                if (sOldVolt != tOldVolt) {
+                    _beforeCost += 1E6 * cost / (sOldVolt - tOldVolt);
+                }
+            }
+        }
+        cerr << "before cost = " << _beforeCost << endl;
+        for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+            double viaCost = 0;
+            for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
+                OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
+                if (!e->redundant()) {
+                    // assert(e->current() * (e->sNode()->voltage() - e->tNode()->voltage()) >= 0); // asserted in linApprox (use oldVolt)
+                    double l = 1E-3 * (0.5*_db.vMetalLayer(layPairId)->thickness()+_db.vMediumLayer(layPairId+1)->thickness()+0.5*_db.vMetalLayer(layPairId+1)->thickness());
+                    double costNum = l * e->current();
+                    double costDen = _db.vMetalLayer(0)->conductivity(); // has not * via cross-sectional area
+                    // cerr << "costDen=" << setprecision(15) << costDen << ", ";
+                    // cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
+                    // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
+                    double cost = costNum / costDen;
+                    // cerr << "cost = " << cost << endl;
+                    double sOldVolt, tOldVolt;
+                    if (e->sNode()->nPort()) {
+                        // sOldVolt = _vOldVoltage[e->netId()][e->sNode()->nPortNodeId()];
+                        sOldVolt = e->sNode()->voltage();
+                    } else {
+                        sOldVolt = e->sNode()->voltage();
+                    }
+                    if (e->tNode()->nPort()) {
+                        // tOldVolt = _vOldVoltage[e->netId()][e->tNode()->nPortNodeId()];
+                        tOldVolt = e->tNode()->voltage();
+                    } else {
+                        tOldVolt = e->tNode()->voltage();
+                    }
+                    if (sOldVolt != tOldVolt) {
+                        if (viaCost < cost / (sOldVolt - tOldVolt)) {
+                            viaCost = cost / (sOldVolt - tOldVolt);
+                        }
+                    }
+                }
+            }
+            _beforeCost += 1E6 * _viaWeight * viaCost;
+        }
+        cerr << "before cost = " << _beforeCost << endl;
+    }
+
+    // collect result and set after cost
     _viaArea = 0;
+    _afterCost = 0;
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         // collect voltage results
         for (size_t nPortNodeId = 0; nPortNodeId < _rGraph.numNPortOASGNodes(netId); ++ nPortNodeId) {
@@ -486,23 +630,72 @@ void VoltSLP::collectRelaxedResult() {
                     widthRight = (widthWeightRight * 1E3) / (e->sNode()->voltage() - e->tNode()->voltage());
                 }
                 cerr << "widthLeft = " << widthLeft << ", widthRight = " << widthRight << endl;
+                assert(widthLeft >= 0);
+                assert(widthRight >= 0);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(widthLeft);
                 _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(widthRight);
                 // assert(VoltInV * e->currentRight() >= 0);
                 // assert(VoltInV * e->currentLeft() >=0);
                 // _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthLeft(VoltInV * widthWeightLeft * 1E3);
                 // _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->setWidthRight(VoltInV * widthWeightRight * 1E3);
+                _afterCost += _areaWeight * _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->length() * (_rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthLeft() + _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId)->widthRight());
             }
         }
         // collect area results for vertical flows
+        // for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
+        //     double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X);
+        //     _viaArea += viaArea * 1E6;
+        //     assert(viaArea * 1E6 > 0);
+        //     for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
+        //         // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
+        //         if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
+                    
+        //             _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
+        //         }
+        //     }
+        //     _afterCost += _viaWeight * viaArea * 1E6;
+        // }
         for (size_t vEdgeId = 0; vEdgeId < _rGraph.numViaOASGEdges(netId); ++ vEdgeId) {
-            double viaArea = _modelRelaxed->getVarByName("Cv_max_n" + to_string(netId) + "_i_" + to_string(vEdgeId)).get(GRB_DoubleAttr_X);
-            _viaArea += viaArea * 1E6;
-            assert(viaArea * 1E6 > 0);
+            double viaCost = 0;
+            for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
+                OASGEdge* e = _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId);
+                if (!e->redundant()) {
+                    // assert(e->current() * (e->sNode()->voltage() - e->tNode()->voltage()) >= 0); // asserted in linApprox (use oldVolt)
+                    double l = 1E-3 * (0.5*_db.vMetalLayer(layPairId)->thickness()+_db.vMediumLayer(layPairId+1)->thickness()+0.5*_db.vMetalLayer(layPairId+1)->thickness());
+                    double costNum = l * e->current();
+                    double costDen = _db.vMetalLayer(0)->conductivity(); // has not * via cross-sectional area
+                    // cerr << "costDen=" << setprecision(15) << costDen << ", ";
+                    // cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
+                    // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
+                    double cost = costNum / costDen;
+                    // cerr << "cost = " << cost << endl;
+                    double sVolt, tVolt;
+                    if (e->sNode()->nPort()) {
+                        // sOldVolt = _vOldVoltage[e->netId()][e->sNode()->nPortNodeId()];
+                        sVolt = e->sNode()->voltage();
+                    } else {
+                        sVolt = e->sNode()->voltage();
+                    }
+                    if (e->tNode()->nPort()) {
+                        // tOldVolt = _vOldVoltage[e->netId()][e->tNode()->nPortNodeId()];
+                        tVolt = e->tNode()->voltage();
+                    } else {
+                        tVolt = e->tNode()->voltage();
+                    }
+                    if (sVolt != tVolt) {
+                        if (viaCost < cost / (sVolt - tVolt)) {
+                            viaCost = cost / (sVolt - tVolt);
+                        }
+                    }
+                }
+            }
+            _afterCost += 1E6 * _viaWeight * viaCost;
+            _viaArea += viaCost * 1E6;
+            assert(viaCost * 1E6 > 0);
             for (size_t layPairId = 0; layPairId < _rGraph.numLayerPairs(); ++ layPairId) {
                 // cerr << "vVEdge[" << netId << "][" << layPairId << "][" << vEdgeId << "]: ";
                 if (! _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId) -> redundant()) {
-                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaArea * 1E6);
+                    _rGraph.vViaOASGEdge(netId, layPairId, vEdgeId)->setViaArea(viaCost * 1E6);
                 }
             }
         }
@@ -518,15 +711,15 @@ void VoltSLP::collectRelaxedResult() {
             }
         }
     }
-    _overlap = 0;
-    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
-        _overlap += _modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X);
-    }
-    _sameNetOverlap = 0;
-    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
-        _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
-        _sameNetOverlap += _vSameNetOverlap[netCapId];
-    }
+    // _overlap = 0;
+    // for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+    //     _overlap += _modelRelaxed->getVarByName("lambda_capacity_" + to_string(capId)).get(GRB_DoubleAttr_X);
+    // }
+    // _sameNetOverlap = 0;
+    // for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+    //     _vSameNetOverlap.push_back(_modelRelaxed->getVarByName("same_net_lambda_same_net_capacity_" + to_string(netCapId)).get(GRB_DoubleAttr_X));
+    //     _sameNetOverlap += _vSameNetOverlap[netCapId];
+    // }
 }
 
 void VoltSLP::printRelaxedResult() {
@@ -545,4 +738,89 @@ void VoltSLP::printRelaxedResult() {
         }
     }
     cerr << "planeArea = " << planeArea << endl;
+}
+
+void VoltSLP::addCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+    double oldTotalWidth = 0;
+    double widthWeight1 = (e1->length()) / (_db.vMetalLayer(e1->layId())->conductivity() * _db.vMetalLayer(e1->layId())->thickness());
+    double widthWeight2 = (e2->length()) / (_db.vMetalLayer(e2->layId())->conductivity() * _db.vMetalLayer(e2->layId())->thickness());
+    double cost1, cost2;
+    if (right1) {
+        cost1 = e1->currentRight() * widthWeight1 * ratio1;
+    } else {
+        cost1 = e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (e1->sNode()->voltage() != e1->tNode()->voltage()) {
+        oldTotalWidth += cost1 / (e1->sNode()->voltage() - e1->tNode()->voltage());
+    }
+    if (right2) {
+        cost2 = e2->currentRight() * widthWeight2 * ratio2;
+    } else {
+        cost2 = e2->currentLeft() * widthWeight2 * ratio2;
+    }
+    if (e2->sNode()->voltage() != e2->tNode()->voltage()) {
+        oldTotalWidth += cost2 / (e2->sNode()->voltage() - e2->tNode()->voltage());
+    }
+    if (oldTotalWidth * 1E3 > width) {
+        _vAfterOverlap.push_back(oldTotalWidth * 1E3 - width);
+    } else {
+        _vAfterOverlap.push_back(0);
+    }
+}
+
+void VoltSLP::addSameNetCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width) {
+    double oldTotalWidth = 0;
+    double widthWeight1 = (e1->length()) / (_db.vMetalLayer(e1->layId())->conductivity() * _db.vMetalLayer(e1->layId())->thickness());
+    double widthWeight2 = (e2->length()) / (_db.vMetalLayer(e2->layId())->conductivity() * _db.vMetalLayer(e2->layId())->thickness());
+    double cost1, cost2;
+    if (right1) {
+        cost1 = e1->currentRight() * widthWeight1 * ratio1;
+    } else {
+        cost1 = e1->currentLeft() * widthWeight1 * ratio1;
+    }
+    if (e1->sNode()->voltage() != e1->tNode()->voltage()) {
+        oldTotalWidth += cost1 / (e1->sNode()->voltage() - e1->tNode()->voltage());
+    }
+    if (right2) {
+        cost2 = e2->currentRight() * widthWeight2 * ratio2;
+    } else {
+        cost2 = e2->currentLeft() * widthWeight2 * ratio2;
+    }
+    if (e2->sNode()->voltage() != e2->tNode()->voltage()) {
+        oldTotalWidth += cost2 / (e2->sNode()->voltage() - e2->tNode()->voltage());
+    }
+    if (oldTotalWidth * 1E3 > width) {
+        _vAfterSameOverlap.push_back(oldTotalWidth * 1E3 - width);
+    } else {
+        _vAfterSameOverlap.push_back(0);
+    }
+}
+
+void VoltSLP::calculateOverlapCost(vector<double> vLambda, vector<double> vNetLambda) {
+    _beforeOverlapCost = 0;
+    _afterOverlapCost = 0;
+    _overlap = 0;
+    _sameNetOverlap = 0;
+    for (size_t capId = 0; capId < _numCapConstrs; ++capId) {
+        _beforeOverlapCost += vLambda[capId] * _vBeforeOverlap[capId];
+        _afterOverlapCost += vLambda[capId] * _vAfterOverlap[capId];
+        _overlap += _vAfterOverlap[capId];
+    }
+    for (size_t netCapId = 0; netCapId < _numNetCapConstrs; ++ netCapId) {
+        _beforeOverlapCost += vNetLambda[netCapId] * _vBeforeSameOverlap[netCapId];
+        _afterOverlapCost += vNetLambda[netCapId] * _vAfterSameOverlap[netCapId];
+        _sameNetOverlap += _vAfterSameOverlap[netCapId];
+    }
+    if (_overlap < 1E-3) {
+        _overlap = 0;
+    }
+    if (_sameNetOverlap < 1E-3) {
+        _sameNetOverlap = 0;
+    }
+    if (_beforeOverlapCost < 1E-3) {
+        _beforeOverlapCost = 0;
+    }
+    if (_afterOverlapCost < 1E-3) {
+        _afterOverlapCost = 0;
+    }
 }

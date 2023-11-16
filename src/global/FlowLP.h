@@ -32,6 +32,10 @@ class FlowLP {
         void solveRelaxed();
         void collectRelaxedResult();
         void printRelaxedResult();
+        void clearVOverlap();
+        void addCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width, bool before);
+        void addSameNetCapacityOverlap(OASGEdge* e1, bool right1, double ratio1, OASGEdge* e2, bool right2, double ratio2, double width, bool before);
+        void calculateOverlapCost(vector<double> vLambda, vector<double> vNetLambda);
 
         int numCapConstrs() const { return _numCapConstrs; }
         double area() const { return _area; }
@@ -41,6 +45,12 @@ class FlowLP {
         double vOverlap(size_t ovId) const { return _vOverlap[ovId]; }
         double sameNetOverlap() const { return _sameNetOverlap; }
         double vSameNetOverlap(size_t ovId) const { return _vSameNetOverlap[ovId]; }
+        double beforeCost() const { return _beforeCost; }
+        double afterCost() const { return _afterCost; }
+        // double overlapCost() const { return _overlapCost; }
+        // double sameOverlapCost() const { return _sameOverlapCost; }
+        double beforeOverlapCost() const { return _beforeOverlapCost; }
+        double afterOverlapCost() const { return _afterOverlapCost; }
 
     private:
         DB& _db;
@@ -68,6 +78,19 @@ class FlowLP {
         vector<double> _vOverlap;   // the resulting overlapped width of each capConstr, assigned in collectRelaxedResult
         double _sameNetOverlap;
         vector<double> _vSameNetOverlap;
+        double _beforeCost;     // the cost without relaxation before LP begins
+        double _afterCost;      // the cost without relaxation after LP ends
+        // double _overlapCost;
+        // double _sameOverlapCost;
+        double _beforeOverlapCost;
+        double _afterOverlapCost;
+        vector<double> _vBeforeOverlap;
+        vector<double> _vBeforeSameOverlap;
+        vector<double> _vAfterOverlap;
+        vector<double> _vAfterSameOverlap;
+        double _areaWeight;
+        double _viaWeight;
+        double _diffWeight;
 };
 
 #endif

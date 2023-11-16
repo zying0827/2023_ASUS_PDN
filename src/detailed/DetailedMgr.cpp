@@ -48,21 +48,21 @@ void DetailedMgr::initGridMap() {
 
     auto occupiedByTPort = [&] (size_t xId, size_t yId, size_t netId, size_t tPortId) -> bool {
         Polygon* tBPolygon = _db.vNet(netId)->targetPort(tPortId)->boundPolygon();
-        if (netId == 2) {
-            if (tBPolygon->minX() <= xId*_gridWidth && tBPolygon->maxX() >= xId*_gridWidth &&
-                tBPolygon->minY() <= yId*_gridWidth && tBPolygon->maxY() >= yId*_gridWidth) return true;
-            if (tBPolygon->minX() <= (xId+1)*_gridWidth && tBPolygon->maxX() >= (xId+1)*_gridWidth &&
-                tBPolygon->minY() <= yId*_gridWidth && tBPolygon->maxY() >= yId*_gridWidth) return true;
-            if (tBPolygon->minX() <= xId*_gridWidth && tBPolygon->maxX() >= xId*_gridWidth &&
-                tBPolygon->minY() <= (yId+1)*_gridWidth && tBPolygon->maxY() >= (yId+1)*_gridWidth) return true;
-            if (tBPolygon->minX() <= (xId+1)*_gridWidth && tBPolygon->maxX() >= (xId+1)*_gridWidth &&
-                tBPolygon->minY() <= (yId+1)*_gridWidth && tBPolygon->maxY() >= (yId+1)*_gridWidth) return true;
-        } else {
+        // if (netId == -1) {
+        //     if (tBPolygon->minX() <= xId*_gridWidth && tBPolygon->maxX() >= xId*_gridWidth &&
+        //         tBPolygon->minY() <= yId*_gridWidth && tBPolygon->maxY() >= yId*_gridWidth) return true;
+        //     if (tBPolygon->minX() <= (xId+1)*_gridWidth && tBPolygon->maxX() >= (xId+1)*_gridWidth &&
+        //         tBPolygon->minY() <= yId*_gridWidth && tBPolygon->maxY() >= yId*_gridWidth) return true;
+        //     if (tBPolygon->minX() <= xId*_gridWidth && tBPolygon->maxX() >= xId*_gridWidth &&
+        //         tBPolygon->minY() <= (yId+1)*_gridWidth && tBPolygon->maxY() >= (yId+1)*_gridWidth) return true;
+        //     if (tBPolygon->minX() <= (xId+1)*_gridWidth && tBPolygon->maxX() >= (xId+1)*_gridWidth &&
+        //         tBPolygon->minY() <= (yId+1)*_gridWidth && tBPolygon->maxY() >= (yId+1)*_gridWidth) return true;
+        // } else {
             if (tBPolygon->enclose(xId*_gridWidth, yId*_gridWidth)) return true;
             if (tBPolygon->enclose((xId+1)*_gridWidth, yId*_gridWidth)) return true;
             if (tBPolygon->enclose(xId*_gridWidth, (yId+1)*_gridWidth)) return true;
             if (tBPolygon->enclose((xId+1)*_gridWidth, (yId+1)*_gridWidth)) return true;
-        }
+        // }
         return false;
     };
 
@@ -2088,3 +2088,52 @@ void DetailedMgr::PostProcessing(){
 }
 
 
+void DetailedMgr::writeColorMap_v2(const char* path, bool isVoltage) {
+
+    vector<double> valList;
+    valList.clear();
+    for(int layId=0; layId<_db.numLayers(); layId++) {
+        for(int netId=0; netId<_db.numNets(); netId++) {
+            for(int gridId=0; gridId<_vNetGrid[netId][layId].size(); gridId++) {
+                int x = _vNetGrid[netId][layId][gridId]->xId(), y = _vNetGrid[netId][layId][gridId]->yId();
+                valList.push_back(isVoltage? _vGrid[layId][x][y]->voltage(netId): _vGrid[layId][x][y]->current(netId));
+            }
+        }
+    }
+    sort(valList.begin(), valList.end());
+
+    
+
+    FILE *fp = fopen(path, "w");
+
+    fprintf(fp, "%d\n", _db.numNets());
+    fprintf(fp, "%d\n", _db.numLayers());
+    fprintf(fp, "%d\n", _numXs);
+    fprintf(fp, "%d\n", _numYs);
+    
+    sort(valList.begin(), valList.end());
+    fprintf(fp, "%16.10f %16.10f\n", valList[(int)(0.01*valList.size())], valList[(int)(0.99*valList.size())]);
+
+    fprintf(fp, "%d\n\n", _db.numVias());
+    for(int i=0; i<_db.numVias(); i++)
+        fprintf(fp, "%13.6f %13.6f %13.6f\n", (double)_db.vVia(i)->shape()->ctrX() / _gridWidth, (double)_db.vVia(i)->shape()->ctrY() / _gridWidth, (double)_db.vVia(i)->drillRadius() / _gridWidth);
+    
+    fprintf(fp, "\n");
+
+    for(int layId=0; layId<_db.numLayers(); layId++) {
+
+        for(int netId=0; netId<_db.numNets(); netId++) {
+            
+            // fprintf(fp, "lay: %d, net: %d\n", layId, netId);
+            fprintf(fp, "%d\n", _vNetGrid[netId][layId].size());
+            for(int gridId=0; gridId<_vNetGrid[netId][layId].size(); gridId++) {
+                int x = _vNetGrid[netId][layId][gridId]->xId(), y = _vNetGrid[netId][layId][gridId]->yId();
+                fprintf(fp, "%4d %4d %18.12f\n", x, y, isVoltage? _vGrid[layId][x][y]->voltage(netId): _vGrid[layId][x][y]->current(netId));
+            }
+            fprintf(fp, "\n");
+        }
+    }
+
+    printf("--- finish write color map ---\n");
+    fclose(fp);
+}
