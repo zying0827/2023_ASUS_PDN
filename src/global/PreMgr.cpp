@@ -32,7 +32,7 @@ void PreMgr::nodeClustering() {
                 vTNode.push_back(_db.vTNode(netId, tNodeId));
             }
             // cerr << "kMeans..." << endl;
-            kMeansClustering(netId, vTNode, 10, _vNumTPorts[netId]);
+            kMeansClustering(netId, vTNode, 2000, _vNumTPorts[netId]);
             for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
                 assert(_vTClusteredNode[netId][tPortId].size() > 0);
             }
