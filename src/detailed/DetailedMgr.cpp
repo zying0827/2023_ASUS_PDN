@@ -1734,6 +1734,9 @@ void DetailedMgr::SmartGrow(size_t netId, int k){
         delete r;
     }
 
+    //DO PEEC simulation after smartgrow
+    buildSingleNetMtx(netId);
+
 
     //Plot Adding Grid
     // for(int i = alreadyRemove ; i < NodeCurrent.size();i++){
@@ -1809,10 +1812,6 @@ bool DetailedMgr::SmartRemove(size_t netId, int k){
 
     cout << "###########Smart Remove###########" << endl;
 
-    //check();
-
-    //buildSingleNetMtx(netId);
-
     vector<tuple<double,int,int>> NodeCurrent;
     for(size_t layId = 0; layId < _vNetGrid[netId].size();layId ++){
         for(size_t gridId = 0; gridId < _vNetGrid[netId][layId].size() ; gridId++){
@@ -1851,22 +1850,23 @@ bool DetailedMgr::SmartRemove(size_t netId, int k){
     }
     delete r;
 
+    //DO PEEC simulation after smartremove
     buildSingleNetMtx(netId);
 
-    bool ReachTarget = false;
+    bool ReachTarget = true;
     for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
-        if(_vTPortCurr[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->current()){
-            ReachTarget = true;
+        if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
+            ReachTarget = false;
             break;
         }
-        if(_vTPortVolt[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->voltage()){
-            ReachTarget = true;
+        if(_vTPortVolt[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->voltage()){
+            ReachTarget = false;
             break;
         }
     }
 
-    //go back to last state
-    if(ReachTarget){
+    //if violate the current constraint -> go back to last state
+    if(!ReachTarget){
         for(size_t i = 0; i < RemovedGrid.size(); i++){
             size_t layId = RemovedGrid[i].first;
             Grid* grid = RemovedGrid[i].second;
@@ -1874,14 +1874,16 @@ bool DetailedMgr::SmartRemove(size_t netId, int k){
             grid->incCongestCur();
             _vNetGrid[netId][layId].push_back(grid);
         }
-        return true;
-    }
-    //return false
-    else{
+        cout << "###SmartRemove failed -> Go back to previous condition###" << endl;
+        buildSingleNetMtx(netId);
         return false;
     }
+    //return true if it still satisfy current constraint 
+    else{
+        return true;
+    }
 
-    return false;
+    return true;
 }
 
 void DetailedMgr::SmartDistribute(){
@@ -1949,43 +1951,9 @@ void DetailedMgr::PostProcessing(){
 
     //for loop for each net
     for(size_t netId = 0; netId < _vNetGrid.size(); ++netId){
-            //SmartRemove stage
-            bool ReachTarget = false;
-            int rm = 0;
-
-            for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
-                rm += _vNetGrid[netId][layId].size();
-            }
-
-            rm = rm/50;
-
-            for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
-                if(_vTPortCurr[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->current()){
-                    ReachTarget = true;
-                    break;
-                }
-                if(_vTPortVolt[netId][tPortId] <= _db.vNet(netId)->targetPort(tPortId)->voltage()){
-                    ReachTarget = true;
-                    break;
-                }
-            }
-           
-            int count = 0;
-
-            while(!ReachTarget){
-                ReachTarget = SmartRemove(netId,rm);
-                rm = (int)(rm/1.25);//隨便設一個遞減函數
-                count ++;
-                if(count > 5){
-                    cout << "######OUT of TIME########" << endl; 
-                    break;
-                }
-            }
-
-            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
 
             //SmartGrow stage
-            ReachTarget = true;
+            bool ReachTarget = true;
             int s = 0;
 
             for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
@@ -2004,16 +1972,12 @@ void DetailedMgr::PostProcessing(){
                 }
             }
 
-            count = 0;
+            int count = 0;
 
             while(!ReachTarget){
                 ReachTarget = true;
                 SmartGrow(netId,s);
                 //s = (int)(s/1.25);//隨便設一個遞減函數
-
-                check();
-
-                buildSingleNetMtx(netId);
 
                 for(size_t tPortId = 0; tPortId < _vTPortCurr[netId].size();tPortId++){
                     if(_vTPortCurr[netId][tPortId] < _db.vNet(netId)->targetPort(tPortId)->current()){
@@ -2026,13 +1990,37 @@ void DetailedMgr::PostProcessing(){
                     }
                 }  
                 count ++;
-                if(count > 5){
+                if(count > 10){
                     cout << "######OUT of TIME########" << endl; 
                     break;
                 }
             }
 
-            if(count <= 5) cout <<"NET " << netId << " DO " << count << " times SmartGrow to reach the target" << endl;
+            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartGrow to reach the target" << endl;
+
+            //SmartRemove stage
+            ReachTarget = true;
+            int rm = 0;
+
+            for(size_t layId = 0; layId < _vNetGrid[netId].size(); layId ++){
+                rm += _vNetGrid[netId][layId].size();
+            }
+
+            rm = rm/30;
+           
+            count = 0;
+
+            while(ReachTarget){
+                ReachTarget = SmartRemove(netId,rm);
+                rm = (int)(rm/1.25);//隨便設一個遞減函數
+                count ++;
+                if(count > 10){
+                    cout << "######OUT of TIME########" << endl; 
+                    break;
+                }
+            }
+
+            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
 
             //Refine stage
             // int rf = 0;//作微調
