@@ -127,6 +127,7 @@ void PreMgr::kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs
         double minDist;  // default infinite dist to nearest cluster
         DBNode* node;
     };
+    //Bug
     auto distance = [] (Point p1, Point p2) -> double {
         return pow((p1.x-p2.x), 2) + pow((p1.y-p2.y), 2);
     }; 

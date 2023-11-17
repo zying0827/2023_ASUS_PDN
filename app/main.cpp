@@ -96,11 +96,42 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
     double gridWidth = 1;
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
+
+    // For Example 1
+    // double boardWidth = 75*gridWidth;
+    // double boardHeight = 40*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 40;
+    // double offsetY = 40;
+
+    // For Example 2 
+    // double boardWidth = 100*gridWidth;
+    // double boardHeight = 70*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 95;
+    // double offsetY = 45;
+
+    // // For Example 3 
+    double boardWidth = 100*gridWidth;
+    double boardHeight = 65*gridWidth;
     size_t numLayers = 4;
-    double offsetX = 40;
-    double offsetY = 40;
+    double offsetX = 25;
+    double offsetY = 20;
+
+    // // For Example 4 
+    // double boardWidth = 80*gridWidth;
+    // double boardHeight = 55*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 120;
+    // double offsetY = 10;
+
+    // // For Example 5
+    // double boardWidth = 90*gridWidth;
+    // double boardHeight = 55*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 110;
+    // double offsetY = 10;
+
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
@@ -108,13 +139,19 @@ int main(int argc, char* argv[]){
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
+
     parser.parse();
+
     // // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
+
     preMgr.nodeClustering();
+
     preMgr.assignPortPolygon();
+
     preMgr.plotBoundBox();
-    
+
+
     // // // replace this line with a real parser function
     // // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
@@ -129,14 +166,14 @@ int main(int argc, char* argv[]){
     globalMgr.numVIter = numVIter;
     globalMgr.numIVIter = numIVIter;
 
-    
+
 
     // // // replace this line with a real OASG building function
     // // globalMgr.buildTestOASG();
 
     globalMgr.buildOASG();
     // globalMgr.buildOASGXObs();
-    // globalMgr.plotOASG();
+    globalMgr.plotOASG();
     // globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
@@ -188,7 +225,7 @@ int main(int argc, char* argv[]){
     globalMgr.plotDB();
     OutputWriter outputWriter;
 
-    outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
+    outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea, globalMgr._vAfterCost);
 
 
     // // mgr.genRGraph();

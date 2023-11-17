@@ -93,10 +93,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                     // _beforeCost += cost * (e->currentLeft() + e->currentRight()) * 1E6;
 
                     // set diff flow
+                    // 1116 Bug
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneLeftFlow[netId][layId][pEdgeId] - _vPlaneRightFlow[netId][layId][pEdgeId]);
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneRightFlow[netId][layId][pEdgeId] - _vPlaneLeftFlow[netId][layId][pEdgeId]);
                     obj += diffWeight * cost * _vPlaneDiffFlow[netId][layId][pEdgeId];
-                    // _beforeCost += diffWeight * cost * abs(e->currentLeft() - e->currentRight()) * 1E6;
+                    _beforeCost += diffWeight * cost * abs(e->currentLeft() - e->currentRight()) * 1E6;
                 }
             }
         }

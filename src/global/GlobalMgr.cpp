@@ -1010,6 +1010,7 @@ void GlobalMgr::voltCurrOpt() {
     voltageDemandAssignment();
     swapSTbyVolt();
 
+
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
     vector<double> vConductivity;
@@ -1054,6 +1055,7 @@ void GlobalMgr::voltCurrOpt() {
 
     // cout << numIIter << "  " << numVIter << "  " << numIVIter << endl;
 
+    //Change for into while, add early stop for all three loops
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
