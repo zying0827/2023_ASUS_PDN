@@ -115,6 +115,7 @@ class DetailedMgr {
         bool NetEdgeDetect(size_t netId, size_t layId, Grid* grid);
         void SmartDistribute();
         void PostProcessing();
+        void RemoveIsolatedGrid();
         void writeColorMap_v2(const char*, bool);
 
     private:

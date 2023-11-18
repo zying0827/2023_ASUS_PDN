@@ -8,8 +8,7 @@
 #include "detailed/DetailedMgr.h"
 #include "global/PreMgr.h"
 #include "base/OutputWriter.h"
-
-
+#include  <time.h>
 
 using namespace std;
 
@@ -109,6 +108,11 @@ int main(int argc, char* argv[]){
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
     parser.parse();
+
+     //time
+    time_t start, end;
+    time(&start);
+
     // // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
     preMgr.nodeClustering();
@@ -181,16 +185,33 @@ int main(int argc, char* argv[]){
     //detailedMgr->buildMtx();
     //detailedMgr->SmartDistribute();
     detailedMgr->PostProcessing();
+    detailedMgr->RemoveIsolatedGrid();
+
+    time(&end);
+    double time_used = double(end - start);
+    int hour = 0, min = 0;
+    if(time_used >= 60){
+        min = time_used/60;
+        time_used = time_used - min*60;
+    }
+    if(min >= 60){
+        hour = min/60;
+        min = min%60;
+    }
+    cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
+
     detailedMgr->plotGridMap();
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
-    // detailedMgr->writeColorMap_v2("../exp/output/voltageColorMap.txt", 1);
-    // detailedMgr->writeColorMap_v2("../exp/output/currentColorMap.txt", 0);
+    //detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
+    //detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
     //globalMgr.plotDB();
     OutputWriter outputWriter;
 
     outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
+
+    //detailedMgr->buildMtx();
 
 
     // // mgr.genRGraph();
