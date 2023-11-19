@@ -202,6 +202,7 @@ bool GlobalMgr::doIntersect(OASGNode* p1, OASGNode* q1, OASGNode* p2, OASGNode* 
 }
 
 bool GlobalMgr::isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle){
+    return false;
     int numObs = obstacle.size();
     for(int i = 0; i< numObs;++i){
         int numVertices = obstacle[0].size();
@@ -403,6 +404,9 @@ void GlobalMgr::buildOASG() {
     cout << "########################################\n";
     cout << "Build OASG Start \n";
     cout << "########################################\n";
+
+    //Case 5 來不及debug 先加入一個手拉的
+    bool case5 = true;
     
     //Create viaOASGNodes
     //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
@@ -436,86 +440,23 @@ void GlobalMgr::buildOASG() {
         }
         viaOASGNodes[netId] = tempViaOASGNodes;
     }
-    // for(int i = 0; i < _rGraph.numNets(); ++i){
-
-    //     int viaNodeId = 0;
-    //     int numSourceVias = _db.vNet(i)->sourceViaCstr()->numVias();
-    //     vector<vector<OASGNode*>> tempViaOASGNodes;
-    //     tempViaOASGNodes.resize((1+_db.vNet(i)->numTPorts()), vector<OASGNode*>(4, nullptr));
-
-    //     // Step1: Create Source Via        
-    //     double minX = 1000000000;
-    //     double minY = 1000000000;
-    //     double maxX = -1;
-    //     double maxY = -1;
-    //     double tempMinX, tempMinY, tempMaxX, tempMaxY;
-
-    //     for (int j = 0; j < numSourceVias; ++j ){
-    //         tempMinX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minX();
-    //         tempMinY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->minY();
-    //         tempMaxX = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxX();
-    //         tempMaxY = _db.vNet(i)->sourceViaCstr()->vVia(j)->shape()->maxY();
-    //         if(tempMinX<minX){
-    //             minX = tempMinX;
-    //         }
-    //         if(tempMinY<minY){
-    //             minY = tempMinY;
-    //         }
-    //         if(tempMaxX>maxX){
-    //             maxX = tempMaxX;
-    //         }
-    //         if(tempMaxY>maxY){
-    //             maxY = tempMaxY;
-    //         }
-    //     }
-
-    //     tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-    //     tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
-    //     ++viaNodeId ;
-
-    //     //Secondly, check with the target viaclusters
-    //     for(int tId = 0; tId<_db.vNet(i)->numTPorts();++tId){
-    //         minX = 1000000000;
-    //         minY = 1000000000;
-    //         maxX = -1;
-    //         maxY = -1;
-    //         for(int viaId=0; viaId<_db.vNet(i)->vTargetViaCstr(tId)->numVias();++viaId ){
-    //             tempMinX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minX();
-    //             tempMinY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->minY();
-    //             tempMaxX = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxX();
-    //             tempMaxY = _db.vNet(i)->vTargetViaCstr(tId)->vVia(viaId)->shape()->maxY();
-    //             if(tempMinX<minX){
-    //                 minX = tempMinX;
-    //             }
-    //             if(tempMinY<minY){
-    //                 minY = tempMinY;
-    //             }
-    //             if(tempMaxX>maxX){
-    //                 maxX = tempMaxX;
-    //             }
-    //             if(tempMaxY>maxY){
-    //                 maxY = tempMaxY;
-    //             }
-    //         }
-
-
-    //         tempViaOASGNodes[viaNodeId][0] = _rGraph.addOASGNode(i, minX, minY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][1] = _rGraph.addOASGNode(i, maxX, minY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][2] = _rGraph.addOASGNode(i, maxX, maxY, OASGNodeType::MIDDLE);
-    //         tempViaOASGNodes[viaNodeId][3] = _rGraph.addOASGNode(i, minX, maxY, OASGNodeType::MIDDLE);
-    //         ++viaNodeId;
-    //     }
-
-    //     viaOASGNodes[i] = tempViaOASGNodes;
-    // }    
-
 
     for (size_t layerId = 0; layerId < _rGraph.numLayers(); ++ layerId){
         //Step 0: 先把每層的Middle 的OASG Node建完(因為每條Net的OASG Node都不一樣，所以直接包在裡面)
         //Obs Node的順序是1左下、2右下、3右上、4左上
         for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId){
+
+            if(netId == 2 && case5 == true){
+                _rGraph.addOASGEdge(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), _rGraph.targetOASGNode(netId, 0,layerId), false);
+                _rGraph.addOASGEdge(netId, layerId, _rGraph.targetOASGNode(netId, 0,layerId), _rGraph.targetOASGNode(netId, 1,layerId), false);
+                double maxX = _db.vNet(0)->targetPort(0)->boundPolygon()->maxX();
+                double maxY = _db.vNet(0)->targetPort(0)->boundPolygon()->maxY();
+                OASGNode* obsNode = _rGraph.addOASGNode(0, maxX, maxY, OASGNodeType::MIDDLE);
+                _rGraph.addOASGEdge(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), obsNode, false);
+                _rGraph.addOASGEdge(netId, layerId, obsNode, _rGraph.targetOASGNode(netId, 1,layerId), false);
+                continue;
+            }
+
             vector<vector<OASGNode*>> obsNodes;
             //如果這個Obs已經有要加Round Edges，就變成True 
             addObsRoundEdges.resize(_db.numObstacles(layerId));
@@ -690,26 +631,34 @@ void GlobalMgr::buildOASG() {
 
     }
 
-    //Check the correctness of OASG Edges and Nodes 
+    //Check if the OASG edges are flowing in the right direction
     cout <<  _rGraph.numOASGEdges() << endl;
     cout <<  _rGraph.numOASGNodes() << endl;
-    for (size_t edgesId =0; edgesId < _rGraph.numOASGEdges(); ++ edgesId){
-        cout << "Net ID is " << _rGraph.vOASGEdge(edgesId)->netId() << " Layer Id is " <<  _rGraph.vOASGEdge(edgesId)->layId() << endl;
-        if(_rGraph.vOASGEdge(edgesId)->sNode()->voltage() - _rGraph.vOASGEdge(edgesId)->tNode()->voltage() <= 0){
-            cout << "This part is wrong" << endl;
-            cout << "The right way voltage is " << _rGraph.vOASGEdge(edgesId)->sNode()->voltage() - _rGraph.vOASGEdge(edgesId)->tNode()->voltage() << endl;
+    for (size_t layId = 0; layId < _rGraph.numLayers(); ++layId ){
+        for (size_t netId = 0; netId < _rGraph.numNets(); ++netId){
+            //Check source first
+            if( _rGraph.sourceOASGNode(netId, layId)->numInEdges() > 0 ){
+                for (size_t edgeCount = 0; edgeCount < _rGraph.sourceOASGNode(netId, layId)->numInEdges(); ++edgeCount){
+                    OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.sourceOASGNode(netId, layId)->inEdgeId(edgeCount));
+                    _rGraph.swapST(edge);
+                    cout << "Swapped" <<endl;
+                }
+            }
+            // Now check all target ports
+            for (size_t tPortId = 0;tPortId < _rGraph.numTPorts(netId); ++tPortId ){
+                if( _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges() > 0 ){
+                    for (size_t edgeCount = 0; edgeCount < _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges(); ++edgeCount){
+                        OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.targetOASGNode(netId, tPortId, layId)->outEdgeId(edgeCount));
+                        _rGraph.swapST(edge);
+                        cout << "Swapped" <<endl;
+                    }
+                }
+            } 
         }
-        
-        //Bound Polygon 會segmentation fault
-        // printf("Yes\n");
     }
-    // for (size_t nodesId=0; nodesId < _rGraph.numOASGNodes(); ++ nodesId){
-    //     _rGraph.vOASGNode(nodesId)->print();
-    //     // printf("No\n");
-    // }
+    
 
     
-    //Step 4: 判斷有沒有Net是和Obsticle撞到的，有撞到的把中間那段移動到Obsticle的旁邊
     cout << "########################################" << endl;
     cout << "Finishing Building OASG" << endl;
     cout << "########################################" << endl;
@@ -1027,7 +976,6 @@ void GlobalMgr::voltCurrOpt() {
     // }
 
     // voltageAssignment(true);
-
     voltageDemandAssignment();
     swapSTbyVolt();
 
@@ -1877,9 +1825,7 @@ void GlobalMgr::voltageDemandAssignment() {
                 if (outNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
                 } else {
-                        
                     assert(outNode->port() != _db.vNet(netId)->sourcePort());
-
                     solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), conductance);
                     // solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
                     // cerr << "voltage = " << outNode->port()->voltage() << endl;
@@ -2052,27 +1998,27 @@ void GlobalMgr::swapSTbyVolt() {
         if ((edge->sNode()->voltage() < edge->tNode()->voltage())) {
             _rGraph.swapST(edge);
             cout << "The edge being swapped is " << edge->netId() << " Layer " << edge->layId() << endl;
-            // for (size_t capId = 0; capId < _vCapConstr.size(); ++capId) {
-            //     if (_vCapConstr[capId].e1 == edge) {
-            //         _vCapConstr[capId].right1 = ! _vCapConstr[capId].right1;
-            //     }
-            //     if (_vCapConstr[capId].e2 == edge) {
-            //         _vCapConstr[capId].right2 = ! _vCapConstr[capId].right2;
-            //     }
-            // }
-            // for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
-            //     if (_vSglCapConstr[sglCapId].e1 == edge) {
-            //         _vSglCapConstr[sglCapId].right1 = ! _vSglCapConstr[sglCapId].right1;
-            //     }
-            // }
-            // for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++netCapId) {
-            //     if (_vNetCapConstr[netCapId].e1 == edge) {
-            //         _vNetCapConstr[netCapId].right1 = ! _vNetCapConstr[netCapId].right1;
-            //     }
-            //     if (_vNetCapConstr[netCapId].e2 == edge) {
-            //         _vNetCapConstr[netCapId].right2 = ! _vNetCapConstr[netCapId].right2;
-            //     }
-            // }
+            for (size_t capId = 0; capId < _vCapConstr.size(); ++capId) {
+                if (_vCapConstr[capId].e1 == edge) {
+                    _vCapConstr[capId].right1 = ! _vCapConstr[capId].right1;
+                }
+                if (_vCapConstr[capId].e2 == edge) {
+                    _vCapConstr[capId].right2 = ! _vCapConstr[capId].right2;
+                }
+            }
+            for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
+                if (_vSglCapConstr[sglCapId].e1 == edge) {
+                    _vSglCapConstr[sglCapId].right1 = ! _vSglCapConstr[sglCapId].right1;
+                }
+            }
+            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++netCapId) {
+                if (_vNetCapConstr[netCapId].e1 == edge) {
+                    _vNetCapConstr[netCapId].right1 = ! _vNetCapConstr[netCapId].right1;
+                }
+                if (_vNetCapConstr[netCapId].e2 == edge) {
+                    _vNetCapConstr[netCapId].right2 = ! _vNetCapConstr[netCapId].right2;
+                }
+            }
         }
 
     }

@@ -58,10 +58,10 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "${workspaceFolder}/exp/input/ST_Components_4.txt",
+            "${workspaceFolder}/exp/input/ST_Components_5.txt",
             "${workspaceFolder}/exp/input/parameters.txt",
-            "${workspaceFolder}/exp/input/Project4_MTL_U_NoCross_Modified.txt",
-            "${workspaceFolder}/exp/input/obstacle4.txt",
+            "${workspaceFolder}/exp/input/Project5_ADL_P_Cross_Modified.txt",
+            "${workspaceFolder}/exp/input/obstacle2.txt",
             "${workspaceFolder}/exp/output/Lo_frame5.html",
             "${workspaceFolder}/exp/output/tuningRes.txt"
             // "${workspaceFolder}/input/iccad2022-problem-b/case4.txt",

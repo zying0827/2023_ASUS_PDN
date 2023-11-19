@@ -117,23 +117,24 @@ int main(int argc, char* argv[]){
     // double offsetY = 20;
 
     // // For Example 4 
-    double boardWidth = 80*gridWidth;
-    double boardHeight = 55*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 120;
-    double offsetY = 10;
-
-    // // For Example 5
-    // double boardWidth = 90*gridWidth;
+    // double boardWidth = 80*gridWidth;
     // double boardHeight = 55*gridWidth;
     // size_t numLayers = 4;
-    // double offsetX = 110;
+    // double offsetX = 120;
     // double offsetY = 10;
+
+    // // For Example 5
+    double boardWidth = 90*gridWidth;
+    double boardHeight = 55*gridWidth;
+    size_t numLayers = 4;
+    double offsetX = 110;
+    double offsetY = 10;
 
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
     DB db(plot);
+
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
@@ -149,6 +150,7 @@ int main(int argc, char* argv[]){
 
     preMgr.plotBoundBox();
 
+    
 
     // // // replace this line with a real parser function
     // // parser.testInitialize(boardWidth, boardHeight, gridWidth);
@@ -168,9 +170,12 @@ int main(int argc, char* argv[]){
     // // // replace this line with a real OASG building function
     // // globalMgr.buildTestOASG();
 
+    
     globalMgr.buildOASG();
+
     // globalMgr.buildOASGXObs();
-    // globalMgr.plotOASG();
+    globalMgr.plotOASG();
+    
     // globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();
