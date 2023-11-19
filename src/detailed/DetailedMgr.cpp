@@ -1998,21 +1998,21 @@ void DetailedMgr::PostProcessing(){
                 rm += _vNetGrid[netId][layId].size();
             }
 
-            rm = rm/20;
+            rm = rm/30;
            
             count = 0;
 
             while(ReachTarget){
                 ReachTarget = SmartRemove(netId,rm);
-                rm = (int)(rm/1.25);//隨便設一個遞減函數
+                rm = (int)(rm/1.2);//隨便設一個遞減函數
                 count ++;
-                if(count > 10){
+                if(count > 12){
                     cout << "######OUT of TIME########" << endl; 
                     break;
                 }
             }
 
-            if(count <= 10) cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
+            if(count <= 12) cout <<"NET " << netId << " DO " << count << " times SmartRemove to reach the target" << endl;
 
             // //Refine stage
             // int rf = 0;//作微調
@@ -2061,7 +2061,7 @@ void DetailedMgr::RemoveIsolatedGrid(){
         for(size_t layId=0; layId<_vNetGrid[netId].size(); layId++){
             Grid* r = new Grid(0,0,0);
             for(size_t gridId = 0; gridId < _vNetGrid[netId][layId].size(); gridId++){
-                bool Remove = true;
+                int Remove = 0;
                 Grid* grid = _vNetGrid[netId][layId][gridId];
                 int xId = grid->xId();
                 int yId = grid->yId();
@@ -2069,29 +2069,29 @@ void DetailedMgr::RemoveIsolatedGrid(){
                 if (legal(xId+1, yId)) {
                     Grid* rGrid = _vGrid[layId][xId+1][yId];
                     if (rGrid->hasNet(netId)) {
-                        Remove = false;
+                        Remove += 1;
                     }
                 }
                 if (legal(xId-1, yId)) {
                     Grid* lGrid = _vGrid[layId][xId-1][yId];
                     if (lGrid->hasNet(netId)) {
-                        Remove = false;
+                        Remove += 1;
                     }
                 }
                 if (legal(xId, yId+1)) {
                     Grid* uGrid = _vGrid[layId][xId][yId+1];
                     if (uGrid->hasNet(netId)) {
-                        Remove = false;
+                        Remove += 1;
                     }
                 }
                 if (legal(xId, yId-1)) {
                     Grid* dGrid = _vGrid[layId][xId][yId-1];
                     if (dGrid->hasNet(netId)) {
-                        Remove = false;
+                        Remove += 1;
                     }
                 }
                 //Remove
-                if(Remove){
+                if(Remove < 2){
                     grid->removeNet(netId);//remove it from net
                     grid->decCongestCur();
                     _vNetGrid[netId][layId][gridId] = r; 

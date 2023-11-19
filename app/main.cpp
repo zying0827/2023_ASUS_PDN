@@ -198,21 +198,21 @@ int main(int argc, char* argv[]){
         hour = min/60;
         min = min%60;
     }
-    cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
 
     detailedMgr->plotGridMap();
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
-    //detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
-    //detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
+    detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
+    detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
     //globalMgr.plotDB();
     OutputWriter outputWriter;
 
     outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
 
-    //detailedMgr->buildMtx();
+    detailedMgr->buildMtx();
 
+    cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
 
     // // mgr.genRGraph();
     // // // mgr.drawRGraph();
