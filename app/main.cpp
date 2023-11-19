@@ -9,8 +9,6 @@
 #include "global/PreMgr.h"
 #include "base/OutputWriter.h"
 
-
-
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -112,18 +110,18 @@ int main(int argc, char* argv[]){
     // double offsetY = 45;
 
     // // For Example 3 
-    double boardWidth = 100*gridWidth;
-    double boardHeight = 65*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 25;
-    double offsetY = 20;
+    // double boardWidth = 100*gridWidth;
+    // double boardHeight = 65*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 25;
+    // double offsetY = 20;
 
     // // For Example 4 
-    // double boardWidth = 80*gridWidth;
-    // double boardHeight = 55*gridWidth;
-    // size_t numLayers = 4;
-    // double offsetX = 120;
-    // double offsetY = 10;
+    double boardWidth = 80*gridWidth;
+    double boardHeight = 55*gridWidth;
+    size_t numLayers = 4;
+    double offsetX = 120;
+    double offsetY = 10;
 
     // // For Example 5
     // double boardWidth = 90*gridWidth;
@@ -162,18 +160,17 @@ int main(int argc, char* argv[]){
     detailedMgr->check();
 
     GlobalMgr globalMgr(db, plot);
+    
     globalMgr.numIIter = numIIter;
     globalMgr.numVIter = numVIter;
     globalMgr.numIVIter = numIVIter;
-
-
 
     // // // replace this line with a real OASG building function
     // // globalMgr.buildTestOASG();
 
     globalMgr.buildOASG();
     // globalMgr.buildOASGXObs();
-    globalMgr.plotOASG();
+    // globalMgr.plotOASG();
     // globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
     // globalMgr.buildTestNCOASG();

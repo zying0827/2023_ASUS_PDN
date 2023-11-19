@@ -690,10 +690,30 @@ void GlobalMgr::buildOASG() {
 
     }
 
+    //Check the correctness of OASG Edges and Nodes 
+    cout <<  _rGraph.numOASGEdges() << endl;
+    cout <<  _rGraph.numOASGNodes() << endl;
+    for (size_t edgesId =0; edgesId < _rGraph.numOASGEdges(); ++ edgesId){
+        cout << "Net ID is " << _rGraph.vOASGEdge(edgesId)->netId() << " Layer Id is " <<  _rGraph.vOASGEdge(edgesId)->layId() << endl;
+        if(_rGraph.vOASGEdge(edgesId)->sNode()->voltage() - _rGraph.vOASGEdge(edgesId)->tNode()->voltage() <= 0){
+            cout << "This part is wrong" << endl;
+            cout << "The right way voltage is " << _rGraph.vOASGEdge(edgesId)->sNode()->voltage() - _rGraph.vOASGEdge(edgesId)->tNode()->voltage() << endl;
+        }
+        
+        //Bound Polygon 會segmentation fault
+        // printf("Yes\n");
+    }
+    // for (size_t nodesId=0; nodesId < _rGraph.numOASGNodes(); ++ nodesId){
+    //     _rGraph.vOASGNode(nodesId)->print();
+    //     // printf("No\n");
+    // }
+
+    
     //Step 4: 判斷有沒有Net是和Obsticle撞到的，有撞到的把中間那段移動到Obsticle的旁邊
-    cout << "########################################\n";
-    cout << "Finishing Building OASG \n";
-    cout << "########################################\n";
+    cout << "########################################" << endl;
+    cout << "Finishing Building OASG" << endl;
+    cout << "########################################" << endl;
+
 }
 
 void GlobalMgr::buildOASGXObs() {
@@ -1007,6 +1027,7 @@ void GlobalMgr::voltCurrOpt() {
     // }
 
     // voltageAssignment(true);
+
     voltageDemandAssignment();
     swapSTbyVolt();
 
@@ -1055,18 +1076,19 @@ void GlobalMgr::voltCurrOpt() {
 
     // cout << numIIter << "  " << numVIter << "  " << numIVIter << endl;
 
+
+    for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
+                //調
+                vNetLambda[netCapId] = 4;
+    }
+
     //Change for into while, add early stop for all three loops
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
         for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
-                //調
-                vLambda[capId] = 2;
+            //調
+            vLambda[capId] =  4;
         }
-        for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
-                //調
-                vNetLambda[netCapId] = 4;
-        }
-
         
         // current optimization
         // currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
@@ -1130,8 +1152,9 @@ void GlobalMgr::voltCurrOpt() {
                 // vLambda[capId] *= vLambda[capId];
 
                 // schedule2: exp(.)
-                //調
-                vLambda[capId] *= 1;
+                //調 vLambda
+                //4 = 
+                vLambda[capId] *= 1.2;
 
                 // schedule3: P control
                 // vLambda[capId] += PRatio * currentSolver->vOverlap(capId);
@@ -1854,7 +1877,9 @@ void GlobalMgr::voltageDemandAssignment() {
                 if (outNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), outNode->nPortNodeId(), conductance);
                 } else {
+                        
                     assert(outNode->port() != _db.vNet(netId)->sourcePort());
+
                     solver.setInputVector(nPortNode->nPortNodeId(), outNode->port()->voltage(), conductance);
                     // solver.setMatrix(nPortNode->nPortNodeId(), _rGraph.numNPortOASGNodes(netId)+outNode->port()->netTPortId(), conductance);
                     // cerr << "voltage = " << outNode->port()->voltage() << endl;
@@ -1894,6 +1919,7 @@ void GlobalMgr::voltageDemandAssignment() {
                 if (inNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
                 } else {
+                    
                     assert(inNode->port() == _db.vNet(netId)->sourcePort());
                     solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
                     cerr << "voltage = " << inNode->port()->voltage() << endl;
@@ -2017,33 +2043,45 @@ void GlobalMgr::voltageDemandAssignment() {
 }
 
 void GlobalMgr::swapSTbyVolt() {
+
+    cout << "#####################" << endl;
+    cout << "Start Swap ST by Volt" << endl;
+    cout << "#####################" << endl;
     for (size_t edgeId = 0; edgeId < _rGraph.numOASGEdges(); ++ edgeId) {
         OASGEdge* edge = _rGraph.vOASGEdge(edgeId);
-        if (edge->sNode()->voltage() < edge->tNode()->voltage()) {
+        if ((edge->sNode()->voltage() < edge->tNode()->voltage())) {
             _rGraph.swapST(edge);
-            for (size_t capId = 0; capId < _vCapConstr.size(); ++capId) {
-                if (_vCapConstr[capId].e1 == edge) {
-                    _vCapConstr[capId].right1 = ! _vCapConstr[capId].right1;
-                }
-                if (_vCapConstr[capId].e2 == edge) {
-                    _vCapConstr[capId].right2 = ! _vCapConstr[capId].right2;
-                }
-            }
-            for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
-                if (_vSglCapConstr[sglCapId].e1 == edge) {
-                    _vSglCapConstr[sglCapId].right1 = ! _vSglCapConstr[sglCapId].right1;
-                }
-            }
-            for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++netCapId) {
-                if (_vNetCapConstr[netCapId].e1 == edge) {
-                    _vNetCapConstr[netCapId].right1 = ! _vNetCapConstr[netCapId].right1;
-                }
-                if (_vNetCapConstr[netCapId].e2 == edge) {
-                    _vNetCapConstr[netCapId].right2 = ! _vNetCapConstr[netCapId].right2;
-                }
-            }
+            cout << "The edge being swapped is " << edge->netId() << " Layer " << edge->layId() << endl;
+            // for (size_t capId = 0; capId < _vCapConstr.size(); ++capId) {
+            //     if (_vCapConstr[capId].e1 == edge) {
+            //         _vCapConstr[capId].right1 = ! _vCapConstr[capId].right1;
+            //     }
+            //     if (_vCapConstr[capId].e2 == edge) {
+            //         _vCapConstr[capId].right2 = ! _vCapConstr[capId].right2;
+            //     }
+            // }
+            // for (size_t sglCapId = 0; sglCapId < _vSglCapConstr.size(); ++ sglCapId) {
+            //     if (_vSglCapConstr[sglCapId].e1 == edge) {
+            //         _vSglCapConstr[sglCapId].right1 = ! _vSglCapConstr[sglCapId].right1;
+            //     }
+            // }
+            // for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++netCapId) {
+            //     if (_vNetCapConstr[netCapId].e1 == edge) {
+            //         _vNetCapConstr[netCapId].right1 = ! _vNetCapConstr[netCapId].right1;
+            //     }
+            //     if (_vNetCapConstr[netCapId].e2 == edge) {
+            //         _vNetCapConstr[netCapId].right2 = ! _vNetCapConstr[netCapId].right2;
+            //     }
+            // }
         }
+
     }
+    
+    // assert(false);
+
+    cout << "######################" << endl;
+    cout << "Finish Swap ST by Volt" << endl;
+    cout << "######################" << endl;
 }
 
 void GlobalMgr::currentDistribution() {
@@ -2868,7 +2906,6 @@ void GlobalMgr::genCapConstrs() {
                         }
                     }
                 }
-
                 // board cnstraint
                 // bottom
                 if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),

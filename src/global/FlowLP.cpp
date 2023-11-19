@@ -113,7 +113,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                     // cerr << "costDen=" << setprecision(15) << costDen << ", ";
                     // cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
                     // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
+                    
+                    //Bug
                     assert (e->sNode()->voltage() > e->tNode()->voltage());
+
+
                     if (e->sNode()->voltage() == e->tNode()->voltage()) {
                         _model.addConstr(_vViaFlow[netId][layPairId][vEdgeId] == 0);
                     } else {
@@ -700,3 +704,5 @@ void FlowLP::clearVOverlap() {
     _vAfterOverlap.clear();
     _vAfterSameOverlap.clear();
 }
+
+
