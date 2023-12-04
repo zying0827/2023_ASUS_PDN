@@ -159,24 +159,24 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    //globalMgr.plotCurrentPaths();
+    globalMgr.plotCurrentPaths();
     
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     delete detailedMgr;
-    detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
-    detailedMgr->initGridMap();
+    // detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
+    // detailedMgr->initGridMap();
     // detailedMgr->initSegObsGridMap();
     //detailedMgr->check();
     //detailedMgr->plotGridMap();
     // // detailedMgr.naiveAStar();
-    detailedMgr->negoAStar(false);
-    detailedMgr->check();
+    // detailedMgr->negoAStar(false);
+    // detailedMgr->check();
     //detailedMgr->plotGridMap();
-    detailedMgr->addPortVia();
-    detailedMgr->check();
+    // detailedMgr->addPortVia();
+    // detailedMgr->check();
     // // // detailedMgr.plotVia();
-    detailedMgr->addViaGrid();
-    detailedMgr->check();
+    // detailedMgr->addViaGrid();
+    // detailedMgr->check();
 
     // // // printf("\n==================== print ===================\n");
     // // // detailedMgr.print();
@@ -184,8 +184,8 @@ int main(int argc, char* argv[]){
     // printf("\n==================== buildMtx ===================\n");
     //detailedMgr->buildMtx();
     //detailedMgr->SmartDistribute();
-    detailedMgr->PostProcessing();
-    detailedMgr->RemoveIsolatedGrid();
+    // detailedMgr->PostProcessing();
+    // detailedMgr->RemoveIsolatedGrid();
 
     time(&end);
     double time_used = double(end - start);
@@ -199,18 +199,18 @@ int main(int argc, char* argv[]){
         min = min%60;
     }
 
-    detailedMgr->plotGridMap();
+    //detailedMgr->plotGridMap();
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
-    detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
-    detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
+    //detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
+    //detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
     //globalMgr.plotDB();
-    OutputWriter outputWriter;
+    //OutputWriter outputWriter;
 
-    outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
+    //outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
 
-    detailedMgr->buildMtx();
+    //detailedMgr->buildMtx();
 
     cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
 
