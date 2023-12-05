@@ -24,14 +24,17 @@ struct SingleCapConstr {
 
 class GlobalMgr {
     public:
+
         GlobalMgr(DB& db, SVGPlot& plot): _db(db), _plot(plot) {
             cerr << "numNets = " << _db.numNets() << endl;
             _rGraph.initRGraph(db);
+            
             for (size_t netId = 0; netId < _db.numNets(); ++ netId) {
                 vector<double> temp(_rGraph.numViaOASGEdges(netId), -1);
                 _vUBViaArea.push_back(temp);
             }
         }
+        
         ~GlobalMgr() {}
 
         void plotDB();

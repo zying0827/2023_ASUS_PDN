@@ -51,9 +51,11 @@ class FlowLP {
         // double sameOverlapCost() const { return _sameOverlapCost; }
         double beforeOverlapCost() const { return _beforeOverlapCost; }
         double afterOverlapCost() const { return _afterOverlapCost; }
+        //Bug
 
     private:
         DB& _db;
+
         RGraph& _rGraph;
         GRBEnv _env;
         GRBModel _model;
