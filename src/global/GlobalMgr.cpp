@@ -2779,7 +2779,7 @@ void GlobalMgr::genCapConstrs() {
                                     addNetCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                                 } 
                                 else {
-                                    if(width < Min_width) Min_width = width;
+                                    if(width < Min_width && ratio.first != 0) Min_width = width/ratio.first;
                                     addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                                 }
                             }
@@ -2810,11 +2810,9 @@ void GlobalMgr::genCapConstrs() {
                             //new T2 
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
                         
-                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
-                                             make_pair(e1->tNode()->x(), e1->tNode()->y()),
-                                             S2, T2, ratio, right, width)){
-                                if(width < Min_width){
-                                    Min_width = width;
+                            if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
+                                if(width < Min_width && ratio.first != 0){
+                                    Min_width = width/ratio.first;
                                     addSglCapConstr(e1, right.first, ratio.first, width);
                                 }
                             }
@@ -2847,8 +2845,8 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                if(width < Min_width){
-                                    Min_width = width;
+                                if(width < Min_width && ratio.first != 0){
+                                    Min_width = width/ratio.first;
                                     addSglCapConstr(e1, right.first, ratio.first, width);
                                 }
                             }
@@ -2873,8 +2871,8 @@ void GlobalMgr::genCapConstrs() {
                                 T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                                 if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                    if(width < Min_width){
-                                        Min_width = width;
+                                    if(width < Min_width && ratio.first != 0){
+                                        Min_width = width/ratio.first;
                                         addSglCapConstr(e1, right.first, ratio.first, width);
                                     }
                                 }

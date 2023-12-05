@@ -205,7 +205,7 @@ int main(int argc, char* argv[]){
 
     //detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
     //detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
-    //globalMgr.plotDB();
+    globalMgr.plotDB();
     //OutputWriter outputWriter;
 
     //outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
