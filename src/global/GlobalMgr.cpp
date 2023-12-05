@@ -406,7 +406,7 @@ void GlobalMgr::buildOASG() {
     cout << "########################################\n";
 
     //Case 5 來不及debug 先加入一個手拉的
-    bool case5 = true;
+    bool case5 = false;
     
     //Create viaOASGNodes
     //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
@@ -634,29 +634,50 @@ void GlobalMgr::buildOASG() {
     //Check if the OASG edges are flowing in the right direction
     cout <<  _rGraph.numOASGEdges() << endl;
     cout <<  _rGraph.numOASGNodes() << endl;
-    for (size_t layId = 0; layId < _rGraph.numLayers(); ++layId ){
-        for (size_t netId = 0; netId < _rGraph.numNets(); ++netId){
-            //Check source first
-            if( _rGraph.sourceOASGNode(netId, layId)->numInEdges() > 0 ){
-                for (size_t edgeCount = 0; edgeCount < _rGraph.sourceOASGNode(netId, layId)->numInEdges(); ++edgeCount){
-                    OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.sourceOASGNode(netId, layId)->inEdgeId(edgeCount));
-                    _rGraph.swapST(edge);
-                    cout << "Swapped" <<endl;
-                }
-            }
-            // Now check all target ports
-            for (size_t tPortId = 0;tPortId < _rGraph.numTPorts(netId); ++tPortId ){
-                if( _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges() > 0 ){
-                    for (size_t edgeCount = 0; edgeCount < _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges(); ++edgeCount){
-                        OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.targetOASGNode(netId, tPortId, layId)->outEdgeId(edgeCount));
-                        _rGraph.swapST(edge);
-                        cout << "Swapped" <<endl;
-                    }
-                }
-            } 
+    // for (size_t layId = 0; layId < _rGraph.numLayers(); ++layId ){
+    //     for (size_t netId = 0; netId < _rGraph.numNets(); ++netId){
+    //         //Check source first
+    //         if( _rGraph.sourceOASGNode(netId, layId)->numInEdges() > 0 ){
+    //             for (size_t edgeCount = 0; edgeCount < _rGraph.sourceOASGNode(netId, layId)->numInEdges(); ++edgeCount){
+    //                 OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.sourceOASGNode(netId, layId)->inEdgeId(edgeCount));
+    //                 _rGraph.swapST(edge);
+    //                 cout << "Swapped" <<endl;
+    //             }
+    //         }
+    //         // Now check all target ports
+    //         for (size_t tPortId = 0;tPortId < _rGraph.numTPorts(netId); ++tPortId ){
+    //             if( _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges() > 0 ){
+    //                 for (size_t edgeCount = 0; edgeCount < _rGraph.targetOASGNode(netId, tPortId,layId)->numOutEdges(); ++edgeCount){
+    //                     OASGEdge * edge = _rGraph.vOASGEdge(_rGraph.targetOASGNode(netId, tPortId, layId)->outEdgeId(edgeCount));
+    //                     _rGraph.swapST(edge);
+    //                     cout << "Swapped" <<endl;
+    //                 }
+    //             }
+    //         } 
+    //     }
+    // }
+    
+    // Check All OASGEdges have the right flow dirction 
+    // Determine by its distance with the source
+    for (size_t edgeId = 0; edgeId < _rGraph.numOASGEdges(); ++ edgeId  ){
+        OASGEdge* edge = _rGraph.vOASGEdge(edgeId);
+        int netId = edge->netId();
+        double disS = 0;
+        double disT = 0;
+        double tempX = 0, tempY = 0, sourceX = 0, sourceY = 0;
+        sourceX = _rGraph.sourceOASGNode(netId, 0)->x();
+        sourceY = _rGraph.sourceOASGNode(netId, 0)->y();
+        
+        tempX = edge->sNode()->x();
+        tempY = edge->sNode()->y();
+        disS = sqrt (pow((tempX-sourceX), 2) + pow((tempY-sourceY), 2));
+        tempX = edge->tNode()->x();
+        tempY = edge->tNode()->y();
+        disT = sqrt (pow((tempX-sourceX), 2) + pow((tempY-sourceY), 2));
+        if (disS > disT){
+            _rGraph.swapST(edge);
         }
     }
-    
 
     
     cout << "########################################" << endl;
@@ -976,6 +997,7 @@ void GlobalMgr::voltCurrOpt() {
     // }
 
     // voltageAssignment(true);
+ 
     voltageDemandAssignment();
     swapSTbyVolt();
 
@@ -1026,17 +1048,16 @@ void GlobalMgr::voltCurrOpt() {
 
 
     for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
-                //調
                 vNetLambda[netCapId] = 4;
     }
+    for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
+            vLambda[capId] =  4;
+        }
 
     //Change for into while, add early stop for all three loops
     for (size_t ivIter = 0; ivIter < numIVIter; ++ ivIter) {
         cerr << "ivIter = " << ivIter << endl;
-        for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
-            //調
-            vLambda[capId] =  4;
-        }
+        
         
         // current optimization
         // currentSolver = new FlowLP(_rGraph, vMediumLayerThickness, vMetalLayerThickness, vConductivity, normRatio);
@@ -1100,9 +1121,7 @@ void GlobalMgr::voltCurrOpt() {
                 // vLambda[capId] *= vLambda[capId];
 
                 // schedule2: exp(.)
-                //調 vLambda
-                //4 = 
-                vLambda[capId] *= 1.2;
+                vLambda[capId] *= 1.1;
 
                 // schedule3: P control
                 // vLambda[capId] += PRatio * currentSolver->vOverlap(capId);
@@ -1865,7 +1884,6 @@ void GlobalMgr::voltageDemandAssignment() {
                 if (inNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
                 } else {
-                    
                     assert(inNode->port() == _db.vNet(netId)->sourcePort());
                     solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
                     cerr << "voltage = " << inNode->port()->voltage() << endl;

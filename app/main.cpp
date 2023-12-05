@@ -96,11 +96,11 @@ int main(int argc, char* argv[]){
     double gridWidth = 1;
 
     // For Example 1
-    // double boardWidth = 75*gridWidth;
-    // double boardHeight = 40*gridWidth;
-    // size_t numLayers = 4;
-    // double offsetX = 40;
-    // double offsetY = 40;
+    double boardWidth = 75*gridWidth;
+    double boardHeight = 40*gridWidth;
+    size_t numLayers = 4;
+    double offsetX = 40;
+    double offsetY = 40;
 
     // For Example 2 
     // double boardWidth = 100*gridWidth;
@@ -124,11 +124,11 @@ int main(int argc, char* argv[]){
     // double offsetY = 10;
 
     // // For Example 5
-    double boardWidth = 90*gridWidth;
-    double boardHeight = 55*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 110;
-    double offsetY = 10;
+    // double boardWidth = 90*gridWidth;
+    // double boardHeight = 55*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 110;
+    // double offsetY = 10;
 
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
@@ -187,7 +187,20 @@ int main(int argc, char* argv[]){
         // globalMgr.voltageDemandAssignment();
         // globalMgr.voltageAssignment();
         // globalMgr.currentDistribution();
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
         globalMgr.voltCurrOpt();
+
+        // 获取结束时间点
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        // 计算时间差
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+        // 输出执行时间
+        std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
+       
+
         // globalMgr.checkFeasible();
         // globalMgr.checkVoltDemandFeasible();
     } catch (GRBException e) {
