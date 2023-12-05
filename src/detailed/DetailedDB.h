@@ -16,6 +16,9 @@ class Grid {
                 _vVoltage.push_back(-1);
                 _vCurrent.push_back(-1);
             }
+            for (size_t netId = 0; netId < numNets; ++ netId) {
+                _IsPort.push_back(false);
+            }
         }
         ~Grid() {}
 
@@ -36,11 +39,13 @@ class Grid {
         double voltage(size_t netId) const { return _vVoltage[netId]; }
         double current(size_t netId) const { return _vCurrent[netId]; }
         bool hasObs() const { return _hasObs; }
+        bool IsPort(size_t netId ) const { return _IsPort[netId]; }
 
         // set function
         void incCongestCur() { _congestCur ++; _congestion ++; }
         void decCongestCur() { _congestCur --; _congestion --; }
         void incCongestHis() { _congestHis ++; _congestion ++; }
+        void setPort(size_t netId){ _IsPort[netId] = true; }
         // void decCongestHis() { _congestHis --; _congestion --; }
         void addCongestCur(int congestion) { _congestCur += congestion; _congestion += congestion; } 
         void addNet(size_t netId) { _vNetId.push_back(netId); }
@@ -69,6 +74,7 @@ class Grid {
         int _congestCur;    // current congestion cost
         int _congestHis;    // history congestion cost
         bool _hasObs;
+        vector<bool> _IsPort; // index = [netId], port of the net
         vector<size_t> _vNetId;
         size_t _xId;
         size_t _yId;
