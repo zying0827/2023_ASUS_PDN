@@ -406,11 +406,12 @@ void GlobalMgr::buildOASG() {
     cout << "########################################\n";
 
     //Case 5 來不及debug 先加入一個手拉的
-    bool case5 = false;
+    bool case5 = true;
     
     //Create viaOASGNodes
     //3 dim, 1dim =  netId, 2dim = Source vias and then targets' vias, 3dim = 4points
     vector<vector<vector<OASGNode*> > > viaOASGNodes;
+    if (case5 == false) {
     viaOASGNodes.resize(_rGraph.numNets());
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         int viaNodeId = 0;
@@ -440,6 +441,7 @@ void GlobalMgr::buildOASG() {
         }
         viaOASGNodes[netId] = tempViaOASGNodes;
     }
+    }
 
     for (size_t layerId = 0; layerId < _rGraph.numLayers(); ++ layerId){
         //Step 0: 先把每層的Middle 的OASG Node建完(因為每條Net的OASG Node都不一樣，所以直接包在裡面)
@@ -451,7 +453,7 @@ void GlobalMgr::buildOASG() {
                 _rGraph.addOASGEdge(netId, layerId, _rGraph.targetOASGNode(netId, 0,layerId), _rGraph.targetOASGNode(netId, 1,layerId), false);
                 double maxX = _db.vNet(0)->targetPort(0)->boundPolygon()->maxX();
                 double maxY = _db.vNet(0)->targetPort(0)->boundPolygon()->maxY();
-                OASGNode* obsNode = _rGraph.addOASGNode(0, maxX, maxY, OASGNodeType::MIDDLE);
+                OASGNode* obsNode = _rGraph.addOASGNode(2, maxX, maxY, OASGNodeType::MIDDLE);
                 _rGraph.addOASGEdge(netId, layerId, _rGraph.sourceOASGNode(netId,layerId), obsNode, false);
                 _rGraph.addOASGEdge(netId, layerId, obsNode, _rGraph.targetOASGNode(netId, 1,layerId), false);
                 continue;
@@ -1000,7 +1002,7 @@ void GlobalMgr::voltCurrOpt() {
  
     voltageDemandAssignment();
     swapSTbyVolt();
-
+    voltageDemandAssignment();
 
     vector<double> vMediumLayerThickness;
     vector<double> vMetalLayerThickness;
@@ -1048,7 +1050,7 @@ void GlobalMgr::voltCurrOpt() {
 
 
     for (size_t netCapId = 0; netCapId < _vNetCapConstr.size(); ++ netCapId) {
-                vNetLambda[netCapId] = 4;
+                vNetLambda[netCapId] = 1;
     }
     for (size_t capId = 0; capId < _vCapConstr.size(); ++ capId) {
             vLambda[capId] =  4;
@@ -1776,7 +1778,7 @@ void GlobalMgr::voltageDemandAssignment() {
             }
         }
     }
-
+/*
     for (size_t capId = 0; capId < _vNetCapConstr.size(); ++ capId) {
         OASGEdge* e1 = _vNetCapConstr[capId].e1;
         OASGEdge* e2 = _vNetCapConstr[capId].e2;
@@ -1803,6 +1805,22 @@ void GlobalMgr::voltageDemandAssignment() {
             }
         }
     }
+*/
+    // add traces to each net
+    // for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
+    //     for (size_t layId = 0; layId < _rGraph.numLayers(); ++ layId) {
+    //         for (size_t pEdgeId = 0; pEdgeId < _rGraph.numPlaneOASGEdges(netId, layId); ++ pEdgeId) {
+    //             OASGEdge* e = _rGraph.vPlaneOASGEdge(netId, layId, pEdgeId);
+    //             // if (e->current() > 0) {
+    //                 Segment* segment = edge2Segment(e);
+    //                 // segment->plot(netId, layId);
+    //                 _db.vNet(netId)->addSegment(segment, layId);
+    //             // }
+    //         }
+    //     }
+    // }
+    // plotCurrentPaths();
+    // assert(false);
 
     for (size_t netId = 0; netId < _rGraph.numNets(); ++ netId) {
         VoltEigen solver(_rGraph.numNPortOASGNodes(netId));
@@ -1884,7 +1902,7 @@ void GlobalMgr::voltageDemandAssignment() {
                 if (inNode->nPort()) {
                     solver.setMatrix(nPortNode->nPortNodeId(), inNode->nPortNodeId(), conductance);
                 } else {
-                    assert(inNode->port() == _db.vNet(netId)->sourcePort());
+                    // assert(inNode->port() == _db.vNet(netId)->sourcePort());
                     solver.setInputVector(nPortNode->nPortNodeId(), inNode->port()->voltage(), conductance);
                     cerr << "voltage = " << inNode->port()->voltage() << endl;
                 }

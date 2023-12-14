@@ -97,11 +97,11 @@ int main(int argc, char* argv[]){
     double gridWidth = 1;
 
     // For Example 1
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 40;
-    double offsetY = 40;
+    // double boardWidth = 75*gridWidth;
+    // double boardHeight = 40*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 40;
+    // double offsetY = 40;
 
     // For Example 2 
     // double boardWidth = 100*gridWidth;
@@ -125,11 +125,11 @@ int main(int argc, char* argv[]){
     // double offsetY = 10;
 
     // // For Example 5
-    // double boardWidth = 90*gridWidth;
-    // double boardHeight = 55*gridWidth;
-    // size_t numLayers = 4;
-    // double offsetX = 110;
-    // double offsetY = 10;
+    double boardWidth = 90*gridWidth;
+    double boardHeight = 55*gridWidth;
+    size_t numLayers = 5;
+    double offsetX = 110;
+    double offsetY = 10;
 
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
@@ -179,13 +179,14 @@ int main(int argc, char* argv[]){
     globalMgr.buildOASG();
 
     // globalMgr.buildOASGXObs();
-    globalMgr.plotOASG();
+    // globalMgr.plotOASG();
     
-    // globalMgr.layerDistribution();
+    globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
-    // globalMgr.buildTestNCOASG();
-    // // globalMgr.plotNCOASG();
+    globalMgr.buildTestNCOASG();
+    // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
+    // /*
     globalMgr.genCapConstrs();
     globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
     try {
@@ -212,8 +213,9 @@ int main(int argc, char* argv[]){
         cerr << "Error = " << e.getErrorCode() << endl;
         cerr << e.getMessage() << endl;
     }
-    //globalMgr.plotCurrentPaths();
-    
+    globalMgr.plotCurrentPaths();
+    // */
+    /*
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     delete detailedMgr;
     detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
@@ -265,7 +267,7 @@ int main(int argc, char* argv[]){
     detailedMgr->buildMtx();
 
     cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
-
+*/
 
     // // mgr.genRGraph();
     // // // mgr.drawRGraph();
