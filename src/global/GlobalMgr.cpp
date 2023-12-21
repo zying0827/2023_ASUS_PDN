@@ -2752,14 +2752,9 @@ void GlobalMgr::genCapConstrs() {
                 pair<bool, bool> right;
                 double width;
 
-                double Min_width = 999999; // 這是用來記錄EDGE最小的值，過程中如果這個值會降到10^-6以下表示幾乎是0，可以直接終止判斷
-
-                //這三個是紀錄edge 與 obstacle間constraint最小的值，存起來最後只新增一項add cap constraint
-                double min_width = 999999;
-                double min_ratio = 1;
-                bool min_right = 1;
-                ///////////////////////////////////////////////////////////////////////////////
-                
+                double Min_width_R = 999999; // 這是用來記錄EDGE最小的值，過程中如果這個值會降到10^-6以下表示幾乎是0，可以直接終止判斷 
+                double Min_width_L = 999999; 
+                double stop_parameter = pow(10,-6); // 可設定提前停止的值           
                 
                 //compare to other net edge
                 for(size_t T_netId = S_netId; T_netId < _rGraph.numNets(); ++ T_netId){
@@ -2786,7 +2781,14 @@ void GlobalMgr::genCapConstrs() {
                                     addNetCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                                 } 
                                 else {
-                                    if(width < Min_width && ratio.first != 0) Min_width = width/ratio.first;
+                                    //right
+                                    if(right.first){
+                                        if(ratio.first != 0 && (width/ratio.first) < Min_width_R) Min_width_R = width/ratio.first;
+                                    }
+                                    //left
+                                    else{
+                                        if(ratio.first != 0 && (width/ratio.first) < Min_width_L) Min_width_L = width/ratio.first;
+                                    }
                                     addCapConstr(e1, right.first, ratio.first, e2, right.second, ratio.second, width);
                                 }
                             }
@@ -2794,7 +2796,14 @@ void GlobalMgr::genCapConstrs() {
                     }   
                 } 
                 
-                if(Min_width < pow(10,-6)) continue; // if capacity constraint is very small(nearly zero), no need to check obstacle;
+                if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) continue; // if capacity constraint is very small(nearly zero), no need to check obstacle;
+
+                //這三個是紀錄edge 與 obstacle間constraint最小的值，存起來最後只新增一項add cap constraint
+                double min_width_R = 999999;
+                double min_width_L = 999999;
+                double min_ratio_R = 1;
+                double min_ratio_L = 1;
+                ///////////////////////////////////////////////////////////////////////////////
 
                 // obstacle constraint
                 for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
@@ -2818,25 +2827,41 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                if(ratio.first != 0){
-                                    if(width/ratio.first < Min_width){
-                                        Min_width = width/ratio.first;
-                                        min_width = width;
-                                        min_ratio = ratio.first;
-                                        min_right = right.first;
-                                        //addSglCapConstr(e1, right.first, ratio.first, width);
+                                //Right
+                                if(right.first){
+                                    if(ratio.first != 0){
+                                        if((width/ratio.first) < Min_width_R){
+                                            Min_width_R = width/ratio.first;
+                                            min_width_R = width;
+                                            min_ratio_R = ratio.first;
+                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                        }
+                                    }
+                                }
+                                //left
+                                else{
+                                    if(ratio.first != 0){
+                                        if((width/ratio.first) < Min_width_L){
+                                            Min_width_L = width/ratio.first;
+                                            min_width_L = width;
+                                            min_ratio_L = ratio.first;
+                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                        }
                                     }
                                 }
                             }
-                            if(Min_width < pow(10,-6)) break;
+                            if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                         }
-                        if(Min_width < pow(10,-6)) break;
+                        if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                     }
-                    if(Min_width < pow(10,-6)) break;
+                    if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                 }
 
-                if(Min_width < pow(10,-6)){
-                    addSglCapConstr(e1, min_right, min_ratio, min_width);
+                if(Min_width_R < stop_parameter && Min_width_L < stop_parameter){
+                    //Right
+                    addSglCapConstr(e1, 1 , min_ratio_R, min_width_R);
+                    //Left
+                    addSglCapConstr(e1, 0 , min_ratio_L, min_width_L);
                     continue;
                 }
                 // port bounding polygon constraints from other nets
@@ -2860,19 +2885,32 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                if(ratio.first != 0){
-                                    if(width/ratio.first < Min_width){
-                                        Min_width = width/ratio.first;
-                                        min_width = width;
-                                        min_ratio = ratio.first;
-                                        min_right = right.first;
-                                        //addSglCapConstr(e1, right.first, ratio.first, width);
+                                //Right
+                                if(right.first){
+                                    if(ratio.first != 0){
+                                        if((width/ratio.first) < Min_width_R){
+                                            Min_width_R = width/ratio.first;
+                                            min_width_R = width;
+                                            min_ratio_R = ratio.first;
+                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                        }
+                                    }
+                                }
+                                //left
+                                else{
+                                    if(ratio.first != 0){
+                                        if((width/ratio.first) < Min_width_L){
+                                            Min_width_L = width/ratio.first;
+                                            min_width_L = width;
+                                            min_ratio_L = ratio.first;
+                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                        }
                                     }
                                 }
                             }
-                            if(Min_width < pow(10,-6)) break;
+                            if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                         }
-                        if(Min_width < pow(10,-6)) break;
+                        if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
 
                         for (size_t tPortId = 0; tPortId < _db.vNet(T_netId)->numTPorts(); ++ tPortId) {
                             bPolygon = _db.vNet(T_netId)->targetPort(tPortId)->boundPolygon();
@@ -2891,26 +2929,42 @@ void GlobalMgr::genCapConstrs() {
                                 T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                                 if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                    if(ratio.first != 0){
-                                        if(width/ratio.first < Min_width){
-                                            Min_width = width/ratio.first;
-                                            min_width = width;
-                                            min_ratio = ratio.first;
-                                            min_right = right.first;
-                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                    //Right
+                                    if(right.first){
+                                        if(ratio.first != 0){
+                                            if((width/ratio.first) < Min_width_R){
+                                                Min_width_R = width/ratio.first;
+                                                min_width_R = width;
+                                                min_ratio_R = ratio.first;
+                                                //addSglCapConstr(e1, right.first, ratio.first, width);
+                                            }
+                                        }
+                                    }
+                                    //left
+                                    else{
+                                        if(ratio.first != 0){
+                                            if((width/ratio.first) < Min_width_L){
+                                                Min_width_L = width/ratio.first;
+                                                min_width_L = width;
+                                                min_ratio_L = ratio.first;
+                                                //addSglCapConstr(e1, right.first, ratio.first, width);
+                                            }
                                         }
                                     }
                                 }
-                                if(Min_width < pow(10,-6)) break;
+                                if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                             }
-                            if(Min_width < pow(10,-6)) break;
+                            if(Min_width_R < stop_parameter && Min_width_L < stop_parameter) break;
                         }
                     }
                 }
 
-                addSglCapConstr(e1, min_right, min_ratio, min_width);
-                
-                if(Min_width < pow(10,-6))continue;
+                //Right
+                addSglCapConstr(e1, 1 , min_ratio_R, min_width_R);
+                //Left
+                addSglCapConstr(e1, 0 , min_ratio_L, min_width_L);
+
+                if(Min_width_R < stop_parameter && Min_width_L < stop_parameter)continue;
                 
 
                 // board cnstraint

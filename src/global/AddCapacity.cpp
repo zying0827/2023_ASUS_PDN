@@ -51,6 +51,7 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(cos, 1);
         right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
+        
     }
     // project T1 to e2
     P = T1;
@@ -77,7 +78,6 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         min_dist = dist;
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
-        
     }
     width = min_dist;
     return ratio.first >= 0;
