@@ -2748,11 +2748,18 @@ void GlobalMgr::genCapConstrs() {
             //search each edge
             for (size_t S_EdgeId = 0; S_EdgeId < _rGraph.numPlaneOASGEdges(S_netId, layId); ++ S_EdgeId){
                 OASGEdge* e1 = _rGraph.vPlaneOASGEdge(S_netId, layId, S_EdgeId);
-                double Min_width = 999999;
-                
                 pair<double, double> ratio;
                 pair<bool, bool> right;
                 double width;
+
+                double Min_width = 999999; // 這是用來記錄EDGE最小的值，過程中如果這個值會降到10^-6以下表示幾乎是0，可以直接終止判斷
+
+                //這三個是紀錄edge 與 obstacle間constraint最小的值，存起來最後只新增一項add cap constraint
+                double min_width = 999999;
+                double min_ratio = 1;
+                bool min_right = 1;
+                ///////////////////////////////////////////////////////////////////////////////
+                
                 
                 //compare to other net edge
                 for(size_t T_netId = S_netId; T_netId < _rGraph.numNets(); ++ T_netId){
@@ -2811,9 +2818,14 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
                         
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                if(width < Min_width && ratio.first != 0){
-                                    Min_width = width/ratio.first;
-                                    addSglCapConstr(e1, right.first, ratio.first, width);
+                                if(ratio.first != 0){
+                                    if(width/ratio.first < Min_width){
+                                        Min_width = width/ratio.first;
+                                        min_width = width;
+                                        min_ratio = ratio.first;
+                                        min_right = right.first;
+                                        //addSglCapConstr(e1, right.first, ratio.first, width);
+                                    }
                                 }
                             }
                             if(Min_width < pow(10,-6)) break;
@@ -2823,7 +2835,10 @@ void GlobalMgr::genCapConstrs() {
                     if(Min_width < pow(10,-6)) break;
                 }
 
-                if(Min_width < pow(10,-6)) continue;
+                if(Min_width < pow(10,-6)){
+                    addSglCapConstr(e1, min_right, min_ratio, min_width);
+                    continue;
+                }
                 // port bounding polygon constraints from other nets
                 // Bug: if the port is not connected on the layer, its bounding polygon should be ignored
                 for(size_t T_netId = 0; T_netId < _rGraph.numNets(); ++ T_netId) {
@@ -2845,9 +2860,14 @@ void GlobalMgr::genCapConstrs() {
                             T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                if(width < Min_width && ratio.first != 0){
-                                    Min_width = width/ratio.first;
-                                    addSglCapConstr(e1, right.first, ratio.first, width);
+                                if(ratio.first != 0){
+                                    if(width/ratio.first < Min_width){
+                                        Min_width = width/ratio.first;
+                                        min_width = width;
+                                        min_ratio = ratio.first;
+                                        min_right = right.first;
+                                        //addSglCapConstr(e1, right.first, ratio.first, width);
+                                    }
                                 }
                             }
                             if(Min_width < pow(10,-6)) break;
@@ -2871,9 +2891,14 @@ void GlobalMgr::genCapConstrs() {
                                 T2 = make_pair((T2.first + pow(10,-6)*(-vectorX) - pow(10,-8)*(normalX)), (T2.second + pow(10,-6)*(-vectorY) - pow(10,-8)*(normalY)));
 
                                 if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),make_pair(e1->tNode()->x(), e1->tNode()->y()),S2, T2, ratio, right, width)){
-                                    if(width < Min_width && ratio.first != 0){
-                                        Min_width = width/ratio.first;
-                                        addSglCapConstr(e1, right.first, ratio.first, width);
+                                    if(ratio.first != 0){
+                                        if(width/ratio.first < Min_width){
+                                            Min_width = width/ratio.first;
+                                            min_width = width;
+                                            min_ratio = ratio.first;
+                                            min_right = right.first;
+                                            //addSglCapConstr(e1, right.first, ratio.first, width);
+                                        }
                                     }
                                 }
                                 if(Min_width < pow(10,-6)) break;
@@ -2883,7 +2908,10 @@ void GlobalMgr::genCapConstrs() {
                     }
                 }
 
-                if(Min_width < pow(10,-6)) continue;
+                addSglCapConstr(e1, min_right, min_ratio, min_width);
+                
+                if(Min_width < pow(10,-6))continue;
+                
 
                 // board cnstraint
                 // bottom
