@@ -2808,6 +2808,8 @@ void GlobalMgr::genCapConstrs() {
                     }   
                 } 
 
+                double l_min = 9999999, r_min = 9999999;
+                double l_ratio, r_ratio;
                 // obstacle constraint
                 for (size_t obsId = 0; obsId < _db.vMetalLayer(layId)->numObstacles(); ++ obsId) {
                    
@@ -2832,12 +2834,24 @@ void GlobalMgr::genCapConstrs() {
                             if(addConstraint(make_pair(e1->sNode()->x(), e1->sNode()->y()),
                                              make_pair(e1->tNode()->x(), e1->tNode()->y()),
                                              S2, T2, ratio, right, width)){
-                                addSglCapConstr(e1, right.first, ratio.first, width);
+                                // addSglCapConstr(e1, right.first, ratio.first, width);
+                                if(right.first && width < r_min) {
+                                    r_min = width;
+                                    r_ratio = ratio.first;
+                                }
+                                else if(!right.first && width < l_min) {
+                                    l_min = width;
+                                    l_ratio = ratio.first;
+                                }
                             }
-
                         }
                     }
                 }
+                
+                if(l_min < 9999999)
+                    addSglCapConstr(e1, 0, l_ratio, l_min);
+                if(r_min < 9999999)
+                    addSglCapConstr(e1, 1, r_ratio, r_min);
 
                 // port bounding polygon constraints from other nets
                 // Bug: if the port is not connected on the layer, its bounding polygon should be ignored
