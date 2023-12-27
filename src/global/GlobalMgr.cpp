@@ -2784,7 +2784,7 @@ void GlobalMgr::genCapConstrs() {
                     }   
                 }
 
-                //這三個是紀錄edge 與 obstacle間constraint最小的值，存起來最後只新增一項add cap constraint
+                //紀錄edge 與 obstacle間constraint最小的值，存起來最後只新增一項add cap constraint
                 double min_width_R = 999999;
                 double min_width_L = 999999;
                 double min_ratio_R = 1;
