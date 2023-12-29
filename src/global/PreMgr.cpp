@@ -32,7 +32,7 @@ void PreMgr::nodeClustering() {
                 vTNode.push_back(_db.vTNode(netId, tNodeId));
             }
             // cerr << "kMeans..." << endl;
-            kMeansClustering(netId, vTNode, 10, _vNumTPorts[netId]);
+            kMeansClustering(netId, vTNode, 2000, _vNumTPorts[netId]);
             for (size_t tPortId = 0; tPortId < _vNumTPorts[netId]; ++ tPortId) {
                 assert(_vTClusteredNode[netId][tPortId].size() > 0);
             }
@@ -127,6 +127,7 @@ void PreMgr::kMeansClustering(size_t netId, vector<DBNode*> vNode, int numEpochs
         double minDist;  // default infinite dist to nearest cluster
         DBNode* node;
     };
+    //Bug
     auto distance = [] (Point p1, Point p2) -> double {
         return pow((p1.x-p2.x), 2) + pow((p1.y-p2.y), 2);
     }; 

@@ -12,7 +12,7 @@ class OutputWriter {
         }
         ~OutputWriter() {}
 
-    void writeTuningResult(std::ofstream& outputFile, int numIIter, int numVIter, int numIVIter, vector<double> vArea, vector<double> vOverlap, vector<double> vSameNetOverlap, vector<double> vViaArea) {
+    void writeTuningResult(std::ofstream& outputFile, int numIIter, int numVIter, int numIVIter, vector<double> vArea, vector<double> vOverlap, vector<double> vSameNetOverlap, vector<double> vViaArea, vector<double> vAfterCost) {
         //1:v_area, 2:v_Overlap, 3:v_SameNetOverlap, 4:viaArea
 
         vector<int> vXI;
@@ -26,23 +26,28 @@ class OutputWriter {
         int indexIV = 0;
         int IVnum = numIIter + numVIter;
 
-        for (int i = 0; i < 4; ++i){
+        for (int i = 0; i < 5; ++i){
             data.clear();
+            //順序自己記得
             if(i == 0) {
-                outputFile << "vArea\n\n"; 
+                // outputFile << "vArea\n\n"; 
                 data = vArea;
             }
             else if (i == 1) {
-                outputFile << "vOverlap\n\n"; 
+                // outputFile << "vOverlap\n\n"; 
                 data = vOverlap;
             }
             else if (i == 2){
-                outputFile << "vSameNetOverlap\n\n";
+                // outputFile << "vSameNetOverlap\n\n";
                 data = vSameNetOverlap;
             }  
             else if (i == 3) {
-                outputFile << "vViaArea\n\n"; 
+                // outputFile << "vViaArea\n\n"; 
                 data = vViaArea;
+            }
+            else if (i == 4) {
+                // outputFile << "vAfterCost\n\n"; 
+                data = vAfterCost;
             }
             for (const double& value : data) {
                 if( (indexIV % IVnum ) < numIIter || (indexIV % IVnum ) == (IVnum-1) ){

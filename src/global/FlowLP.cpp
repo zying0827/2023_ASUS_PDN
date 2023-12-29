@@ -93,10 +93,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                     // _beforeCost += cost * (e->currentLeft() + e->currentRight()) * 1E6;
 
                     // set diff flow
+                    // 1116 Bug
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneLeftFlow[netId][layId][pEdgeId] - _vPlaneRightFlow[netId][layId][pEdgeId]);
                     _model.addConstr(_vPlaneDiffFlow[netId][layId][pEdgeId] >= _vPlaneRightFlow[netId][layId][pEdgeId] - _vPlaneLeftFlow[netId][layId][pEdgeId]);
                     obj += diffWeight * cost * _vPlaneDiffFlow[netId][layId][pEdgeId];
-                    // _beforeCost += diffWeight * cost * abs(e->currentLeft() - e->currentRight()) * 1E6;
+                    _beforeCost += diffWeight * cost * abs(e->currentLeft() - e->currentRight()) * 1E6;
                 }
             }
         }
@@ -112,7 +113,11 @@ void FlowLP::setObjective(double areaWeight, double viaWeight, double diffWeight
                     // cerr << "costDen=" << setprecision(15) << costDen << ", ";
                     // cerr << "sNode->voltage=" << setprecision(15) << e->sNode()->voltage() << ", ";
                     // cerr << "tNode->voltage=" << setprecision(15) << e->tNode()->voltage() << endl;
+                    
+                    //Bug
                     assert (e->sNode()->voltage() > e->tNode()->voltage());
+
+
                     if (e->sNode()->voltage() == e->tNode()->voltage()) {
                         _model.addConstr(_vViaFlow[netId][layPairId][vEdgeId] == 0);
                     } else {
@@ -699,3 +704,5 @@ void FlowLP::clearVOverlap() {
     _vAfterOverlap.clear();
     _vAfterSameOverlap.clear();
 }
+
+

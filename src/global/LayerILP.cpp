@@ -4,7 +4,7 @@ using namespace std;
 LayerILP::LayerILP(RGraph& rGraph, vector< vector<double> > vNetWeight, vector<double> vAccuViaLength)
         : _model(_env), _rGraph(rGraph), _vNetWeight(vNetWeight), _vAccuViaLength(vAccuViaLength) {
     // _model.getEnv().set(GRB_DoubleParam_TimeLimit, 400);
-
+    _model.set(GRB_DoubleParam_FeasibilityTol, 1e-9);
     _vFlow = new GRBVar** [_rGraph.num2PinNets()];
     for (size_t twoPinNetId = 0; twoPinNetId < _rGraph.num2PinNets(); ++ twoPinNetId) {
         _vFlow[twoPinNetId] = new GRBVar* [ _rGraph.numLayers() ];

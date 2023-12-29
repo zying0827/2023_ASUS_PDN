@@ -44,6 +44,12 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
     pair<double, double> P, F; // foot
     ratio = make_pair(-1, -1);
 
+    //middle point for S1T1
+    pair<double,double> M1 = make_pair ( (S1.first+T1.first)/2 ,(S1.second+T1.second)/2 );
+    //middle point for S2T2
+    pair<double,double> M2 = make_pair ( (S2.first+T2.first)/2 ,(S2.second+T2.second)/2 );
+
+
     // project S1 to e2
     P = S1;
     dist = shortest_distance(S2, T2, P, F);
@@ -54,6 +60,14 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
     }
     // project T1 to e2
     P = T1;
+    dist = shortest_distance(S2, T2, P, F);
+    if(F.first >= 0 && dist < min_dist) {
+        min_dist = dist;
+        ratio = make_pair(cos, 1);
+        right = make_pair(isRight(S1, T1, F), isRight(S2, T2, P));
+    }
+    // project M1 to e2
+    P = M1;
     dist = shortest_distance(S2, T2, P, F);
     if(F.first >= 0 && dist < min_dist) {
         min_dist = dist;
@@ -76,6 +90,15 @@ bool addConstraint(pair<double, double> S1, pair<double, double> T1, pair<double
         ratio = make_pair(1, cos);
         right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
     }
+    // project M2 to e1
+    P = M2;
+    dist = shortest_distance(S1, T1, P, F);
+    if(F.first >= 0 && dist < min_dist) {
+        min_dist = dist;
+        ratio = make_pair(1, cos);
+        right = make_pair(isRight(S1, T1, P), isRight(S2, T2, F));
+    }
+    
     width = min_dist;
     return ratio.first >= 0;
 }

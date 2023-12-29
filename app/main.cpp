@@ -95,18 +95,51 @@ int main(int argc, char* argv[]){
     // double boardHeight = 15*gridWidth;
     // size_t numLayers = 12;
     double gridWidth = 1;
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 40;
-    double offsetY = 40;
+
+    // For Example 1
+    // double boardWidth = 75*gridWidth;
+    // double boardHeight = 40*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 40;
+    // double offsetY = 40;
+
+    // For Example 2 
+    // double boardWidth = 100*gridWidth;
+    // double boardHeight = 70*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 95;
+    // double offsetY = 45;
+
+    // // For Example 3 
+    // double boardWidth = 100*gridWidth;
+    // double boardHeight = 65*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 25;
+    // double offsetY = 20;
+
+    // // For Example 4 
+    // double boardWidth = 80*gridWidth;
+    // double boardHeight = 55*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 120;
+    // double offsetY = 10;
+
+    // // For Example 5
+    double boardWidth = 90*gridWidth;
+    double boardHeight = 55*gridWidth;
+    size_t numLayers = 5;
+    double offsetX = 110;
+    double offsetY = 10;
+
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
     SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
     DB db(plot);
+
     db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
     Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
+
     parser.parse();
 
      //time
@@ -115,10 +148,15 @@ int main(int argc, char* argv[]){
 
     // // NetworkMgr mgr(db, plot);
     PreMgr preMgr(db, plot);
+
     preMgr.nodeClustering();
+
     preMgr.assignPortPolygon();
+
     preMgr.plotBoundBox();
+
     
+
     // // // replace this line with a real parser function
     // // parser.testInitialize(boardWidth, boardHeight, gridWidth);
 
@@ -129,30 +167,46 @@ int main(int argc, char* argv[]){
     detailedMgr->check();
 
     GlobalMgr globalMgr(db, plot);
+    
     globalMgr.numIIter = numIIter;
     globalMgr.numVIter = numVIter;
     globalMgr.numIVIter = numIVIter;
 
-    
-
     // // // replace this line with a real OASG building function
     // // globalMgr.buildTestOASG();
 
+    
     globalMgr.buildOASG();
+
     // globalMgr.buildOASGXObs();
-    // globalMgr.plotOASG();
-    // globalMgr.layerDistribution();
+    //globalMgr.plotOASG();
+    
+    globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
-    // globalMgr.buildTestNCOASG();
-    // // globalMgr.plotNCOASG();
+    globalMgr.buildTestNCOASG();
+    // globalMgr.plotNCOASG();
     // // globalMgr.voltageAssignment();
+    // /*
     globalMgr.genCapConstrs();
     globalMgr.setUBViaArea(detailedMgr->vNetPortGrid());
     try {
         // globalMgr.voltageDemandAssignment();
         // globalMgr.voltageAssignment();
         // globalMgr.currentDistribution();
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
         globalMgr.voltCurrOpt();
+
+        // 获取结束时间点
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        // 计算时间差
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+        // 输出执行时间
+        std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
+       
+
         // globalMgr.checkFeasible();
         // globalMgr.checkVoltDemandFeasible();
     } catch (GRBException e) {
@@ -160,7 +214,8 @@ int main(int argc, char* argv[]){
         cerr << e.getMessage() << endl;
     }
     globalMgr.plotCurrentPaths();
-    
+    // */
+    /*
     // DetailedMgr detailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
     delete detailedMgr;
     // detailedMgr = new DetailedMgr(db, plot, 2 * db.VIA16D8A24()->drillRadius());
@@ -208,11 +263,11 @@ int main(int argc, char* argv[]){
     globalMgr.plotDB();
     //OutputWriter outputWriter;
 
-    //outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea);
-
-    //detailedMgr->buildMtx();
+    outputWriter.writeTuningResult(ftunRes, numIIter, numVIter, numIVIter, globalMgr._vArea, globalMgr._vOverlap, globalMgr._vSameNetOverlap, globalMgr._vViaArea, globalMgr._vAfterCost);
+    detailedMgr->buildMtx();
 
     cout << "Time : " << hour << " hours " << min <<" mins "<< fixed << setprecision(5) << time_used << " sec " << endl; 
+*/
 
     // // mgr.genRGraph();
     // // // mgr.drawRGraph();
@@ -222,5 +277,6 @@ int main(int argc, char* argv[]){
     // // // mgr.drawRGraph(true);
     // // mgr.drawDB();
     // // fout.close();
+
     return 0;
 }
