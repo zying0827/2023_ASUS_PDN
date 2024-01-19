@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 # # Find packages go here.
 set(GUROBI_DIR "/work/gurobi1001/linux64")
-set(CPLEX_ROOT_DIR "$ENV{HOME}/.local/cplex")
+#set(CPLEX_ROOT_DIR "$ENV{HOME}/.local/cplex")
 
 # # Add submodules
 # find_package(Git QUIET)
