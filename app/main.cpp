@@ -133,12 +133,14 @@ int main(int argc, char* argv[]){
 
 
     // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 6.0);
-    SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
+    // SVGPlot plot(fout, boardWidth, boardHeight, gridWidth, numLayers, 10.0);
+    SVGPlot plot(fout, 10.0);
     DB db(plot);
 
-    db.setBoundary(boardWidth, boardHeight);
+    // db.setBoundary(boardWidth, boardHeight);
     db.setFlowWeight(0.5, 0.5);
-    Parser parser(finST, fin, finOb, db, offsetX, offsetY, plot);
+    // Parser parser(finST, fin, finOb, db, offsetX, offsetY, boardWidth, boardHeight, plot);
+    Parser parser(finST, fin, finOb, db, plot);
 
     parser.parse();
 
@@ -176,15 +178,19 @@ int main(int argc, char* argv[]){
     // // globalMgr.buildTestOASG();
 
     
-    globalMgr.buildOASG();
+    globalMgr.buildOASG(string(argv[3]).find('5') != std::string::npos);
 
     // globalMgr.buildOASGXObs();
     // globalMgr.plotOASG();
     
+    if (string(argv[3]).find('5') != std::string::npos) {
+    // globalMgr.genCrossConstrs();
+    // globalMgr.genCrossCapConstrs()
     globalMgr.layerDistribution();
     // // //globalMgr.plotRGraph();
     globalMgr.buildTestNCOASG();
     // globalMgr.plotNCOASG();
+    }
     // // globalMgr.voltageAssignment();
     // /*
     globalMgr.genCapConstrs();
