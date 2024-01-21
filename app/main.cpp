@@ -97,11 +97,11 @@ int main(int argc, char* argv[]){
     double gridWidth = 1;
 
     // For Example 1
-    double boardWidth = 75*gridWidth;
-    double boardHeight = 40*gridWidth;
-    size_t numLayers = 4;
-    double offsetX = 40;
-    double offsetY = 40;
+    // double boardWidth = 75*gridWidth;
+    // double boardHeight = 40*gridWidth;
+    // size_t numLayers = 4;
+    // double offsetX = 40;
+    // double offsetY = 40;
 
     // For Example 2 
     // double boardWidth = 100*gridWidth;
@@ -111,11 +111,11 @@ int main(int argc, char* argv[]){
     // double offsetY = 45;
 
     // // For Example 3 
-    // double boardWidth = 100*gridWidth;
-    // double boardHeight = 65*gridWidth;
-    // size_t numLayers = 4;
-    // double offsetX = 25;
-    // double offsetY = 20;
+    double boardWidth = 100*gridWidth;
+    double boardHeight = 65*gridWidth;
+    size_t numLayers = 4;
+    double offsetX = 25;
+    double offsetY = 20;
 
     // // For Example 4 
     // double boardWidth = 80*gridWidth;
@@ -264,8 +264,8 @@ int main(int argc, char* argv[]){
     //detailedMgr->plotGridMapVoltage();
     //detailedMgr->plotGridMapCurrent();
 
-    detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
-    detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
+    // detailedMgr->writeColorMap_v2("../../exp/output/voltageColorMap.txt", 1);
+    // detailedMgr->writeColorMap_v2("../../exp/output/currentColorMap.txt", 0);
     //globalMgr.plotDB();
     OutputWriter outputWriter;
 
