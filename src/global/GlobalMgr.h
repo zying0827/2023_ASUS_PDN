@@ -39,7 +39,7 @@ class GlobalMgr {
 
         void plotDB();
         void buildTestOASG();
-        void buildOASG();
+        void buildOASG(bool case5);
         void buildOASGXObs();
 
         bool isSegmentIntersectingWithObstacles(OASGNode* a, OASGNode* b, vector<vector<OASGNode*> > obstacle);
@@ -61,6 +61,7 @@ class GlobalMgr {
         void layerDistribution();
         void buildTestNCOASG();
         void plotNCOASG();
+        void genCrossConstrs();
         void genCapConstrs();
         void voltCurrOpt();
         void voltageAssignment(bool currentBased);
@@ -105,6 +106,7 @@ class GlobalMgr {
         SVGPlot& _plot;
         RGraph _rGraph;
         
+        vector< pair<RGEdge*, RGEdge*> > _vCrossConstr;   // the indices of the crossing RGEdges
         vector<CapConstr> _vCapConstr;
         vector<SingleCapConstr> _vSglCapConstr;
         vector<CapConstr> _vNetCapConstr;
