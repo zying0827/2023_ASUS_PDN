@@ -326,7 +326,10 @@ void AStarRouter::backTraceNoPad() {
         }
     } else {
         // around the ending grid
+
+        // current path: https://i.imgur.com/fAOAYHV.png
     /*
+        // https://i.imgur.com/TwSo5rq.png
         int dx = abs(_path[0]->xId() - _path[_path.size()-1]->xId());
         int dy = abs(_path[0]->yId() - _path[_path.size()-1]->yId());
         if(dx < dy) {
@@ -348,6 +351,9 @@ void AStarRouter::backTraceNoPad() {
             }
         }
     */
+
+    /*    
+        // https://i.imgur.com/PBVwDdh.png
         for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
             if (xId >= 0 && xId < numXId()) {
                 for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
@@ -358,7 +364,42 @@ void AStarRouter::backTraceNoPad() {
                 }
             }
         }
+        
+    */
+        if(tPathId < sPathId) {
+            // https://i.imgur.com/fdYOVCW.png
+            for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
+                if (xId >= 0 && xId < numXId()) {
+                    for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
+                        if (yId >= 0 && yId < numYId()) {
+                             _vPGrid.push_back(_vGrid[xId][yId]);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            // https://i.imgur.com/O43tcs2.png
+            pair<int, int> S_prime = make_pair(_path[0]->xId(), _path[0]->yId());
+            pair<int, int> T_prime = make_pair(_path[_path.size()-1]->xId(), _path[_path.size()-1]->yId());
+            pair<int, int> O = make_pair((S_prime.first+T_prime.first)/2, (S_prime.second+T_prime.second)/2);
 
+            int length = ceil(sqrt((S_prime.first-T_prime.first)*(S_prime.first-T_prime.first) + (S_prime.second-T_prime.second)*(S_prime.second-T_prime.second)));
+            pair<int, int> S = make_pair(O.first, O.second - length/2);
+            pair<int, int> T = make_pair(O.first, O.second + length/2);
+
+            for(int x=-halfWidth; x<=halfWidth; x++)
+                for(int y=-length/2; y<=length/2; y++) {
+                    double cos = -((S.first-T.first)*(S_prime.first-T_prime.first) + (S.second-T.second)*(S_prime.second-T_prime.second)) / (sqrt((S.first-T.first)*(S.first-T.first) + (S.second-T.second)*(S.second-T.second)) * sqrt((S_prime.first-T_prime.first)*(S_prime.first-T_prime.first) + (S_prime.second-T_prime.second)*(S_prime.second-T_prime.second)));
+                    double sin = sqrt(1 - cos*cos);
+                    int xId = (int)(O.first + cos*x - sin*y);
+                    int yId = (int)(O.second + sin*x + cos*y);
+                    if(legal(xId, yId))
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+                }
+        }
+    
+        
         // around the path
         // node = _vGNode[_tPos.first][_tPos.second];
         // while(node->parent() != node) {
