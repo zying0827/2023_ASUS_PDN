@@ -249,6 +249,15 @@ void AStarRouter::backTraceNoPad() {
             } 
         return false;
     };
+
+    auto isAcute = [&] (pair<int, int> A, pair<int, int> S, pair<int, int> T) -> bool {
+        int dist1 = (A.first-S.first)*(A.first-S.first) + (A.second-S.second)*(A.second-S.second);
+        int dist2 = (A.first-T.first)*(A.first-T.first) + (A.second-T.second)*(A.second-T.second);
+        int dist3 = (T.first-S.first)*(T.first-S.first) + (T.second-S.second)*(T.second-S.second);
+        return (dist1+dist3 > dist2) &&
+               (dist3+dist2 > dist1);
+    };
+    
     GNode* node = _vGNode[_tPos.first][_tPos.second];
     // GNode* node = _vGNode[tXId][tYId];
     _exactLength = 0.0;
@@ -303,6 +312,7 @@ void AStarRouter::backTraceNoPad() {
     assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
     assert(TEncloseS == SEncloseT);
 
+    printf("sPathId: %d, tPathId: %d\n", sPathId, tPathId);
     if (TEncloseS) {
         size_t cPathId = _path.size() / 2;
         for (int xId = _path[cPathId]->xId() - halfWidth; xId <= _path[cPathId]->xId() + halfWidth; ++ xId) {
@@ -316,15 +326,39 @@ void AStarRouter::backTraceNoPad() {
         }
     } else {
         // around the ending grid
+    /*
+        int dx = abs(_path[0]->xId() - _path[_path.size()-1]->xId());
+        int dy = abs(_path[0]->yId() - _path[_path.size()-1]->yId());
+        if(dx < dy) {
+            int projHalfWidth = halfWidth * sqrt(dx*dx + dy*dy) / dy;
+            for(int pathId=0; pathId<_path.size(); pathId++) {
+                int yId = _path[pathId]->yId();
+                for(int xId=_path[pathId]->xId()-projHalfWidth; xId<=_path[pathId]->xId()+projHalfWidth; xId++)
+                    if (xId >= 0 && xId < numXId())
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+            }
+        }
+        else {
+            int projHalfWidth = halfWidth * sqrt(dx*dx + dy*dy) / dx;
+            for(int pathId=0; pathId<_path.size(); pathId++) {
+                int xId = _path[pathId]->xId();
+                for(int yId=_path[pathId]->yId()-projHalfWidth; yId<=_path[pathId]->yId()+projHalfWidth; yId++)
+                    if (yId >= 0 && yId < numYId())
+                        _vPGrid.push_back(_vGrid[xId][yId]);
+            }
+        }
+    */
         for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
             if (xId >= 0 && xId < numXId()) {
                 for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
                     if (yId >= 0 && yId < numYId()) {
-                        _vPGrid.push_back(_vGrid[xId][yId]);
+                        if(isAcute(make_pair(xId, yId), make_pair(_path[0]->xId(), _path[0]->yId()), make_pair(_path[_path.size()-1]->xId(), _path[_path.size()-1]->yId())))
+                            _vPGrid.push_back(_vGrid[xId][yId]);
                     }
                 }
             }
         }
+
         // around the path
         // node = _vGNode[_tPos.first][_tPos.second];
         // while(node->parent() != node) {
