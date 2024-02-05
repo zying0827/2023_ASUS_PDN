@@ -500,8 +500,8 @@ void DetailedMgr::naiveAStar() {
                     int tRealXId = floor(segment->tX() / _gridWidth);
                     int tRealYId = floor(segment->tY() / _gridWidth);
                     AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), make_pair(sRealXId, sRealYId), make_pair(tRealXId, tRealYId), 
-                                       _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2, 0);
-                    router.route();
+                                       _gridWidth, segment->length(), segment->width(), 0.9, _db.numNets() * 10.0, 0.2, 0, _vNetPortGrid);
+                    router.route(netId);
                     segment->setWidth(router.exactWidth() * _gridWidth);
                     segment->setLength(router.exactLength() * _gridWidth);
                     for (size_t pGridId = 0; pGridId < router.numPGrids(); ++ pGridId) {
@@ -585,8 +585,8 @@ void DetailedMgr::negoAStar(bool sameNetCong) {
                         int tRealXId = floor(segment->tX() / _gridWidth);
                         int tRealYId = floor(segment->tY() / _gridWidth);
                         AStarRouter router(_vGrid[layId], make_pair(sXId, sYId), make_pair(tXId, tYId), make_pair(sRealXId, sRealYId), make_pair(tRealXId, tRealYId), 
-                                        _gridWidth, segment->length(), segment->width(), _widthRatio, _obsCongest, _distWeight, _cLineDistWeight);
-                        router.route();
+                                        _gridWidth, segment->length(), segment->width(), _widthRatio, _obsCongest, _distWeight, _cLineDistWeight, _vNetPortGrid);
+                        router.route(netId);
                         segment->setWidth(router.exactWidth() * _gridWidth);
                         segment->setLength(router.exactLength() * _gridWidth);
                         if (iter == _numNegoIters - 1) {
