@@ -1,6 +1,6 @@
 #include "AStarRouter.h"
 
-bool AStarRouter::route() {
+bool AStarRouter::route(int netId) {
     // define the priority queue
     auto cmp = [](GNode* a, GNode* b) { return a->cost() < b->cost(); };
     multiset<GNode*, decltype(cmp) > Q(cmp);
@@ -25,7 +25,7 @@ bool AStarRouter::route() {
         //     (dir == Direction::Right && xId + floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second) ||
         //     (dir == Direction::Left && xId - floor(ceil(_lbWidth/_gridWidth)/2.0) == _tPos.first && yId == _tPos.second)) {
             stepNode->setParent(orgNode);
-            backTraceNoPad();
+            backTraceNoPad(netId);
             // backTrace(xId, yId);
             // cerr << _vGNode[-1][-1] << endl;
             return true;
@@ -239,7 +239,7 @@ void AStarRouter::backTrace(int tXId, int tYId) {
     } 
 }
 
-void AStarRouter::backTraceNoPad() {
+void AStarRouter::backTraceNoPad(int netId) {
     auto encloseNode = [&] (int centerX, int centerY, int radius, int enclosedX, int enclosedY) -> bool {
         assert(legal(centerX, centerY));
         assert(legal(enclosedX, enclosedY));
@@ -249,6 +249,15 @@ void AStarRouter::backTraceNoPad() {
             } 
         return false;
     };
+
+    auto isAcute = [&] (pair<int, int> A, pair<int, int> S, pair<int, int> T) -> bool {
+        int dist1 = (A.first-S.first)*(A.first-S.first) + (A.second-S.second)*(A.second-S.second);
+        int dist2 = (A.first-T.first)*(A.first-T.first) + (A.second-T.second)*(A.second-T.second);
+        int dist3 = (T.first-S.first)*(T.first-S.first) + (T.second-S.second)*(T.second-S.second);
+        return (dist1+dist3 > dist2) &&
+               (dist3+dist2 > dist1);
+    };
+    
     GNode* node = _vGNode[_tPos.first][_tPos.second];
     // GNode* node = _vGNode[tXId][tYId];
     _exactLength = 0.0;
@@ -303,18 +312,71 @@ void AStarRouter::backTraceNoPad() {
     assert(encloseNode(_path[tPathId]->xId(), _path[tPathId]->yId(), halfWidth, _tRealPos.first, _tRealPos.second));
     assert(TEncloseS == SEncloseT);
 
-    if (TEncloseS) {
-        size_t cPathId = _path.size() / 2;
-        for (int xId = _path[cPathId]->xId() - halfWidth; xId <= _path[cPathId]->xId() + halfWidth; ++ xId) {
+    printf("sPathId: %d, tPathId: %d\n", sPathId, tPathId);
+
+    if(TEncloseS || sPathId <= tPathId) {
+
+        int sPortId = -1, tPortId = -1; // the port ID of _sPos, _tPos. If _sPos does not belong to any port, set to -1
+        for(int portId=0; portId<_vNetPortGrid[netId].size(); portId++) {
+            if(find(_vNetPortGrid[netId][portId].begin(), _vNetPortGrid[netId][portId].end(), _sRealPos) != _vNetPortGrid[netId][portId].end()) {
+                sPortId = portId;
+                break;
+            }
+        }
+        for(int portId=0; portId<_vNetPortGrid[netId].size(); portId++) {
+            if(find(_vNetPortGrid[netId][portId].begin(), _vNetPortGrid[netId][portId].end(), _tRealPos) != _vNetPortGrid[netId][portId].end()) {
+                tPortId = portId;
+                break;
+            }
+        }
+        printf("netId: %d, sPortId: %d, tPortId: %d\n", netId, sPortId, tPortId);
+
+        // TODO: what if sPortId == -1 ?
+        int xmin = 999999, xmax = -1, ymin = 999999, ymax = -1;
+        if(sPortId != -1) {
+            for(int gridId=0; gridId<_vNetPortGrid[netId][sPortId].size(); gridId++) {
+                if(_vNetPortGrid[netId][sPortId][gridId].first < xmin) xmin = _vNetPortGrid[netId][sPortId][gridId].first;
+                if(_vNetPortGrid[netId][sPortId][gridId].first > xmax) xmax = _vNetPortGrid[netId][sPortId][gridId].first;
+                if(_vNetPortGrid[netId][sPortId][gridId].second < ymin) ymin = _vNetPortGrid[netId][sPortId][gridId].second;
+                if(_vNetPortGrid[netId][sPortId][gridId].second > ymax) ymax = _vNetPortGrid[netId][sPortId][gridId].second;
+            }
+        }
+        else {
+            if(_sRealPos.first - halfWidth < xmin) xmin = _sRealPos.first - halfWidth;
+            if(_sRealPos.first + halfWidth > xmin) xmax = _sRealPos.first + halfWidth;
+            if(_sRealPos.second - halfWidth < ymin) ymin = _sRealPos.second - halfWidth;
+            if(_sRealPos.second + halfWidth > ymax) ymax = _sRealPos.second + halfWidth;
+        }
+
+        if(tPortId != -1) {
+            for(int gridId=0; gridId<_vNetPortGrid[netId][tPortId].size(); gridId++) {
+                if(_vNetPortGrid[netId][tPortId][gridId].first < xmin) xmin = _vNetPortGrid[netId][tPortId][gridId].first;
+                if(_vNetPortGrid[netId][tPortId][gridId].first > xmax) xmax = _vNetPortGrid[netId][tPortId][gridId].first;
+                if(_vNetPortGrid[netId][tPortId][gridId].second < ymin) ymin = _vNetPortGrid[netId][tPortId][gridId].second;
+                if(_vNetPortGrid[netId][tPortId][gridId].second > ymax) ymax = _vNetPortGrid[netId][tPortId][gridId].second;
+            }
+        }
+        else {
+            if(_tRealPos.first - halfWidth < xmin) xmin = _tRealPos.first - halfWidth;
+            if(_tRealPos.first + halfWidth > xmin) xmax = _tRealPos.first + halfWidth;
+            if(_tRealPos.second - halfWidth < ymin) ymin = _tRealPos.second - halfWidth;
+            if(_tRealPos.second + halfWidth > ymax) ymax = _tRealPos.second + halfWidth;
+        }
+
+        // https://i.imgur.com/PBVwDdh.png
+        for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
             if (xId >= 0 && xId < numXId()) {
-                for (int yId = _path[cPathId]->yId() - halfWidth; yId <= _path[cPathId]->yId() + halfWidth; ++ yId) {
+                for (int yId = _path[tPathId]->yId() - halfWidth; yId <= _path[tPathId]->yId() + halfWidth; ++ yId) {
                     if (yId >= 0 && yId < numYId()) {
-                        _vPGrid.push_back(_vGrid[xId][yId]);
+                //        if(isAcute(make_pair(xId, yId), make_pair(_path[0]->xId(), _path[0]->yId()), make_pair(_path[_path.size()-1]->xId(), _path[_path.size()-1]->yId())))
+                            if(xId >= xmin && xId <= xmax && yId >= ymin && yId <= ymax)
+                                _vPGrid.push_back(_vGrid[xId][yId]);
                     }
                 }
             }
-        }
-    } else {
+        } 
+    }
+    else {
         // around the ending grid
         for (int xId = _path[tPathId]->xId() - halfWidth; xId <= _path[tPathId]->xId() + halfWidth; ++ xId) {
             if (xId >= 0 && xId < numXId()) {
@@ -324,7 +386,8 @@ void AStarRouter::backTraceNoPad() {
                     }
                 }
             }
-        }
+        } 
+        
         // around the path
         // node = _vGNode[_tPos.first][_tPos.second];
         // while(node->parent() != node) {

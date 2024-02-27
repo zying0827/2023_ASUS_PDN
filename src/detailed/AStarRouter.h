@@ -12,8 +12,8 @@ enum Direction {
 
 class AStarRouter {
     public:
-        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, pair<int, int> sRealPos, pair<int, int> tRealPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight, double cLineDistWeight)
-        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _sRealPos(sRealPos), _tRealPos(tRealPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight), _cLineDistWeight(cLineDistWeight) {
+        AStarRouter(vector< vector< Grid* > > vGrid, pair<int, int> sPos, pair<int, int> tPos, pair<int, int> sRealPos, pair<int, int> tRealPos, double gridWidth, double lbLength, double lbWidth, double widthRatio, double obsCongest, double distWeight, double cLineDistWeight, vector< vector< vector< pair<int, int> > > > vNetPortGrid)
+        : _vGrid(vGrid), _sPos(sPos), _tPos(tPos), _sRealPos(sRealPos), _tRealPos(tRealPos), _gridWidth(gridWidth), _lbLength(lbLength), _lbWidth(lbWidth), _widthRatio(widthRatio), _obsCongest(obsCongest), _distWeight(distWeight), _cLineDistWeight(cLineDistWeight), _vNetPortGrid(vNetPortGrid) {
             for (size_t xId = 0; xId < numXId(); ++ xId) {
                 vector<GNode*> temp;
                 for (size_t yId = 0; yId < numYId(); ++ yId) {
@@ -25,9 +25,9 @@ class AStarRouter {
         }
         ~AStarRouter() {}
 
-        bool route();
+        bool route(int);
         void backTrace(int tXId, int tYId);
-        void backTraceNoPad();
+        void backTraceNoPad(int);
         double marginCongestCost(int xId, int yId, Direction dir);
         double estDistCost(int xId, int yId) {
             // return abs(_tPos.first - xId) + abs(_tPos.second - yId);
@@ -79,6 +79,8 @@ class AStarRouter {
         // process
         vector< vector< GNode* > > _vGNode;     // index = [xId] [yId]
         double _obsCongest;         // congestion cost (including history) of obstacles and grids out of boudaries
+
+        vector< vector< vector< pair<int, int> > > > _vNetPortGrid;        // index = [netId] [portId] [gridId]
 };
 
 #endif
